@@ -1,0 +1,13 @@
+.clangd
+build/
+.vscode/
+.cache/
+CMakePresets.json
+*.o
+*.s
+*.ll
+*.bin
+*.inr
+*.inb
+*.txt
+syntax/
