@@ -9,5 +9,5 @@ CMakePresets.json
 *.bin
 *.inr
 *.inb
-*.txt
+examples/*.txt
 syntax/
