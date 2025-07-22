@@ -302,9 +302,10 @@ public:
         codeBytes.push_back(']');
     }
 
-    inline void start_func(INBTypes ret, const std::string& name){
+    inline void start_func(INBTypes ret, PDFlags flags, const std::string& name){
         codeBytes.push_back(FUNC_PREFIX);
         codeBytes.push_back((uint8_t)ret);
+        codeBytes.push_back((uint8_t)flags);
         codeBytes.insert(codeBytes.end(), name.data(), name.data() + name.size());
         codeBytes.push_back('\0');
     }

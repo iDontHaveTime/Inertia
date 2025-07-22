@@ -6,7 +6,6 @@
 #include "Inertia/Target/Architecture.hpp"
 #include "Inertia/ELF/ELFWriter.hpp"
 #include <cstddef>
-#include <cstdint>
 #include <cstdio>
 
 using namespace Inertia;
@@ -88,7 +87,7 @@ int main(){
 
     inb.new_instr();
 
-    inb.start_func(INB::INBTypes::DWORD, "main");
+    inb.start_func(INB::INBTypes::DWORD, INB::PDFlags::GLOBAL, "main");
     inb.func_arg(INB::INBTypes::DWORD, argc);
     inb.func_arg(INB::INBTypes::PTR, argv);
 

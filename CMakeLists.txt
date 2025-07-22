@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.10.0)
 
 project(Inertia VERSION 0.1.0 LANGUAGES C CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 file(GLOB_RECURSE LIB_SOURCES "lib/Inertia/*.cpp")
 file(GLOB_RECURSE FRONTEND_SOURCES "src/main.cpp")
 
