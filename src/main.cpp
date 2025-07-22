@@ -40,7 +40,7 @@ void MakeELF(){
     wr.WriteHeader();
 }
 
-int main(){
+void MakeINB(){
     INB::INBWriter inb("examples/irbin.inb");
 
     inb.setup();
@@ -102,6 +102,9 @@ int main(){
     inb.close_nest();
 
     inb.finish();
+}
+
+int main(){
 
     return 0;
 }

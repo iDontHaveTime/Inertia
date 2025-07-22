@@ -13,6 +13,10 @@ namespace Inertia{
         ABI abi;
         const char* name;
 
+        const char* datasect;
+        const char* rodatasect;
+        const char* bsssect;
+
         inline void AddRegister(Register reg){
             arch.registers.push_back(reg);
         }
