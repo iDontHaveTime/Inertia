@@ -1,8 +1,11 @@
+#include "Inertia/Codegen/ASMFormat.hpp"
+#include "Inertia/Codegen/Assembly.hpp"
 #include "Inertia/INB/INBWriter.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/Lexer.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
+#include "Inertia/Mem/Allocator.hpp"
 #include "Inertia/Target/Architecture.hpp"
 #include "Inertia/ELF/ELFWriter.hpp"
 #include <cstddef>
@@ -105,6 +108,19 @@ void MakeINB(){
 }
 
 int main(){
+    Allocator<AssemblyVariant> asmalloc;
+
+    AssemblyVariant* mov = asmalloc.alloc(
+        (AssemblyInstruction){
+            "movq",
+            (AssemblyOperand){AssemblyOperand::REGISTER, "rax"},
+            (AssemblyOperand){AssemblyOperand::REGISTER, "rsi"}
+        },
+        (AssemblyComment){"move rsi to rax"}
+    );
+
+    ASMFormat format;
+
 
     return 0;
 }
