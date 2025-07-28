@@ -8,7 +8,6 @@
 #include <cstring>
 #include <iostream>
 #include <iterator>
-#include <string_view>
 #include <sys/types.h>
 #include <thread>
 
@@ -44,14 +43,12 @@ struct alignas(64) LexerContext{
     bool inescape = false;
     TokenType look = TokenType::Special;
     TokenType type = TokenType::Special;
-    std::string_view multiline_start, multiline_end, linecom;
+    TokenType multiline_start, multiline_end, linecom;
     const Lexer* lex;
     short utf = 0;
     
     LexerContext(const char* s, const char* e) noexcept : cur(s), end(e){};
-    LexerContext(const char* s, const char* e, const std::string& lcom, const std::string& mlstr, const std::string& mlend, const Lexer* lxr) : 
-        cur(s), end(e), multiline_start(mlstr), multiline_end(mlend), linecom(lcom), lex(lxr){};
-    LexerContext(const char* s, const char* e, const std::string_view& lcom, const std::string_view& mlstr, const std::string_view& mlend, const Lexer* lxr) : 
+    LexerContext(const char* s, const char* e, TokenType lcom, TokenType mlstr, TokenType mlend, const Lexer* lxr) : 
         cur(s), end(e), multiline_start(mlstr), multiline_end(mlend), linecom(lcom), lex(lxr){};
 };
 
@@ -71,15 +68,15 @@ inline void GoBack(LexerContext& ctx) noexcept{
 inline void EatToken(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     if(build.index == 0) return;
 
-    bool isMultilineStart = (build == ctx.multiline_start);
-    bool isLineComment = (build == ctx.linecom && ctx.com == CommentType::Line);
-    bool isMultilineEnd = (build == ctx.multiline_end);
+    bool isMultilineStart = (ctx.type == ctx.multiline_start);
+    bool isLineComment = (ctx.type == ctx.linecom && ctx.com == CommentType::Line);
+    bool isMultilineEnd = (ctx.type == ctx.multiline_end);
 
-    if(isMultilineStart){
+    if(isMultilineStart && !ctx.incom){
         ctx.incom = true;
         ctx.com = CommentType::Block;
     }
-    else if(isLineComment){
+    else if(isLineComment && !ctx.incom){
         ctx.incom = true;
     }
 
@@ -96,7 +93,7 @@ inline void EatToken(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
         out.push(ctx.tokStart, ctx.tokEnd, ctx.type, ctx.line);
     }
 
-    if(isMultilineEnd){
+    if(isMultilineEnd && ctx.incom){
         ctx.incom = false;
         ctx.com = CommentType::Line;
     }
@@ -274,94 +271,64 @@ inline void AddAndGoForward(LexerContext& ctx, TokenBuild& build) noexcept{
     ctx.tokEnd++;
 }
 
-inline void SymbolPushBack(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
-    // PLEASE FIX THIS! IT WORKS BUT NO IDEA HOW!?
+inline bool FinalizeSymbol(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     if(build.index == 1){
+        ctx.type = ctx.lex->look(*ctx.cur);
         EatToken(ctx, out, build);
-        ctx.state = LexerState::Normal;
     }
     else if(build.index == 2){
         TokenType match = ctx.lex->match(build);
-        if(match != Inertia::TokenType::Special){
+        if(match != TokenType::Special){
             ctx.type = match;
+            EatToken(ctx, out, build);
         }
         else{
             GoBack(ctx);
             build.index--;
-            ctx.type = ctx.lex->look(*ctx.cur);
-            EatToken(ctx, out, build);
-            GoForward(ctx);
-            ctx.type = ctx.lex->look(*ctx.cur);
-            build.add_char(*ctx.cur);
+            FinalizeSymbol(ctx, out, build);
         }
-        EatToken(ctx, out, build);
-        ctx.state = LexerState::Normal;
     }
     else if(build.index == 3){
         TokenType match = ctx.lex->match(build);
-        if(match != Inertia::TokenType::Special){
+        if(match != TokenType::Special){
             ctx.type = match;
-        }
-        else{
-            GoBack(ctx);
-            build.index--;
-            GoBack(ctx);
-            build.index--;
-            ctx.type = ctx.lex->look(*ctx.cur);
             EatToken(ctx, out, build);
-            GoForward(ctx);
-            build.add_char(*ctx.cur);
-            ctx.type = ctx.lex->look(*ctx.cur);
-            EatToken(ctx, out, build);
-            GoForward(ctx);
-            ctx.type = ctx.lex->look(*ctx.cur);
-            build.add_char(*ctx.cur);
+            return true;
         }
-        EatToken(ctx, out, build);
-        ctx.state = LexerState::Normal;
     }
+    return false;
 }
 
 inline void SymbolState(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     AddAndGoForward(ctx, build);
 
     if(PeekableForward(ctx)){
-        const char* peek = PeekForward(ctx);
-        TokenType pt = ctx.lex->look(*peek);
-        
-        if(build.index == 2){
-            TokenType match = ctx.lex->match(build);
-            if(match != Inertia::TokenType::Special){
-                if(isTypeSymbol(pt)){
-                    build.add_char(*peek);
-                    TokenType match2 = ctx.lex->match(build);
-                    if(match2 != Inertia::TokenType::Special){
-                        ctx.type = match2;
-                        ctx.tokEnd++;
-                        EatToken(ctx, out, build);
-                        ctx.tokEnd--;
-                        ctx.state = LexerState::Normal;
-                        ctx.cur++;
-                        return;
-                    }
-                    else{
-                        build.index--;
-                    }
-                }
-                ctx.type = match;
-                EatToken(ctx, out, build);
-                ctx.state = LexerState::Normal;
+        TokenType nxt = ctx.lex->look(*PeekForward(ctx));
+        if(isTypeSymbol(nxt)){
+            if(build.index == 1){
                 ctx.tokEnd--;
                 return;
             }
         }
-        if(!isTypeSymbol(pt) || build.index == 3){
-            SymbolPushBack(ctx, out, build);
+        if(build.index == 2 && isTypeSymbol(nxt)){
+            GoForward(ctx);
+            build.add_char(*ctx.cur);
+            if(FinalizeSymbol(ctx, out, build)){
+                ctx.tokEnd--;
+                ctx.state = LexerState::Normal;
+                return;
+            }
+            build.index--;
+            GoBack(ctx);
         }
+        FinalizeSymbol(ctx, out, build);
+        ctx.state = LexerState::Normal;
     }
     else{
-        SymbolPushBack(ctx, out, build);
+        FinalizeSymbol(ctx, out, build);
+        ctx.state = LexerState::Normal;
     }
+
     ctx.tokEnd--;
 }
 
@@ -584,29 +551,44 @@ struct ScannerContext{
     bool escape = false;
 };
 
+inline bool ableForward(ScannerContext& ctx){
+    return (ctx.cur + 1) < ctx.end;
+}
+
+inline bool ableBackward(ScannerContext& ctx){
+    return ctx.cur != ctx.start;
+}
+
+inline bool isComment(ScannerContext& ctx, TokenType cm){
+
+    return true;
+}
+
 inline void NormalScanner(ScannerContext& ctx){
-    if(ctx.cur + ctx.lex->line_comment.length() < ctx.end && memcmp(ctx.cur, ctx.lex->line_comment.c_str(), ctx.lex->line_comment.length()) == 0){
+
+    if(isComment(ctx, ctx.lex->line_comment)){
         ctx.state = ScannerState::Comment;
         ctx.com = CommentType::Line;
+        return;
     }
-    else if(ctx.cur + ctx.lex->multiline_start.length() < ctx.end && memcmp(ctx.cur, ctx.lex->multiline_start.c_str(), ctx.lex->multiline_start.length()) == 0){
+
+    if(isComment(ctx, ctx.lex->multiline_start)){
         ctx.state = ScannerState::Comment;
         ctx.com = CommentType::Block;
+        return;
     }
-    else{
-        // not a comment
-        if(ctx.look == Inertia::TokenType::DoubleQuote){
-            ctx.state = ScannerState::String;
-        }
-        else if(ctx.look == Inertia::TokenType::Quote){
-            ctx.state = ScannerState::Char;
-        }
-        else if(ctx.look == Inertia::TokenType::Special && *ctx.cur != '\n'){
-            size_t offset = ctx.cur - ctx.start;
-            if(offset >= ctx.recSplit){
-                ctx.actSplit = offset;
-                ctx.done = true;
-            }
+    // not a comment
+    if(ctx.look == TokenType::DoubleQuote){
+        ctx.state = ScannerState::String;
+    }
+    else if(ctx.look == TokenType::Quote){
+        ctx.state = ScannerState::Char;
+    }
+    else if(ctx.look == TokenType::Special && *ctx.cur != '\n'){
+        size_t offset = ctx.cur - ctx.start;
+        if(offset >= ctx.recSplit){
+            ctx.actSplit = offset;
+            ctx.done = true;
         }
     }
 }
@@ -616,9 +598,7 @@ inline void CommentScanner(ScannerContext& ctx){
         if(*ctx.cur == '\n') ctx.state = ScannerState::Normal;
     }
     else{
-        if(ctx.cur + ctx.lex->multiline_end.length() < ctx.end && memcmp(ctx.cur, ctx.lex->multiline_end.c_str(), ctx.lex->multiline_end.length()) == 0){
-            ctx.cur += ctx.lex->multiline_end.length() - 1;
-            // because it switches state it needs to be -1
+        if(isComment(ctx, ctx.lex->multiline_end)){
             ctx.state = ScannerState::Normal;
         }
     }

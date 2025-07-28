@@ -1,10 +1,18 @@
 #ifndef ARCHMEM_HPP
 #define ARCHMEM_HPP
 
-#include "Inertia/Target/Architecture.hpp"
 #include <cstring>
+#include <vector>
+#include <cstdint>
+#include <cstdio>
 
 namespace Inertia{
+    enum class Endian{
+        IN_LITTLE_ENDIAN = 1, IN_BIG_ENDIAN = 2
+    };
+    enum class Bitness{
+        M_64_BIT, M_32_BIT 
+    };
     Endian HardwareEndian();
 
     extern const Endian MachineEndian;

@@ -3,7 +3,6 @@
 
 #include "Inertia/Mem/Archmem.hpp"
 #include "Inertia/Mem/Autopointer.hpp"
-#include "Inertia/Target/Architecture.hpp"
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>

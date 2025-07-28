@@ -1,5 +1,4 @@
 #include "Inertia/Mem/Archmem.hpp"
-#include "Inertia/Target/Architecture.hpp"
 #include <cstdint>
 
 namespace Inertia{

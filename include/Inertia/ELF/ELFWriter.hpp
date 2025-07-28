@@ -2,7 +2,6 @@
 #define ELFWRITER_HPP
 
 #include "../Mem/Memstream.hpp"
-#include "../Target/Architecture.hpp"
 #include "Inertia/Mem/Archmem.hpp"
 #include <cstdint>
 #include <cstring>

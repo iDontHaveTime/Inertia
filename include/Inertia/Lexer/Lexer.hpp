@@ -9,7 +9,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
-#include <string>
 #include <cstring>
 #include <string_view>
 #include <unordered_map>
@@ -68,8 +67,8 @@ namespace Inertia{
         TokenType (*customFunc)(char, char, char, size_t) = nullptr;
     public:
         KeywordMap keywords;
-        std::string line_comment;
-        std::string multiline_start, multiline_end;
+        TokenType line_comment;
+        TokenType multiline_start, multiline_end;
         bool usekwd = false;
         
         Lexer() noexcept{
@@ -166,16 +165,16 @@ namespace Inertia{
         inline TokenType look(uint8_t c) const noexcept{
             return lookup[c];
         }
-        inline TokenType match(TokenBuild& tok) const noexcept{
-            if(tok.index != 2 && tok.index != 3) return TokenType::Special;
+        inline TokenType match(TokenBuild& tok, int offset = 0) const noexcept{
+            if(tok.index != (size_t)(2 + offset) && tok.index != (size_t)(3 + offset)) return TokenType::Special;
 
             if(replaceSymbol && customSymbol && customFunc){
                 return customFunc(tok.buffer[0], tok.buffer[1], tok.buffer[2], tok.index);
             }
 
-            char lhs = tok.buffer[0];
-            char mid = tok.buffer[1];
-            if(tok.index == 2){
+            char lhs = tok.buffer[0 + offset];
+            char mid = tok.buffer[1 + offset];
+            if(tok.index == (size_t)(2 + offset)){
                 switch(lhs){
                     case '=':
                         switch(mid){
@@ -285,7 +284,7 @@ namespace Inertia{
                 }   
             }
             else{
-                char rhs = tok.buffer[2];
+                char rhs = tok.buffer[2 + offset];
                 switch(lhs){
                     case '<':
                         switch(mid){
