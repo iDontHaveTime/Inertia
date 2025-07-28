@@ -8,7 +8,6 @@
 #include <cstring>
 #include <iostream>
 #include <iterator>
-#include <sys/types.h>
 #include <thread>
 
 #if defined(__GNUC__) || defined(__clang__)

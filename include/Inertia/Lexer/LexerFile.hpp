@@ -1,7 +1,6 @@
 #ifndef LEXERFILE_HPP
 #define LEXERFILE_HPP
 
-#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -12,6 +11,9 @@
 #include <utility>
 
 namespace Inertia{
+    static const char* LexerFileErrStr[] = {
+        "No errors", "File not found", "Allocation error", "Read error"
+    };
     struct LexerFileChunk{
         std::string_view view;
 
@@ -45,12 +47,17 @@ namespace Inertia{
     class LexerFile{
         char* file = nullptr;
         std::size_t length;
+        int err = 0;
+        enum LexerFileErrCodes{
+            FILE_NOT_FOUND = 1, ALLOC_ERROR = 2, READ_ERROR = 3
+        };
 
         inline void clear() noexcept{
             if(file){
                 std::free(file);
                 file = nullptr;
             }
+            err = 0;
             length = 0;
         }
 
@@ -114,7 +121,7 @@ namespace Inertia{
 
             std::FILE* f = std::fopen(fileName, "rb");
             if(!f){
-                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
+                err = FILE_NOT_FOUND;
                 return;
             }
 
@@ -125,13 +132,13 @@ namespace Inertia{
             file = (char*)std::malloc(length + 1);
             if(!file){
                 std::fclose(f);
-                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
+                err = ALLOC_ERROR;
                 length = 0;
                 return;
             }
 
             if(std::fread(file, 1, length, f) != length){
-                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
+                err = READ_ERROR;
                 std::free(file);
                 file = nullptr;
                 length = 0;
@@ -181,7 +188,7 @@ namespace Inertia{
             length = size;
             file = (char*)malloc(size + 1);
             if(!file){
-                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
+                err = ALLOC_ERROR;
                 length = 0;
                 return;
             }
@@ -198,7 +205,7 @@ namespace Inertia{
 
             file = (char*)malloc(length + 1);
             if(!file){
-                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
+                err = ALLOC_ERROR;
                 length = 0;
                 return;
             }

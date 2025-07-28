@@ -7,7 +7,6 @@ CMakePresets.json
 *.s
 *.ll
 *.bin
-*.inr
 *.inb
 examples/*.txt
 syntax/

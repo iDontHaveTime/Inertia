@@ -2,7 +2,6 @@
 #include "Inertia/Lexer/Lexer.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
-#include "Inertia/Lexer/LexerToken.hpp"
 #include "Inertia/ELF/ELFWriter.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
 #include <cstddef>
@@ -40,13 +39,8 @@ void MakeELF(){
 
 int main(){
     LexerFile file = "examples/inertia.inr";
+
     LexerOutput lex = GetLexedFile(file);
-
-    std::cout<<lex.size()<<std::endl;
-
-    for(const Token& tok : lex){
-        std::cout<<tok.view_str(*lex.file)<<std::endl;
-    }
 
     return 0;
 }
