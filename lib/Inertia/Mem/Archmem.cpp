@@ -15,7 +15,7 @@ Endian HardwareEndian(){
     return Endian::IN_BIG_ENDIAN;
 }
 
-void FlipMemEndian(void* mem, size_t size){
+void FlipMemEndian(void* mem, size_t size) noexcept{
     size_t lhs = 0, rhs = size - 1;
 
     uint8_t* mempt = (uint8_t*)mem;
@@ -29,7 +29,7 @@ void FlipMemEndian(void* mem, size_t size){
     }
 }
 
-void fread_endian(void* dest, size_t n, Endian endian, FILE* fst){
+void fread_endian(void* dest, size_t n, Endian endian, FILE* fst) noexcept{
     fread(dest, 1, n, fst);
     if(endian != MachineEndian){
         FlipMemEndian(dest, n);

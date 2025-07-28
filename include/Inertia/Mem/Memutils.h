@@ -18,10 +18,10 @@ void aligned_free(void* ptr);
 
 #ifdef __cplusplus
 namespace MemUtils{
-    inline void* aligned_malloc(size_t size, size_t alignment){
+    inline void* aligned_malloc(size_t size, size_t alignment) noexcept{
         return ::aligned_malloc(size, alignment);
     }
-    inline void aligned_free(void* ptr){
+    inline void aligned_free(void* ptr) noexcept{
         ::aligned_free(ptr);
     }
 }

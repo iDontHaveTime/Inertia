@@ -124,7 +124,7 @@ namespace Inertia{
             open(size);
         }
 
-        inline void read_endian(void* dest, size_t offset = 0){
+        inline void read_endian(void* dest, size_t offset = 0) noexcept{
             if(offset >= length) return;
             read_off(dest, offset);
             if(endianess != MachineEndian){
@@ -250,6 +250,7 @@ namespace Inertia{
         MemoryStream& operator<<(MemoryStream& rhs) noexcept;
 
         MemoryStream& operator=(MemoryStream&& rhs) noexcept;
+        MemoryStream(MemoryStream&& rhs) noexcept;
 
         MemoryStream& operator<<(char c) noexcept{
             if(dir == StreamDirection::None) return *this;
@@ -345,7 +346,7 @@ namespace Inertia{
             return true;
         }
 
-        inline void dump(FILE* dest){
+        inline void dump(FILE* dest) noexcept{
             if(dir == StreamDirection::None) return;
 
             if(dir == StreamDirection::File){

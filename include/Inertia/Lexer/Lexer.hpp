@@ -77,7 +77,7 @@ namespace Inertia{
         }
 
         // put NULL or nullptr to skip
-        Lexer(const char* _alpha, const char* _symbols, const char* _numbers){
+        Lexer(const char* _alpha, const char* _symbols, const char* _numbers) noexcept{
             if(_alpha){
                 alpha = _alpha;
             }
@@ -91,7 +91,7 @@ namespace Inertia{
             InitLexer();
         }
 
-        void SetKeywords(KeywordMap& kwds){
+        void SetKeywords(KeywordMap& kwds) noexcept{
             usekwd = true;
             keywords = kwds;
         }
@@ -163,7 +163,7 @@ namespace Inertia{
             }
         }
 
-        inline TokenType look(uint8_t c){
+        inline TokenType look(uint8_t c) const noexcept{
             return lookup[c];
         }
         inline TokenType match(TokenBuild& tok) const noexcept{
@@ -333,18 +333,18 @@ namespace Inertia{
             return TokenType::Special;
         }
 
-        LexerOutput lex(LexerFile& file);
-        size_t assume(const LexerFile& file);
-        size_t find_split(const LexerFile& file);
-        size_t find_split(const char* start, const char* end);
-        LexerOutput lex_chunk(LexerFileChunk& chunk);
-        LexerOutput lex_perf(LexerFile& file, size_t assumed);
+        LexerOutput lex(const LexerFile& file) const;
+        size_t assume(const LexerFile& file) const noexcept;
+        size_t find_split(const LexerFile& file) const;
+        size_t find_split(const char* start, const char* end) const;
+        LexerOutput lex_chunk(const LexerFileChunk& chunk) const;
+        LexerOutput lex_perf(const LexerFile& file, size_t assumed) const;
         /* EXPERIMENTAL 
            THIS USES THREADING, USE AT YOUR OWN RISK!
            THIS IS THREAD SAFE BUT THIS ISNT TESTED MUCH.
         */
-        LexerOutput split_lex(LexerFile* file);
-        LexerOutput lex_2chunk(LexerFileChunk& chunk1, LexerFileChunk& chunk2, LexerFile* file);
+        LexerOutput split_lex(const LexerFile* file);
+        LexerOutput lex_2chunk(const LexerFileChunk& chunk1, const LexerFileChunk& chunk2, const LexerFile* file);
         LexerOutput merge_output(LexerOutput&& out1, LexerOutput&& out2);
         std::vector<Token> merge(std::vector<Token>& toks1, std::vector<Token>& toks2);
     };

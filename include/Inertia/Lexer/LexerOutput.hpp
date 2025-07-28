@@ -9,12 +9,12 @@ namespace Inertia{
     // start, end, type, line (constructor)
     struct LexerOutput{
         std::vector<Token> tokens;
-        LexerFile* file;
+        const LexerFile* file;
 
-        LexerOutput() : tokens(), file(nullptr){};
+        LexerOutput() noexcept : tokens(), file(nullptr){};
 
-        LexerOutput(LexerFile* lfile) : tokens(), file(lfile){};
-        LexerOutput(LexerFile& lfile) : tokens(), file(&lfile){};
+        LexerOutput(const LexerFile* lfile) noexcept : tokens(), file(lfile){};
+        LexerOutput(const LexerFile& lfile) noexcept : tokens(), file(&lfile){};
 
         LexerOutput& operator=(LexerOutput& rhs) = default;
         LexerOutput(LexerOutput& rhs) = default;
@@ -42,7 +42,7 @@ namespace Inertia{
             return tokens.size();
         }
 
-        inline size_t TokensWithType(TokenType t){
+        inline size_t TokensWithType(TokenType t) const{
             size_t res = 0;
             for(size_t i = 0; i < tokens.size(); i++) if(tokens[i].type == t) res++;
             return res;

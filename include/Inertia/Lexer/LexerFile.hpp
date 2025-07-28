@@ -1,6 +1,7 @@
 #ifndef LEXERFILE_HPP
 #define LEXERFILE_HPP
 
+#include <cerrno>
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
@@ -54,17 +55,17 @@ namespace Inertia{
         }
 
     public:
-        LexerFile() : file(nullptr), length(0){}
+        LexerFile() noexcept : file(nullptr), length(0){}
 
-        inline LexerFile(const char* fileName) : file(nullptr), length(0){
+        LexerFile(const char* fileName) noexcept : file(nullptr), length(0){
             open(fileName);
         }
 
-        inline ~LexerFile() noexcept{
+        ~LexerFile() noexcept{
             clear();
         }
 
-        std::pair<LexerFileChunk, LexerFileChunk> split(size_t at, bool* result = nullptr){
+        std::pair<LexerFileChunk, LexerFileChunk> split(size_t at, bool* result = nullptr) const{
             if(!file || length <= 1){
                 if(result) *result = false;
                 std::cerr<<"Splitting file into chunks failed"<<std::endl;
@@ -113,7 +114,7 @@ namespace Inertia{
 
             std::FILE* f = std::fopen(fileName, "rb");
             if(!f){
-                std::cerr<<"LexerFile: File not found at "<<fileName<<std::endl;
+                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
                 return;
             }
 
@@ -124,13 +125,13 @@ namespace Inertia{
             file = (char*)std::malloc(length + 1);
             if(!file){
                 std::fclose(f);
-                std::cerr<<"LexerFile: Memory allocation failed"<<std::endl;
+                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
                 length = 0;
                 return;
             }
 
             if(std::fread(file, 1, length, f) != length){
-                std::cerr<<"LexerFile: Read error"<<std::endl;
+                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
                 std::free(file);
                 file = nullptr;
                 length = 0;
@@ -180,7 +181,7 @@ namespace Inertia{
             length = size;
             file = (char*)malloc(size + 1);
             if(!file){
-                std::cerr<<"LexerFile: Memory allocation failed"<<std::endl;
+                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
                 length = 0;
                 return;
             }
@@ -197,7 +198,7 @@ namespace Inertia{
 
             file = (char*)malloc(length + 1);
             if(!file){
-                std::cerr<<"LexerFile: Memory allocation failed"<<std::endl;
+                std::cerr<<"LexerFile: error: "<<strerror(errno)<<std::endl;
                 length = 0;
                 return;
             }

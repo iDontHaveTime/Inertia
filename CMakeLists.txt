@@ -8,14 +8,22 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 file(GLOB_RECURSE LIB_SOURCES "lib/Inertia/*.cpp")
 file(GLOB_RECURSE FRONTEND_SOURCES "src/main.cpp")
 
+if(CMAKE_CXX_COMPILER STREQUAL "clang++")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
+endif()
+
 set(SANITIZE_LIBRARY ON)
 set(SANITIZE_EXECUTABLE ON)
+set(LTO_LIBRARY OFF)
 
 add_library(InertiaLib SHARED ${LIB_SOURCES})
 
 target_compile_options(InertiaLib PUBLIC -Wall -Wextra)
 target_include_directories(InertiaLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set_target_properties(InertiaLib PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+if(LTO_LIBRARY)
+    set_target_properties(InertiaLib PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
 
 if(SANITIZE_LIBRARY)
     target_compile_options(InertiaLib PRIVATE -fsanitize=address)

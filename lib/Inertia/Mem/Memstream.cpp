@@ -47,6 +47,22 @@ MemoryStream& MemoryStream::operator<<(double n) noexcept{
     return *this;
 }
 
+MemoryStream::MemoryStream(MemoryStream&& rhs) noexcept{
+    if(this != &rhs){
+        close();
+        dir = rhs.dir;
+        rhs.dir = StreamDirection::None;
+        mems = rhs.mems;
+        rhs.mems = nullptr;
+        fst = rhs.fst;
+        rhs.fst = nullptr;
+        length = rhs.length;
+        rhs.length = 0;
+        currentSize = rhs.currentSize;
+        rhs.currentSize = 0;
+    }
+}
+
 MemoryStream& MemoryStream::operator=(MemoryStream&& rhs) noexcept{
     if(this != &rhs){
         close();

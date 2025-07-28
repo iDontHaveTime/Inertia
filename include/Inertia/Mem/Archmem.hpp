@@ -9,7 +9,7 @@ namespace Inertia{
 
     extern const Endian MachineEndian;
     
-    void FlipMemEndian(void* mem, size_t size);
+    void FlipMemEndian(void* mem, size_t size) noexcept;
 
     template<typename T, typename Y>
     inline void InsertEndian(std::vector<T>& target, Y val, Endian endian){
@@ -25,7 +25,7 @@ namespace Inertia{
         target.insert(target.end(), bytes, bytes + sizeof(Y));
     }
 
-    void fread_endian(void* dest, size_t n, Endian endian, FILE* fst);
+    void fread_endian(void* dest, size_t n, Endian endian, FILE* fst) noexcept;
 }
 
 #endif // ARCHMEM_HPP

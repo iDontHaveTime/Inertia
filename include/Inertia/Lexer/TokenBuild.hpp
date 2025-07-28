@@ -55,7 +55,7 @@ namespace Inertia{
             return memcmp(buffer, rhs.data(), index) == 0;
         }
 
-        operator std::string_view(){
+        operator std::string_view() const{
             return {buffer, index};
         }
 
@@ -74,11 +74,6 @@ namespace Inertia{
         inline bool matching(char lhs, char mid, char rhs) const noexcept{
             if(index != 3) return false;
             return (lhs == buffer[0] && mid == buffer[1] && rhs == buffer[2]);
-        }
-
-        inline bool simd_match(char lhs, char rhs) const noexcept{
-            short s = *(short*)buffer;
-            return (s == (short)(((short)lhs << 2) + rhs));
         }
 
         friend std::ostream& operator<<(std::ostream& lhs, const TokenBuild& rhs){

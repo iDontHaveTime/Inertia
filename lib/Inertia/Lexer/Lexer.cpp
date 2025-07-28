@@ -45,13 +45,13 @@ struct alignas(64) LexerContext{
     TokenType look = TokenType::Special;
     TokenType type = TokenType::Special;
     std::string_view multiline_start, multiline_end, linecom;
-    Lexer* lex;
+    const Lexer* lex;
     short utf = 0;
     
-    LexerContext(const char* s, const char* e) : cur(s), end(e){};
-    LexerContext(const char* s, const char* e, const std::string& lcom, const std::string& mlstr, const std::string& mlend, Lexer* lxr) : 
+    LexerContext(const char* s, const char* e) noexcept : cur(s), end(e){};
+    LexerContext(const char* s, const char* e, const std::string& lcom, const std::string& mlstr, const std::string& mlend, const Lexer* lxr) : 
         cur(s), end(e), multiline_start(mlstr), multiline_end(mlend), linecom(lcom), lex(lxr){};
-    LexerContext(const char* s, const char* e, const std::string_view& lcom, const std::string_view& mlstr, const std::string_view& mlend, Lexer* lxr) : 
+    LexerContext(const char* s, const char* e, const std::string_view& lcom, const std::string_view& mlstr, const std::string_view& mlend, const Lexer* lxr) : 
         cur(s), end(e), multiline_start(mlstr), multiline_end(mlend), linecom(lcom), lex(lxr){};
 };
 
@@ -105,7 +105,7 @@ inline void EatToken(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     build.clear();
 }
 
-inline void SpecialCharacter(LexerContext& ctx){
+inline void SpecialCharacter(LexerContext& ctx) noexcept{
     if(*ctx.cur == '\n'){
         ctx.line++; 
         if(ctx.com == CommentType::Line) ctx.incom = false;
@@ -248,8 +248,8 @@ HOT_FUNC inline void AlphaState(LexerContext& ctx, LexerOutput& out, TokenBuild&
     CallBasedOnState(ctx, out, build);
 }
 
-inline bool isTypeSymbol(TokenType t){
-    return !(t == Inertia::TokenType::Alpha || t == Inertia::TokenType::Number || t == Inertia::TokenType::Special || t == Inertia::TokenType::Quote || t == Inertia::TokenType::DoubleQuote);
+inline bool isTypeSymbol(TokenType t) noexcept{
+    return !(t == TokenType::Alpha || t == TokenType::Number || t == TokenType::Special || t == TokenType::Quote || t == TokenType::DoubleQuote);
 }
 
 inline void EatSwitchCall(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
@@ -264,12 +264,12 @@ inline void NormalEatSpecial(LexerContext& ctx, LexerOutput& out, TokenBuild& bu
     SpecialCharacter(ctx);
 }
 
-inline void GoForward(LexerContext& ctx){
+inline void GoForward(LexerContext& ctx) noexcept{
     ctx.tokEnd++;
     ctx.cur++;
 }
 
-inline void AddAndGoForward(LexerContext& ctx, TokenBuild& build){
+inline void AddAndGoForward(LexerContext& ctx, TokenBuild& build) noexcept{
     build.add_char(*ctx.cur);
     ctx.tokEnd++;
 }
@@ -365,11 +365,11 @@ inline void SymbolState(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     ctx.tokEnd--;
 }
 
-inline bool IsUTF(TokenType t){
+inline bool IsUTF(TokenType t) noexcept{
     return (t == Inertia::TokenType::UTF_2 || t == Inertia::TokenType::UTF_3 || t == Inertia::TokenType::UTF_4);
 }
 
-inline short GetUTF(TokenType t){
+inline short GetUTF(TokenType t) noexcept{
     if(t == Inertia::TokenType::UTF_2) return 1;
     if(t == Inertia::TokenType::UTF_3) return 2;
     if(t == Inertia::TokenType::UTF_4) return 3;
@@ -544,7 +544,7 @@ HOT_FUNC inline void CallBasedOnState(LexerContext& ctx, LexerOutput& out, Token
     }
 }
 
-size_t Lexer::assume(const LexerFile& file){
+size_t Lexer::assume(const LexerFile& file) const noexcept{
     const char* cur = file.raw();
     const char* end = file.fend();
 
@@ -559,7 +559,7 @@ size_t Lexer::assume(const LexerFile& file){
     return assumed;
 }
 
-size_t Lexer::find_split(const LexerFile& file){
+size_t Lexer::find_split(const LexerFile& file) const{
     return find_split(file.raw(), file.fend());
 }
 
@@ -576,7 +576,7 @@ struct ScannerContext{
     const char* start;
     const char* cur;
     const char* end;
-    Lexer* lex;
+    const Lexer* lex;
     ScannerState state = ScannerState::Normal;
     TokenType look;
     bool done = false;
@@ -624,7 +624,7 @@ inline void CommentScanner(ScannerContext& ctx){
     }
 }
 
-inline void StringScanner(ScannerContext& ctx){
+inline void StringScanner(ScannerContext& ctx) noexcept{
     if(ctx.escape){
         ctx.escape = false;
     }
@@ -636,7 +636,7 @@ inline void StringScanner(ScannerContext& ctx){
     }
 }
 
-inline void CharScanner(ScannerContext& ctx){
+inline void CharScanner(ScannerContext& ctx) noexcept{
     if(ctx.escape){
         ctx.escape = false;
     }
@@ -648,7 +648,7 @@ inline void CharScanner(ScannerContext& ctx){
     }
 }
 
-size_t Lexer::find_split(const char* start, const char* end){
+size_t Lexer::find_split(const char* start, const char* end) const{
     if(!start || !end){
         std::cout<<"Start or end on splitting file not found"<<std::endl;
         return 0;
@@ -693,7 +693,7 @@ size_t Lexer::find_split(const char* start, const char* end){
     return ctx.actSplit;
 }
 
-LexerOutput Lexer::split_lex(LexerFile* file){
+LexerOutput Lexer::split_lex(const LexerFile* file){
     bool res;
     auto [sp1, sp2] = file->split(find_split(*file), &res);
     if(!res){
@@ -704,7 +704,7 @@ LexerOutput Lexer::split_lex(LexerFile* file){
     return lex_2chunk(sp1, sp2, file);
 }
 
-LexerOutput Lexer::lex_chunk(LexerFileChunk& chunk){
+LexerOutput Lexer::lex_chunk(const LexerFileChunk& chunk) const{
     LexerOutput out;
     TokenBuild build;
     out.file = nullptr;
@@ -754,7 +754,7 @@ LexerOutput Lexer::merge_output(LexerOutput&& out1, LexerOutput&& out2){
     return std::move(out1);
 }
 
-LexerOutput Lexer::lex_2chunk(LexerFileChunk& chunk1, LexerFileChunk& chunk2, LexerFile* file){
+LexerOutput Lexer::lex_2chunk(const LexerFileChunk& chunk1, const LexerFileChunk& chunk2, const LexerFile* file){
     LexerOutput out1, out2;
 
     std::thread t1([&](){
@@ -774,7 +774,7 @@ LexerOutput Lexer::lex_2chunk(LexerFileChunk& chunk1, LexerFileChunk& chunk2, Le
     return merge_output(std::move(out1), std::move(out2));
 }
 
-LexerOutput Lexer::lex_perf(LexerFile& file, size_t assumed){
+LexerOutput Lexer::lex_perf(const LexerFile& file, size_t assumed) const{
     LexerOutput out;
     TokenBuild build;
     out.tokens.reserve(assumed);
@@ -794,7 +794,7 @@ LexerOutput Lexer::lex_perf(LexerFile& file, size_t assumed){
     return out;
 }
 
-LexerOutput Lexer::lex(LexerFile& file){
+LexerOutput Lexer::lex(const LexerFile& file) const{
     LexerOutput out;
     TokenBuild build;
     out.file = &file;

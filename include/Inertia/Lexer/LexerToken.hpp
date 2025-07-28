@@ -4,9 +4,7 @@
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
 #include "Inertia/Lexer/TokenBuild.hpp"
-#include <iomanip>
 #include <string>
-#include <sstream>
 
 namespace Inertia{
     struct Token{
@@ -59,65 +57,12 @@ namespace Inertia{
             str = std::string(bld.data(), bld.index);
         };
 
-        inline std::string view_str(LexerFile& file){
+        inline std::string view_str(const LexerFile& file) const{
             if(type == TokenType::StringLiteral || type == TokenType::CharLiteral) return str;
             return std::string(file.raw() + start, end - start);
         }
 
-        inline float get_float(LexerFile& file){
-            if(type == TokenType::FloatLiteral){
-                std::string v = view_str(file);
-                return std::stof(v);
-            }
-            else{
-                return 0;
-            }
-        }
-
-        inline double get_double(LexerFile& file){
-            if(type == TokenType::FloatLiteral){
-                std::string v = view_str(file);
-                return std::stod(v);
-            }
-            else{
-                return 0;
-            }
-        }
-
-        inline uint64_t get_value(LexerFile& file){
-            int base = 10;
-            switch(type){
-                case Inertia::TokenType::IntegerLiteral:
-                    break;
-                case Inertia::TokenType::HexLiteral:
-                    base = 16;
-                    break;
-                case Inertia::TokenType::CharLiteral:
-                    base = 0;
-                    break;
-                case Inertia::TokenType::BinaryLiteral:
-                    base = 2;
-                    break;
-                default:
-                    // unknown type
-                    return 0;
-            }
-            if(base != 0){
-                return std::stoull(view_str(file), nullptr, base);
-            }
-            else{
-                std::string str = view_str(file);
-                std::stringstream ss;
-
-                ss<<"0x";
-                for(char c : str){
-                    ss<<std::hex<<std::setw(2)<<std::setfill('0')<<(int)((uint8_t)c);
-                }
-                return std::stoull(ss.str(), nullptr, 16);
-            }
-        }
-
-        inline std::string_view view(LexerFile& file){
+        inline std::string_view view(const LexerFile& file) const{
             if(type == TokenType::StringLiteral || type == TokenType::CharLiteral) return str;
             return std::string_view((file.raw() + start), end - start);
         }

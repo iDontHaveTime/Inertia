@@ -23,6 +23,7 @@ namespace Inertia{
                     delete ptr;
                 }
             }
+            ptr = nullptr;
         }
     public:
 
