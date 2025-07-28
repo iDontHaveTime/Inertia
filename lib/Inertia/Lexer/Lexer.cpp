@@ -560,8 +560,22 @@ inline bool ableBackward(ScannerContext& ctx){
 }
 
 inline bool isComment(ScannerContext& ctx, TokenType cm){
+    char c = *ctx.cur;
+    if(ctx.lex->look(c) == cm) return true;
 
-    return true;
+    if(ableForward(ctx)){
+        ctx.cur++;
+        char c2 = *ctx.cur;
+        if(ctx.lex->match(c, c2, 0, 2) == cm) return true;
+        if(ableForward(ctx)){
+            ctx.cur++;
+            char c3 = *ctx.cur;
+            if(ctx.lex->match(c, c2, c3, 3) == cm) return true;
+            ctx.cur--;
+        }
+        ctx.cur--;
+    }
+    return false;
 }
 
 inline void NormalScanner(ScannerContext& ctx){

@@ -4,17 +4,12 @@
 #include <cstddef>
 #include <cstring>
 #include <cstdlib>
-#include "Inertia/Lexer/LexerConst.hpp"
 #include <string>
 #include <ostream>
 
 namespace Inertia{
-    // Reason for a buffer is for speed, but this is not a hard length at all
-    // even if token goes above 1024, this will safely push that token still
-    // this is mainly used for checking if current token is a comment, which in all cases comment symbol is 100% less than 1024 
-    // but a safe limit doesnt hurt anyone
     struct TokenBuild{
-        char buffer[MaxTokenLength] = {0};
+        char buffer[1024] = {0};
         size_t index = 0;
 
         TokenBuild() : index(0){};

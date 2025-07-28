@@ -165,16 +165,18 @@ namespace Inertia{
         inline TokenType look(uint8_t c) const noexcept{
             return lookup[c];
         }
-        inline TokenType match(TokenBuild& tok, int offset = 0) const noexcept{
-            if(tok.index != (size_t)(2 + offset) && tok.index != (size_t)(3 + offset)) return TokenType::Special;
+        inline TokenType match(const TokenBuild& tok) const noexcept{
+            return match(tok.buffer[0], tok.buffer[1], tok.buffer[2], tok.index);
+        }
+
+        inline TokenType match(char lhs, char mid, char rhs, size_t size) const noexcept{
+            if(size != 2 && size != 3) return TokenType::Special;
 
             if(replaceSymbol && customSymbol && customFunc){
-                return customFunc(tok.buffer[0], tok.buffer[1], tok.buffer[2], tok.index);
+                return customFunc(lhs, mid, rhs, size);
             }
 
-            char lhs = tok.buffer[0 + offset];
-            char mid = tok.buffer[1 + offset];
-            if(tok.index == (size_t)(2 + offset)){
+            if(size == 2){
                 switch(lhs){
                     case '=':
                         switch(mid){
@@ -284,7 +286,6 @@ namespace Inertia{
                 }   
             }
             else{
-                char rhs = tok.buffer[2 + offset];
                 switch(lhs){
                     case '<':
                         switch(mid){
@@ -327,7 +328,7 @@ namespace Inertia{
                 
             }
             if(customSymbol && customFunc){
-                return customFunc(lhs, mid, tok.buffer[2], tok.index);
+                return customFunc(lhs, mid, rhs, size);
             }
             return TokenType::Special;
         }
