@@ -3,6 +3,7 @@
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/ELF/ELFWriter.hpp"
+#include "Inertia/Lexer/LexerToken.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
 #include <cstddef>
 #include <cstdio>
@@ -40,7 +41,18 @@ void MakeELF(){
 int main(){
     LexerFile file = "examples/inertia.inr";
 
-    LexerOutput lex = GetLexedFile(file);
+    Lexer lxr;
+    lxr.line_comment = TokenType::SlashSlash;
+    lxr.multiline_end = TokenType::StarSlash;
+    lxr.multiline_start = TokenType::SlashStar;
+
+    auto s = file.split(lxr.find_split(file));
+
+    LexerOutput l = lxr.lex_2chunk(s.first, s.second, &file);
+
+    for(const Token& tok : l){
+        std::cout<<tok.view_str(file)<<std::endl;
+    }
 
     return 0;
 }

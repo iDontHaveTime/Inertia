@@ -700,7 +700,7 @@ LexerOutput Lexer::split_lex(const LexerFile* file){
 LexerOutput Lexer::lex_chunk(const LexerFileChunk& chunk) const{
     LexerOutput out;
     TokenBuild build;
-    out.file = nullptr;
+    out.file = chunk.parent;
     LexerContext ctx(chunk.raw(), chunk.raw() + chunk.len(), this->line_comment, this->multiline_start, this->multiline_end, this);
     
     while(ctx.cur != ctx.end){
@@ -716,26 +716,13 @@ LexerOutput Lexer::lex_chunk(const LexerFileChunk& chunk) const{
     return out;
 }
 
-std::vector<Token> Lexer::merge(std::vector<Token>& toks1, std::vector<Token>& toks2){
-    std::vector<Token> out;
-    out.reserve(toks1.size() + toks2.size());
-
-    size_t line_offset = toks1.empty() ? 0 : (toks1.back().line - 1);
-
-    for(Token& tok : toks2){
-        tok.line += line_offset;
-    }
-
-    out.insert(out.end(), std::make_move_iterator(toks1.begin()), std::make_move_iterator(toks1.end()));
-    out.insert(out.end(), std::make_move_iterator(toks2.begin()), std::make_move_iterator(toks2.end()));
-    return out;
-}
-
-LexerOutput Lexer::merge_output(LexerOutput&& out1, LexerOutput&& out2){
+LexerOutput Lexer::merge_output(LexerOutput&& out1, LexerOutput&& out2, size_t split){
     if(!out1.tokens.empty() && !out2.tokens.empty()){
         size_t line_offset = out1.tokens.back().line - 1;
         for(Token& tok : out2.tokens){
             tok.line += line_offset;
+            tok.start += split;
+            tok.end += split;
         }
     }
 
@@ -764,7 +751,7 @@ LexerOutput Lexer::lex_2chunk(const LexerFileChunk& chunk1, const LexerFileChunk
     LexerOutput fout; 
     fout.file = file;
 
-    return merge_output(std::move(out1), std::move(out2));
+    return merge_output(std::move(out1), std::move(out2), chunk1.len());
 }
 
 LexerOutput Lexer::lex_perf(const LexerFile& file, size_t assumed) const{

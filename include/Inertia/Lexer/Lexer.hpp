@@ -3,7 +3,6 @@
 
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
-#include "Inertia/Lexer/LexerToken.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
 #include "Inertia/Lexer/TokenBuild.hpp"
 #include <cstddef>
@@ -12,7 +11,6 @@
 #include <cstring>
 #include <string_view>
 #include <unordered_map>
-#include <vector>
 
 namespace Inertia{
     typedef std::unordered_map<std::string_view, uint32_t> KeywordMap;
@@ -332,21 +330,29 @@ namespace Inertia{
             }
             return TokenType::Special;
         }
-
+        // Simple lexing, nothing much, single threaded
         LexerOutput lex(const LexerFile& file) const;
+        // assumes the amount of tokens to output from a file
         size_t assume(const LexerFile& file) const noexcept;
+        // finds split in a file, uses find_split(const char*, const char*) internally
         size_t find_split(const LexerFile& file) const;
+        // finds split in a buffer, aware of comments, strings, etc... 
         size_t find_split(const char* start, const char* end) const;
+        // lexes just one chunk
         LexerOutput lex_chunk(const LexerFileChunk& chunk) const;
+        // preallocates the token count, use assume(file) for best results
         LexerOutput lex_perf(const LexerFile& file, size_t assumed) const;
+        
         /* EXPERIMENTAL 
            THIS USES THREADING, USE AT YOUR OWN RISK!
            THIS IS THREAD SAFE BUT THIS ISNT TESTED MUCH.
         */
+        // auto splits and lexes
         LexerOutput split_lex(const LexerFile* file);
+        // lexes 2 chunks
         LexerOutput lex_2chunk(const LexerFileChunk& chunk1, const LexerFileChunk& chunk2, const LexerFile* file);
-        LexerOutput merge_output(LexerOutput&& out1, LexerOutput&& out2);
-        std::vector<Token> merge(std::vector<Token>& toks1, std::vector<Token>& toks2);
+        // merges two outputs and patches up lines, and positions
+        LexerOutput merge_output(LexerOutput&& out1, LexerOutput&& out2, size_t split);
     };
 };
 

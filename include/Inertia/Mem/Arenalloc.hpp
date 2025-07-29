@@ -47,6 +47,11 @@ namespace Inertia{
             return false;
         }
 
+        template<typename T>
+        inline void alloc(size_t size, T*& to_track, size_t align = alignof(void*)){
+            alloc(size, (void**)&to_track, align);
+        }
+
         void alloc(size_t s, void** to_track, size_t align = alignof(void*)){ /* not alignof(max_align_t) on purpose */
             if((align == 0) || (align & (align - 1)) != 0){
                 *to_track = nullptr;

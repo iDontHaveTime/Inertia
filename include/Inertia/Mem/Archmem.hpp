@@ -7,11 +7,11 @@
 #include <cstdio>
 
 namespace Inertia{
-    enum class Endian{
-        IN_LITTLE_ENDIAN = 1, IN_BIG_ENDIAN = 2
+    enum class Endian : uint8_t{
+        IN_UNKNOWN_ENDIAN, IN_LITTLE_ENDIAN = 1, IN_BIG_ENDIAN = 2
     };
-    enum class Bitness{
-        M_64_BIT, M_32_BIT 
+    enum class Bitness : uint8_t{
+        M_UNKNOWN_BIT, M_64_BIT, M_32_BIT 
     };
     Endian HardwareEndian();
 

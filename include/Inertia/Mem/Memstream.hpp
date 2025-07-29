@@ -25,6 +25,7 @@ namespace Inertia{
         char* mems;
         bool bin = false;
         Endian endianess = (Endian)0xFE;
+        bool read_allowed = true;
 
         inline void double_size() noexcept{
             if(dir == StreamDirection::Memory){
@@ -109,6 +110,25 @@ namespace Inertia{
 
         void open(size_t size) noexcept;
 
+        inline void open(FILE* f, bool allow_read){
+            if(!f) return;
+            if(f == stdin) return;
+            open_check();
+            dir = StreamDirection::None;
+            read_allowed = allow_read;
+            if(f == stderr || f == stdout){
+                read_allowed = false;
+            }
+            fst = f;
+            dir = StreamDirection::File;
+            length = ftell(f);
+            currentSize = 0;
+            mems = nullptr;
+        }
+        MemoryStream(FILE* f, bool allow_read) noexcept{
+            open(f, allow_read);
+        }
+
         // Open a simple memory buffer
         inline void open() noexcept{
             open_check();
@@ -124,6 +144,7 @@ namespace Inertia{
         }
 
         inline void read_endian(void* dest, size_t offset = 0) noexcept{
+            if(!read_allowed) return;
             if(offset >= length) return;
             read_off(dest, offset);
             if(endianess != MachineEndian){
@@ -132,6 +153,7 @@ namespace Inertia{
         }
 
         inline void read_off(void* dest, size_t offset = 0) noexcept{
+            if(!read_allowed) return;
             if(offset >= length) return;
             if(dir == StreamDirection::Memory){
                 if(!mems) return;
@@ -327,6 +349,7 @@ namespace Inertia{
         }
 
         inline bool read(void* _dest, size_t n = 0){
+            if(!read_allowed) return false;
             if(dir == StreamDirection::None) return false;
             if(!n) n = length;
 

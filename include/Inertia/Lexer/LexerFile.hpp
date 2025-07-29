@@ -14,11 +14,13 @@ namespace Inertia{
     static const char* LexerFileErrStr[] = {
         "No errors", "File not found", "Allocation error", "Read error"
     };
+    class LexerFile;
     struct LexerFileChunk{
         std::string_view view;
+        const LexerFile* parent;
 
         LexerFileChunk() : view(){};
-        LexerFileChunk(const char* data, size_t len) : view(data, len){};
+        LexerFileChunk(const char* data, size_t len, const LexerFile* _parent) : view(data, len), parent(_parent){};
 
         char operator[](size_t i) const{
             if(i >= view.length()){
@@ -86,8 +88,8 @@ namespace Inertia{
             }
             
             if(result) *result = true;
-            LexerFileChunk p1(file, at);
-            LexerFileChunk p2(file + at, length - at);
+            LexerFileChunk p1(file, at, this);
+            LexerFileChunk p2(file + at, length - at, this);
 
             return {p1, p2};
         }
