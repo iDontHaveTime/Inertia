@@ -87,16 +87,8 @@ namespace Inertia{
         }
 
         template<typename T, typename... Args>
-        typename std::enable_if<!std::is_trivially_destructible<T>::value>::type
-        inline alloc(size_t size, T*& to_track, Args&&... args){
-            alloc(size, (void**)&to_track, alignof(T), &destroy<T>);
-            new(to_track) T(std::forward<Args>(args)...);
-        }
-
-        template<typename T, typename... Args>
-        typename std::enable_if<std::is_trivially_destructible<T>::value>::type
-        inline alloc(size_t size, T*& to_track, Args&&... args){
-            alloc(size, (void**)&to_track, alignof(T), nullptr);
+        inline void alloc(size_t size, T*& to_track, Args&&... args){
+            alloc(size, (void**)&to_track, alignof(T), std::is_trivially_destructible<T>::value ? nullptr : &destroy<T>);
             new(to_track) T(std::forward<Args>(args)...);
         }
 

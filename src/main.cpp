@@ -1,4 +1,5 @@
 #include "Inertia/IR/IRParser.hpp"
+#include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/Lexer.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
@@ -6,6 +7,7 @@
 #include "Inertia/Lexer/TokenType.hpp"
 #include <cstddef>
 #include <cstdio>
+#include <iostream>
 
 using namespace Inertia;
 
@@ -42,9 +44,22 @@ int main(){
 
     LexerOutput out = GetLexedFile(file);
 
+    TypeAllocator talloc;
+
+    auto int32 = talloc.getInteger(32);
+
+    std::cout<<(uint32_t)int32->getKind()<<' '<<int32->width<<' '<<int32<<std::endl;
+
+    auto ptrint32 = talloc.getPointer(int32);
+    auto ptr2int32 = talloc.getPointer(int32);
+
+    std::cout<<(uint32_t)ptrint32->getKind()<<' '<<ptrint32->pointee<<' '<<ptrint32<<std::endl;
+    std::cout<<(uint32_t)ptr2int32->getKind()<<' '<<ptr2int32->pointee<<' '<<ptr2int32<<std::endl;
+    std::cout<<(ptrint32 == ptr2int32 ? "true" : "false")<<std::endl;
+
     IRParser parser(&file);
 
-    auto frame = parser.parse_tokens(out);
+    //auto frame = parser.parse_tokens(out);
 
     return 0;
 }
