@@ -3,8 +3,8 @@
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/ELF/ELFWriter.hpp"
-#include "Inertia/Lexer/LexerToken.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
+#include "Inertia/Mem/Arenalloc.hpp"
 #include <cstddef>
 #include <cstdio>
 
@@ -39,20 +39,16 @@ void MakeELF(){
 }
 
 int main(){
-    LexerFile file = "examples/inertia.inr";
+    // LexerFile file = "examples/inertia.inr";
 
-    Lexer lxr;
-    lxr.line_comment = TokenType::SlashSlash;
-    lxr.multiline_end = TokenType::StarSlash;
-    lxr.multiline_start = TokenType::SlashStar;
+    // LexerOutput out = GetLexedFile(file);
 
-    auto s = file.split(lxr.find_split(file));
+    ArenaAlloc allocator;
 
-    LexerOutput l = lxr.lex_2chunk(s.first, s.second, &file);
+    std::string* str;
+    allocator.alloc(sizeof(std::string), str, "Hello");
 
-    for(const Token& tok : l){
-        std::cout<<tok.view_str(file)<<std::endl;
-    }
+    std::cout<<*str<<std::endl;
 
     return 0;
 }
