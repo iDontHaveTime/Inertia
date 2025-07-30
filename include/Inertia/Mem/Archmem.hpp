@@ -1,5 +1,5 @@
-#ifndef ARCHMEM_HPP
-#define ARCHMEM_HPP
+#ifndef INERTIA_ARCHMEM_HPP
+#define INERTIA_ARCHMEM_HPP
 
 #include <cstring>
 #include <vector>
@@ -36,4 +36,4 @@ namespace Inertia{
     void fread_endian(void* dest, size_t n, Endian endian, FILE* fst) noexcept;
 }
 
-#endif // ARCHMEM_HPP
+#endif // INERTIA_ARCHMEM_HPP

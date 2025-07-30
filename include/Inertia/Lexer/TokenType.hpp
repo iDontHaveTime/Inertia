@@ -1,5 +1,5 @@
-#ifndef TOKENTYPE_HPP
-#define TOKENTYPE_HPP
+#ifndef INERTIA_TOKENTYPE_HPP
+#define INERTIA_TOKENTYPE_HPP
 
 #include <cstdint>
 
@@ -83,6 +83,7 @@ namespace Inertia{
         BinaryLiteral, // binary
 
         Keyword,
+        TokenEOF,
 
         #if defined(NEW_TOKEN_TYPE)
         NEW_TOKEN_TYPE
@@ -90,4 +91,4 @@ namespace Inertia{
     };
 }
 
-#endif // TOKENTYPE_HPP
+#endif // INERTIA_TOKENTYPE_HPP

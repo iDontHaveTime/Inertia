@@ -1,5 +1,5 @@
-#ifndef FRAME_HPP
-#define FRAME_HPP
+#ifndef INERTIA_FRAME_HPP
+#define INERTIA_FRAME_HPP
 
 namespace Inertia{
     class Frame{
@@ -7,4 +7,4 @@ namespace Inertia{
     };
 }
 
-#endif // FRAME_HPP
+#endif // INERTIA_FRAME_HPP

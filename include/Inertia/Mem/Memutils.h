@@ -1,5 +1,5 @@
-#ifndef MEMUTILS_H
-#define MEMUTILS_H
+#ifndef INERTIA_MEMUTILS_H
+#define INERTIA_MEMUTILS_H
 
 #ifdef __cplusplus
 #include <cstdlib>
@@ -27,4 +27,4 @@ namespace MemUtils{
 }
 #endif
 
-#endif // MEMUTILS_H
+#endif // INERTIA_MEMUTILS_H

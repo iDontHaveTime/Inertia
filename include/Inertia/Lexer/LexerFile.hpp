@@ -1,5 +1,5 @@
-#ifndef LEXERFILE_HPP
-#define LEXERFILE_HPP
+#ifndef INERTIA_LEXERFILE_HPP
+#define INERTIA_LEXERFILE_HPP
 
 #include <cstddef>
 #include <cstdint>
@@ -219,4 +219,4 @@ namespace Inertia{
     };
 }
 
-#endif // LEXERFILE_HPP
+#endif // INERTIA_LEXERFILE_HPP

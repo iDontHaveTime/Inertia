@@ -1,5 +1,5 @@
-#ifndef IRKEYWORDS_HPP
-#define IRKEYWORDS_HPP
+#ifndef INERTIA_IRKEYWORDS_HPP
+#define INERTIA_IRKEYWORDS_HPP
 
 #include <cstdint>
 #include <string_view>
@@ -24,4 +24,4 @@ namespace Inertia{
     }
 }
 
-#endif // IRKEYWORDS_HPP
+#endif // INERTIA_IRKEYWORDS_HPP

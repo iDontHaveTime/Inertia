@@ -1,5 +1,5 @@
-#ifndef TOKENBUILD_HPP
-#define TOKENBUILD_HPP
+#ifndef INERTIA_TOKENBUILD_HPP
+#define INERTIA_TOKENBUILD_HPP
 
 #include <cstddef>
 #include <cstring>
@@ -81,4 +81,4 @@ namespace Inertia{
     };
 }
 
-#endif // TOKENBUILD_HPP
+#endif // INERTIA_TOKENBUILD_HPP

@@ -168,7 +168,7 @@ inline void NormalState(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
 
 HOT_FUNC inline void AlphaState(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     char c = *ctx.cur;
-    if(ctx.look == Inertia::TokenType::Alpha){
+    if(ctx.look == TokenType::Alpha){
         build.add_char(c);
         return;
     }
@@ -225,16 +225,16 @@ HOT_FUNC inline void AlphaState(LexerContext& ctx, LexerOutput& out, TokenBuild&
         return;
     }
 
-    if(ctx.look == Inertia::TokenType::Quote){
+    if(ctx.look == TokenType::Quote){
         EatToken(ctx, out, build);
-        ctx.type = Inertia::TokenType::CharLiteral;
+        ctx.type = TokenType::CharLiteral;
         ctx.state = LexerState::String;
         return;
     }
 
-    if(ctx.look == Inertia::TokenType::DoubleQuote){
+    if(ctx.look == TokenType::DoubleQuote){
         EatToken(ctx, out, build);
-        ctx.type = Inertia::TokenType::StringLiteral;
+        ctx.type = TokenType::StringLiteral;
         ctx.state = LexerState::String;
         return;
     }
@@ -332,13 +332,13 @@ inline void SymbolState(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
 }
 
 inline bool IsUTF(TokenType t) noexcept{
-    return (t == Inertia::TokenType::UTF_2 || t == Inertia::TokenType::UTF_3 || t == Inertia::TokenType::UTF_4);
+    return (t == TokenType::UTF_2 || t == TokenType::UTF_3 || t == TokenType::UTF_4);
 }
 
 inline short GetUTF(TokenType t) noexcept{
-    if(t == Inertia::TokenType::UTF_2) return 1;
-    if(t == Inertia::TokenType::UTF_3) return 2;
-    if(t == Inertia::TokenType::UTF_4) return 3;
+    if(t == TokenType::UTF_2) return 1;
+    if(t == TokenType::UTF_3) return 2;
+    if(t == TokenType::UTF_4) return 3;
     return 0;
 }
 
@@ -422,6 +422,9 @@ inline void EatString(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
 
 inline void EndOfLexing(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     EatToken(ctx, out, build);
+    if(ctx.lex->throw_eof){
+        out.push(0, 0, TokenType::TokenEOF, ctx.line);
+    }
 }
 
 inline void StringState(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
@@ -621,10 +624,10 @@ inline void StringScanner(ScannerContext& ctx) noexcept{
     if(ctx.escape){
         ctx.escape = false;
     }
-    else if(ctx.look == Inertia::TokenType::Backslash){
+    else if(ctx.look == TokenType::Backslash){
         ctx.escape = true;
     }
-    else if(ctx.look == Inertia::TokenType::DoubleQuote){
+    else if(ctx.look == TokenType::DoubleQuote){
         ctx.state = ScannerState::Normal;
     }
 }
@@ -633,10 +636,10 @@ inline void CharScanner(ScannerContext& ctx) noexcept{
     if(ctx.escape){
         ctx.escape = false;
     }
-    else if(ctx.look == Inertia::TokenType::Backslash){
+    else if(ctx.look == TokenType::Backslash){
         ctx.escape = true;
     }
-    else if(ctx.look == Inertia::TokenType::Quote){
+    else if(ctx.look == TokenType::Quote){
         ctx.state = ScannerState::Normal;
     }
 }

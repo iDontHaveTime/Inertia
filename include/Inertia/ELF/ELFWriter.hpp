@@ -1,5 +1,5 @@
-#ifndef ELFWRITER_HPP
-#define ELFWRITER_HPP
+#ifndef INERTIA_ELFWRITER_HPP
+#define INERTIA_ELFWRITER_HPP
 
 #include "../Mem/Memstream.hpp"
 #include "Inertia/Mem/Archmem.hpp"
@@ -217,4 +217,4 @@ public:
 }
 }
 
-#endif // ELFWRITER_HPP
+#endif // INERTIA_ELFWRITER_HPP

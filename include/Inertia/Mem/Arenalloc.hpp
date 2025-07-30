@@ -1,6 +1,7 @@
-#ifndef ARENALLOC_HPP
-#define ARENALLOC_HPP
+#ifndef INERTIA_ARENALLOC_HPP
+#define INERTIA_ARENALLOC_HPP
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <vector>
@@ -62,13 +63,22 @@ namespace Inertia{
                 if(!temp){
                     return true;
                 }
-                ptrdiff_t diff = (ptrdiff_t)temp - (ptrdiff_t)arena;
+                
+                char* oldArena = (char*)arena;
+                size_t oldSize = size;
+
+                ptrdiff_t diff = (char*)temp - oldArena;
+
+                size = _size;
                 arena = temp;
+
                 if(diff == 0) return false;
                 if(!track.empty()){
                     for(ArenaAllocPtr& ptr : track){
                         if(ptr.saved_ptr){
-                            *ptr.saved_ptr = (char*)(*(ptr.saved_ptr)) + diff;
+                            char* p = (char*)(*ptr.saved_ptr);
+                            if(p >= oldArena && p < oldArena + oldSize)
+                                *ptr.saved_ptr = p + diff;
                         }
                     }
                 }
@@ -94,7 +104,7 @@ namespace Inertia{
         inline size_t reset(bool call_des = true){
             size_t cleared = 0;
             if(call_des){
-                call_destructors();
+                call_destructors(false);
                 cleared = track.size();
             }
             track.clear();
@@ -128,6 +138,24 @@ namespace Inertia{
             track.emplace_back(to_track, *to_track, dstr);
             current += s;
         }
+
+        // This doesnt actually remove it from memory (yet), only calls destructor (if true)
+        template<typename T>
+        void remove(T*& ptr, bool call_dtor = true){
+            std::vector<ArenaAllocPtr>::iterator it = std::find_if(track.begin(), track.end(), [ptr](const ArenaAllocPtr& obj){
+                return obj.heap_ptr == ptr;
+            });
+
+            if(it == track.end()){
+                return;
+            }
+            
+            if(call_dtor) if(it->destructor) it->destructor(it->heap_ptr);
+
+            ptr = nullptr;
+
+            track.erase(it);
+        }
         
         // caller checks if valid
         ArenaAlloc(size_t _size) noexcept{
@@ -147,7 +175,7 @@ namespace Inertia{
             return arena;
         }
 
-        inline void destructors(bool state){
+        inline void destructors(bool state) noexcept{
             des_call = state;
         }
 
@@ -166,4 +194,4 @@ namespace Inertia{
     };
 }
 
-#endif // ARENALLOC_HPP
+#endif // INERTIA_ARENALLOC_HPP

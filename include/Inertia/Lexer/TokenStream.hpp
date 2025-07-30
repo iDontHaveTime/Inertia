@@ -1,5 +1,5 @@
-#ifndef TOKENSTREAM_HPP
-#define TOKENSTREAM_HPP
+#ifndef INERTIA_TOKENSTREAM_HPP
+#define INERTIA_TOKENSTREAM_HPP
 
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/Lexer/LexerToken.hpp"
@@ -111,4 +111,4 @@ namespace Inertia{
     };
 }
 
-#endif // TOKENSTREAM_HPP
+#endif // INERTIA_TOKENSTREAM_HPP

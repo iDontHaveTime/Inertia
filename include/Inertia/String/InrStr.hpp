@@ -1,5 +1,5 @@
-#ifndef INRSTR_HPP
-#define INRSTR_HPP
+#ifndef INERTIA_INRSTR_HPP
+#define INERTIA_INRSTR_HPP
 
 #include <cstddef>
 #include <cstdint>
@@ -96,4 +96,4 @@ namespace Inertia{
     };
 }
 
-#endif // INRSTR_HPP
+#endif // INERTIA_INRSTR_HPP

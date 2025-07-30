@@ -1,0 +1,6 @@
+#ifndef INERTIA_TYPE_HPP
+#define INERTIA_TYPE_HPP
+
+
+
+#endif // INERTIA_TYPE_HPP

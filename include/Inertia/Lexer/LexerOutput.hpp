@@ -1,5 +1,5 @@
-#ifndef LEXEROUTPUT_HPP
-#define LEXEROUTPUT_HPP
+#ifndef INERTIA_LEXEROUTPUT_HPP
+#define INERTIA_LEXEROUTPUT_HPP
 
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/LexerToken.hpp"
@@ -97,4 +97,4 @@ namespace Inertia{
     };
 }
 
-#endif // LEXEROUTPUT_HPP
+#endif // INERTIA_LEXEROUTPUT_HPP

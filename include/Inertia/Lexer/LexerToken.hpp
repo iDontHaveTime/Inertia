@@ -1,5 +1,5 @@
-#ifndef LEXERTOKEN_HPP
-#define LEXERTOKEN_HPP
+#ifndef INERTIA_LEXERTOKEN_HPP
+#define INERTIA_LEXERTOKEN_HPP
 
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
@@ -78,4 +78,4 @@ namespace Inertia{
     static Token dummyTok;
 }
 
-#endif // LEXERTOKEN_HPP
+#endif // INERTIA_LEXERTOKEN_HPP

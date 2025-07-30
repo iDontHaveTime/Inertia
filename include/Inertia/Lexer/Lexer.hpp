@@ -1,5 +1,5 @@
-#ifndef LEXER_HPP
-#define LEXER_HPP
+#ifndef INERTIA_LEXER_HPP
+#define INERTIA_LEXER_HPP
 
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
@@ -68,6 +68,8 @@ namespace Inertia{
         TokenType line_comment;
         TokenType multiline_start, multiline_end;
         bool usekwd = false;
+        // should lexer put an EOF token in the output
+        bool throw_eof = false;
         
         Lexer() noexcept{
             InitLexer();
@@ -376,4 +378,4 @@ int LexerTest(){
 
 */
 
-#endif // LEXER_HPP
+#endif // INERTIA_LEXER_HPP

@@ -1,5 +1,5 @@
-#ifndef MEMSTREAM_HPP
-#define MEMSTREAM_HPP
+#ifndef INERTIA_MEMSTREAM_HPP
+#define INERTIA_MEMSTREAM_HPP
 
 #include "Inertia/Mem/Archmem.hpp"
 #include "Inertia/Mem/Autopointer.hpp"
@@ -387,4 +387,4 @@ namespace Inertia{
     };
 };
 
-#endif // MEMSTREAM_HPP
+#endif // INERTIA_MEMSTREAM_HPP

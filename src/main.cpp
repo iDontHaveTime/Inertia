@@ -1,10 +1,9 @@
+#include "Inertia/IR/IRParser.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/Lexer.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
-#include "Inertia/ELF/ELFWriter.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
-#include "Inertia/Mem/Arenalloc.hpp"
 #include <cstddef>
 #include <cstdio>
 
@@ -23,7 +22,7 @@ LexerOutput GetLexedFile(const LexerFile& file){
 
     return lexr.lex_perf(file, assume);
 }
-
+/*
 void MakeELF(){
     ELF::ELFWriter wr("examples/inelf.o");
 
@@ -37,18 +36,15 @@ void MakeELF(){
 
     wr.WriteHeader();
 }
-
+*/
 int main(){
-    // LexerFile file = "examples/inertia.inr";
+    LexerFile file = "examples/inertia.inr";
 
-    // LexerOutput out = GetLexedFile(file);
+    LexerOutput out = GetLexedFile(file);
 
-    ArenaAlloc allocator;
+    IRParser parser(&file);
 
-    std::string* str;
-    allocator.alloc(sizeof(std::string), str, "Hello");
-
-    std::cout<<*str<<std::endl;
+    auto frame = parser.parse_tokens(out);
 
     return 0;
 }

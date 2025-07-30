@@ -1,5 +1,5 @@
-#ifndef ALLOCATOR_HPP
-#define ALLOCATOR_HPP
+#ifndef INERTIA_ALLOCATOR_HPP
+#define INERTIA_ALLOCATOR_HPP
 
 #include <vector>
 
@@ -45,4 +45,4 @@ namespace Inertia{
     };
 }
 
-#endif // ALLOCATOR_HPP
+#endif // INERTIA_ALLOCATOR_HPP

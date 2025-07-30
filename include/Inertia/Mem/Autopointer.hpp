@@ -1,5 +1,5 @@
-#ifndef AUTOPOINTER_HPP
-#define AUTOPOINTER_HPP
+#ifndef INERTIA_AUTOPOINTER_HPP
+#define INERTIA_AUTOPOINTER_HPP
 
 #include <cstdint>
 
@@ -79,4 +79,4 @@ namespace Inertia{
     };
 }
 
-#endif // AUTOPOINTER_HPP
+#endif // INERTIA_AUTOPOINTER_HPP
