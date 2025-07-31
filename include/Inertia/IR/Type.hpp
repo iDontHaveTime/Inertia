@@ -108,38 +108,44 @@ namespace Inertia{
 
     class TypeAllocator{
         ArenaAlloc arena;
-        std::unordered_map<TypeKey, Type*> cache;
+        std::unordered_map<TypeKey, ArenaPointer<Type>> cache;
     public:
-        TypeAllocator(size_t initialSize = 1024) : arena(initialSize){};
+        TypeAllocator(size_t initialSize = 8192) : arena(initialSize){};
 
-        IntegerType* getInteger(int width){
+        ArenaPointer<IntegerType> getInteger(int width){
             TypeKey key(Type::INTEGER);
             key.int_width = width;
 
             auto it = cache.find(key);
             if(it != cache.end())
-                return (IntegerType*)(it->second);
+                return (ArenaPointer<IntegerType>&)it->second;
 
-            IntegerType* type;
-            arena.alloc(sizeof(IntegerType), type, width);
+            auto t = arena.alloc<IntegerType>(width);
 
-            cache[key] = type;
-            return type;
+            cache[key] = (ArenaPointer<Type>&)t;
+            return t;
         }
 
-        PointerType* getPointer(Type* type){
+        ArenaPointer<PointerType> getPointer(Type* type){
             TypeKey key(Type::POINTER);
             key.pointee = type;
 
             auto it = cache.find(key);
             if(it != cache.end())
-                return (PointerType*)(it->second);
+                return (ArenaPointer<PointerType>&)it->second;
 
-            PointerType* ptr;
-            arena.alloc(sizeof(PointerType), ptr, type);
+            auto ptr = arena.alloc<PointerType>(type);
 
-            cache[key] = ptr;
+            cache[key] = (ArenaPointer<Type>&)ptr;
             return ptr;
+        }
+
+        ArenaAlloc& get_arena() noexcept{
+            return arena;
+        }
+
+        const ArenaAlloc& get_arena() const noexcept{
+            return arena;
         }
     };
 }

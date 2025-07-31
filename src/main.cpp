@@ -5,6 +5,7 @@
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
+#include "Inertia/Mem/Arenalloc.hpp"
 #include <cstddef>
 #include <cstdio>
 #include <iostream>
@@ -39,6 +40,28 @@ void MakeELF(){
     wr.WriteHeader();
 }
 */
+
+// test class for allocator
+struct TestClass{
+    const char* str;
+
+    TestClass() : str(nullptr){
+        std::cout<<"class on"<<std::endl;
+    }
+
+    TestClass(const char* s) : str(s){
+        std::cout<<"class on "<<s<<std::endl;
+    }
+
+    ~TestClass(){
+        std::cout<<"class off";
+        if(str){
+            std::cout<<' '<<str;
+        }
+        std::cout<<std::endl;
+    }
+};
+
 int main(){
     LexerFile file = "examples/inertia.inr";
 
@@ -48,15 +71,16 @@ int main(){
 
     auto int32 = talloc.getInteger(32);
 
-    std::cout<<(uint32_t)int32->getKind()<<' '<<int32->width<<' '<<int32<<std::endl;
+    std::cout<<(uint32_t)int32.get()->getKind()<<' '<<int32.get()->width<<' '<<int32.get()<<std::endl;
 
     auto ptrint32 = talloc.getPointer(int32);
     auto ptr2int32 = talloc.getPointer(int32);
 
-    std::cout<<(uint32_t)ptrint32->getKind()<<' '<<ptrint32->pointee<<' '<<ptrint32<<std::endl;
-    std::cout<<(uint32_t)ptr2int32->getKind()<<' '<<ptr2int32->pointee<<' '<<ptr2int32<<std::endl;
-    std::cout<<(ptrint32 == ptr2int32 ? "true" : "false")<<std::endl;
+    talloc.get_arena().reserve(500000);
 
+    std::cout<<(uint32_t)ptrint32.get()->getKind()<<' '<<ptrint32.get()->pointee<<' '<<ptrint32.get()<<std::endl;
+    std::cout<<(uint32_t)ptr2int32.get()->getKind()<<' '<<ptr2int32.get()->pointee<<' '<<ptr2int32.get()<<std::endl;
+    std::cout<<(ptrint32.get() == ptr2int32.get() ? "true" : "false")<<std::endl;
     IRParser parser(&file);
 
     //auto frame = parser.parse_tokens(out);

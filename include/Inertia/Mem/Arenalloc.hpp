@@ -1,7 +1,6 @@
 #ifndef INERTIA_ARENALLOC_HPP
 #define INERTIA_ARENALLOC_HPP
 
-#include <algorithm>
 #include <cstddef>
 #include <cstdlib>
 #include <vector>
@@ -13,175 +12,217 @@
 **/
 
 namespace Inertia{
-    struct ArenaAllocPtr{
-        void* heap_ptr;
-        void** saved_ptr;
-        void (*destructor)(void*);
 
-        ArenaAllocPtr() noexcept : saved_ptr(nullptr), destructor(nullptr){};
-        ArenaAllocPtr(void** ptr, void* heap, void (*ds)(void*)) noexcept : heap_ptr(heap), saved_ptr(ptr), destructor(ds){};
-        ~ArenaAllocPtr() = default;
-    };
-    class ArenaAlloc{
-        void* arena = nullptr;
-        size_t current : ((sizeof(size_t)*8)-1);
-        bool des_call : 1;
-        size_t size = 0;
-        std::vector<ArenaAllocPtr> track;
+    template<typename T>
+    class ArenaPointer{
+        T* ptr;
+        std::vector<ArenaPointer<void>>* parent;
+        size_t index : 63;
+        bool stack_alloc : 1;
+        void (*destructor)(T*);
 
-        template<typename T>
-        static void destroy(void* p){
-            static_cast<T*>(p)->~T();
-        }
-        inline void call_destructors(bool nullify = true){
-            for(auto it = track.rbegin(); it != track.rend(); it++){
-                if(it->destructor) it->destructor(it->heap_ptr);
-            }
-            if(nullify){
-                track.clear();
-            }
-        }
     public:
-        ArenaAlloc() noexcept : current(0), des_call(true){};
-        ArenaAlloc(const ArenaAlloc&) = delete;
-        ArenaAlloc& operator=(const ArenaAlloc&) = delete;
+        
+        ArenaPointer() noexcept : ptr(nullptr), parent(nullptr), index(0), stack_alloc(false), destructor(nullptr){};
+        ArenaPointer(T* tptr, decltype(parent) _parent, void (*dstr)(T*), size_t idx) noexcept : ptr(tptr), parent(_parent), index(idx), stack_alloc(false), destructor(dstr){};
 
-        // ALLOCATES THE ARENA, RETURNS TRUE IF ERROR FOUND
-        inline bool allocate_size(size_t _size){
-            if(_size <= size) return false; // not an error
-            if(!arena){
-                arena = malloc(_size);
-                if(arena){
-                    size = _size;
-                }
-                else{
-                    return true;
-                }
+        ArenaPointer(const ArenaPointer& rhs) noexcept{
+            ptr = rhs.ptr;
+            destructor = rhs.destructor;
+            parent = rhs.parent;
+            index = rhs.index;
+            stack_alloc = true;
+        }
+        ArenaPointer& operator=(const ArenaPointer&) = default;
+
+        ArenaPointer(ArenaPointer&& rhs) noexcept : ptr(rhs.ptr), parent(rhs.parent), index(rhs.index), destructor(rhs.destructor){
+            rhs.ptr = nullptr;
+            rhs.parent = nullptr;
+            rhs.destructor = nullptr;
+            rhs.index = 0;
+        }
+        ArenaPointer& operator=(ArenaPointer&& rhs){
+            if(this != &rhs){
+                ptr = rhs.ptr;
+                parent = rhs.parent;
+                destructor = (decltype(destructor))rhs.destructor;
+                index = rhs.index;
+
+
+                rhs.ptr = nullptr;
+                rhs.parent = nullptr;
+                rhs.destructor = nullptr;
+            }
+            return *this;
+        }
+
+        T* operator->() noexcept{
+            get();
+            return ptr;
+        }
+
+        ArenaPointer<T> copy_for_map() noexcept{
+            return {
+                .ptr = ptr,
+                .destructor = destructor,
+                .parent = parent,
+                .index = index,
+                .stack_alloc = true,
+            };
+        }
+
+        operator T*() noexcept{
+            get();
+            return ptr;
+        }
+
+        inline const T* raw() const noexcept{
+            return ptr;
+        }
+
+        inline const T* get() noexcept{
+            if(index < parent->size()){
+                ptr = (T*)((*parent)[index].raw());
+                return ptr;
             }
             else{
-                void* temp = realloc(arena, _size);
-                if(!temp){
-                    return true;
-                }
-                
-                char* oldArena = (char*)arena;
-                size_t oldSize = size;
-
-                ptrdiff_t diff = (char*)temp - oldArena;
-
-                size = _size;
-                arena = temp;
-
-                if(diff == 0) return false;
-                if(!track.empty()){
-                    for(ArenaAllocPtr& ptr : track){
-                        if(ptr.saved_ptr){
-                            char* p = (char*)(*ptr.saved_ptr);
-                            if(p >= oldArena && p < oldArena + oldSize)
-                                *ptr.saved_ptr = p + diff;
-                        }
-                    }
-                }
+                return nullptr;
             }
-            return false;
         }
+
+        inline size_t get_index() const noexcept{
+            return index;
+        }
+
+        ~ArenaPointer() noexcept{
+            if(!ptr || stack_alloc) return;
+            if(destructor){
+                destructor(ptr);
+            }
+        }
+
+        inline operator bool() const noexcept{
+            return ptr != nullptr;
+        }
+
+        friend class ArenaAlloc;
+    };
+
+    class ArenaAlloc{
+        void* arena = nullptr;
+        size_t current = 0, cursize = 0;
+        std::vector<ArenaPointer<void>> ptrs;
+
+        template<typename T>
+        static void destroy(void* p) noexcept{
+            static_cast<T*>(p)->~T();
+        }
+
+        size_t reach_size(size_t size) const noexcept{
+            if(size < cursize) return cursize;
+            size_t cpy = cursize;
+            if(cpy == 0) cpy = 1;
+            while(size >= cpy){
+                cpy <<= 1;
+            }
+            return cpy;
+        }
+
+    public:
 
         template<typename T, typename... Args>
-        inline void alloc(size_t size, T*& to_track, Args&&... args){
-            alloc(size, (void**)&to_track, alignof(T), std::is_trivially_destructible<T>::value ? nullptr : &destroy<T>);
-            new(to_track) T(std::forward<Args>(args)...);
+        inline ArenaPointer<T> alloc(Args&&... args){
+            T* tptr = (T*)_allocate(sizeof(T), alignof(T));
+            new(tptr) T(std::forward<Args>(args)...);
+            ptrs.emplace_back(tptr, &ptrs, std::is_trivially_destructible<T>::value ? nullptr : &destroy<T>, ptrs.size());
+            // arena pointer uses T* meaning everything is a pointer there
+            // meaning it should not matter to cast ArenaPointer to another template type
+            return {(ArenaPointer<T>&)ptrs.back()};
         }
 
-        // returns how many pointers were cleared
-        inline size_t reset(bool call_des = true){
-            size_t cleared = 0;
-            if(call_des){
-                call_destructors(false);
-                cleared = track.size();
-            }
-            track.clear();
-            current = 0;
-            return cleared;
-        }
+        void* _allocate(size_t size, size_t align) noexcept{
+            if(size == 0 || align == 0) return nullptr;
 
-        void alloc(size_t s, void** to_track, size_t align = alignof(void*), void (*dstr)(void*) = nullptr){ /* not alignof(max_align_t) on purpose */
             if((align == 0) || (align & (align - 1)) != 0){
-                *to_track = nullptr;
-                return;
+                return nullptr;
             }
 
             if(current & (align - 1)){
                 current = (current + align - 1) & ~(align - 1);
             }
 
-            if(current + s >= size){
-                size_t cpys = size;
-                if(cpys == 0) cpys = 1;
-                while(cpys <= current + s){
-                    cpys <<= 1;
+            if(current + size >= cursize){
+                size_t to = reach_size(current + size);
+                if(reserve(to)) return nullptr;
+            }
+
+            size_t oldc = current;
+            current += size;
+
+            return (char*)arena + oldc;
+        }
+
+        // returns true on failure
+        bool reserve(size_t size) noexcept{
+            if(cursize >= size) return false;
+            if(size - cursize < 1024){
+                size += 1024 - (size - cursize);
+            }
+            if(!arena){
+                arena = malloc(size);
+                if(arena){
+                    cursize = size;
                 }
-                if(allocate_size(cpys)){
-                    *to_track = nullptr;
-                    return;
+                else{
+                    return true;
                 }
             }
+            else{
+                void* temp = realloc(arena, size);
+                if(!temp){
+                    return true;
+                }
 
-            *to_track = ((char*)arena + current);
-            track.emplace_back(to_track, *to_track, dstr);
-            current += s;
-        }
+                char* oldArena = (char*)arena;
 
-        // This doesnt actually remove it from memory (yet), only calls destructor (if true)
-        template<typename T>
-        void remove(T*& ptr, bool call_dtor = true){
-            std::vector<ArenaAllocPtr>::iterator it = std::find_if(track.begin(), track.end(), [ptr](const ArenaAllocPtr& obj){
-                return obj.heap_ptr == ptr;
-            });
+                ptrdiff_t diff = (char*)temp - oldArena;
 
-            if(it == track.end()){
-                return;
+                cursize = size;
+                arena = temp;
+
+                if(diff == 0){
+                    return false;
+                }
+
+                if(!ptrs.empty()){
+                    for(ArenaPointer<void>& p : ptrs){
+                        p.ptr = ((char*)(p.ptr)) + diff;
+                    }
+                }
             }
-            
-            if(call_dtor) if(it->destructor) it->destructor(it->heap_ptr);
-
-            ptr = nullptr;
-
-            track.erase(it);
-        }
-        
-        // caller checks if valid
-        ArenaAlloc(size_t _size) noexcept{
-            des_call = true;
-            current = 0;
-            arena = malloc(_size);
-            if(arena){
-                size = _size;
-            }
-        }
-
-        operator bool() const noexcept{
-            return arena != nullptr;
+            return false;
         }
 
         const void* heap() const noexcept{
             return arena;
         }
 
-        inline void destructors(bool state) noexcept{
-            des_call = state;
+        ArenaAlloc() = default;
+        ArenaAlloc(size_t size) noexcept{
+            reserve(size);
         }
 
-        inline bool used_heap() const noexcept{
-            return arena != nullptr;
+        inline void slime_pointers() noexcept{
+            ptrs.clear();
         }
 
-        ~ArenaAlloc() noexcept{
-            if(des_call){
-                call_destructors(false);
+        ~ArenaAlloc(){
+            if(!arena) return;
+            if(!ptrs.empty()){
+                slime_pointers();
             }
-            if(arena){
-                free(arena);
-            }
+            free(arena);
+            arena = nullptr;
         }
     };
 }
