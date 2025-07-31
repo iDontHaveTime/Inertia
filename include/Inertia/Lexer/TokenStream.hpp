@@ -13,6 +13,7 @@ namespace Inertia{
 
         TokenStream() noexcept : tokens(nullptr){};
         TokenStream(const LexerOutput& toks) noexcept : tokens(&toks){};
+
         TokenStream(TokenStream&& rhs) noexcept{
             if(this != &rhs){
                 tokens = rhs.tokens;
@@ -49,11 +50,14 @@ namespace Inertia{
             if(index + i < tokens->size()){
                 index += i;
             }
+            else{
+                index = tokens->size() - 1;
+            }
             return *this;
         }
 
         inline bool eof() const noexcept{
-            return !tokens || index >= tokens->size();
+            return index + 1 >= tokens->size();
         }
 
         inline bool peekable() const noexcept{

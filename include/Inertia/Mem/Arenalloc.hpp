@@ -12,12 +12,11 @@
 **/
 
 namespace Inertia{
-
     template<typename T>
     class ArenaPointer{
         T* ptr;
         std::vector<ArenaPointer<void>>* parent;
-        size_t index : 63;
+        size_t index : ((sizeof(size_t) * 8)-1);
         bool stack_alloc : 1;
         void (*destructor)(T*);
 
@@ -33,7 +32,14 @@ namespace Inertia{
             index = rhs.index;
             stack_alloc = true;
         }
-        ArenaPointer& operator=(const ArenaPointer&) = default;
+        ArenaPointer& operator=(const ArenaPointer& rhs) noexcept{
+            ptr = rhs.ptr;
+            destructor = rhs.destructor;
+            parent = rhs.parent;
+            index = rhs.index;
+            stack_alloc = true;
+            return *this;
+        }
 
         ArenaPointer(ArenaPointer&& rhs) noexcept : ptr(rhs.ptr), parent(rhs.parent), index(rhs.index), destructor(rhs.destructor){
             rhs.ptr = nullptr;
@@ -57,8 +63,7 @@ namespace Inertia{
         }
 
         T* operator->() noexcept{
-            get();
-            return ptr;
+            return get();
         }
 
         ArenaPointer<T> copy_for_map() noexcept{
@@ -76,11 +81,26 @@ namespace Inertia{
             return ptr;
         }
 
+        operator const T*() const noexcept{
+            if(!parent) return nullptr;
+            if(index < parent->size()){
+                return (T*)((*parent)[index].raw());
+            }
+            else{
+                return nullptr;
+            }
+        }
+
         inline const T* raw() const noexcept{
             return ptr;
         }
 
+        inline T*& raw_field() noexcept{
+            return ptr;
+        }
+
         inline const T* get() noexcept{
+            if(!parent) return nullptr;
             if(index < parent->size()){
                 ptr = (T*)((*parent)[index].raw());
                 return ptr;
@@ -94,6 +114,10 @@ namespace Inertia{
             return index;
         }
 
+        inline decltype(parent) get_parent() const noexcept{
+            return parent;
+        }
+
         ~ArenaPointer() noexcept{
             if(!ptr || stack_alloc) return;
             if(destructor){
@@ -105,7 +129,69 @@ namespace Inertia{
             return ptr != nullptr;
         }
 
+        // calls destructor, does not free memory, but the arena allocator doesnt call the destructor here anymore
+        void destroy() noexcept{
+            get();
+            if(destructor) destructor(ptr);
+            stack_alloc = true;
+            destructor = nullptr;
+            ptr = nullptr;
+            (*parent)[index].raw_field() = nullptr;
+        }
+
         friend class ArenaAlloc;
+        friend class Arenareference;
+    };
+
+    template<typename T>
+    class ArenaReference{
+        size_t i;
+        std::vector<ArenaPointer<void>>* parent;
+    public:
+        ArenaReference() noexcept : i(0), parent(nullptr){};
+
+        inline const T* get() const noexcept{
+            if(!parent) return nullptr;
+            return (T*)((*parent)[i].raw());
+        }
+
+        inline T* get() noexcept{
+            if(!parent) return nullptr;
+            return (T*)((*parent)[i].raw());
+        }
+
+        operator T*() noexcept{
+            return get();
+        }
+
+        operator const T*() const noexcept{
+            return get();
+        }
+
+        T* operator->() noexcept{
+            return get();
+        }
+
+        inline void unreference() noexcept{
+            i = 0;
+            parent = nullptr;
+        }
+
+        template<typename Y>
+        ArenaReference(const ArenaPointer<Y>& arenap){
+            i = arenap.get_index();
+            parent = arenap.get_parent();
+        }
+
+        template<typename Y>
+        ArenaReference& operator=(const ArenaPointer<Y>& arenap){
+            i = arenap.get_index();
+            parent = arenap.get_parent();
+            return *this;
+        }
+
+        ~ArenaReference() = default;
+
     };
 
     class ArenaAlloc{
@@ -162,11 +248,26 @@ namespace Inertia{
             return (char*)arena + oldc;
         }
 
+        inline size_t capacity() const noexcept{
+            return cursize;
+        }
+
+        inline size_t get_bump() const noexcept{
+            return current;
+        }
+
+        inline const void* get_bump_ptr() const noexcept{
+            return (char*)arena + current;
+        }
+
         // returns true on failure
         bool reserve(size_t size) noexcept{
             if(cursize >= size) return false;
             if(size - cursize < 1024){
                 size += 1024 - (size - cursize);
+            }
+            if(size & (alignof(max_align_t) - 1)){
+                size = (size + alignof(max_align_t) - 1) & ~(alignof(max_align_t) - 1);
             }
             if(!arena){
                 arena = malloc(size);
@@ -196,14 +297,15 @@ namespace Inertia{
 
                 if(!ptrs.empty()){
                     for(ArenaPointer<void>& p : ptrs){
-                        p.ptr = ((char*)(p.ptr)) + diff;
+                        if(p)
+                            p.ptr = ((char*)(p.ptr)) + diff;
                     }
                 }
             }
             return false;
         }
 
-        const void* heap() const noexcept{
+        inline const void* heap() const noexcept{
             return arena;
         }
 

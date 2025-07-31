@@ -13,6 +13,7 @@ namespace Inertia{
         #undef ADD_KEYWORD
         ENDOFKEYWORDS,
     };
+    
     inline const std::unordered_map<std::string_view, uint32_t> DefaultIRKeywordMap = {
         #define ADD_KEYWORD(str, name) {str, static_cast<uint32_t>(IRKeyword::name)},
         #include "Inertia/IR/IRKeywords.def"

@@ -29,7 +29,7 @@ namespace Inertia{
 
     class FloatType : public Type{
     public:
-        enum FloatAccuracy {FLOAT_ACC, DOUBLE_ACC} accuracy;
+        enum FloatAccuracy {FLOAT_ACC = 1, DOUBLE_ACC = 2} accuracy;
 
         FloatType(FloatAccuracy _acc) noexcept : Type(FLOAT), accuracy(_acc){};
     };  
@@ -112,6 +112,19 @@ namespace Inertia{
     public:
         TypeAllocator(size_t initialSize = 8192) : arena(initialSize){};
 
+        ArenaPointer<Type> getVoid(void){
+            TypeKey key(Type::VOID);
+
+            auto it = cache.find(key);
+            if(it != cache.end())
+                return it->second;
+
+            auto t = arena.alloc<Type>();
+
+            cache[key] = t;
+            return t;
+        }
+
         ArenaPointer<IntegerType> getInteger(int width){
             TypeKey key(Type::INTEGER);
             key.int_width = width;
@@ -121,6 +134,20 @@ namespace Inertia{
                 return (ArenaPointer<IntegerType>&)it->second;
 
             auto t = arena.alloc<IntegerType>(width);
+
+            cache[key] = (ArenaPointer<Type>&)t;
+            return t;
+        }
+
+        ArenaPointer<FloatType> getFloat(FloatType::FloatAccuracy accuracy){
+            TypeKey key(Type::FLOAT);
+            key.f_type = accuracy;
+
+            auto it = cache.find(key);
+            if(it != cache.end())
+                return (ArenaPointer<FloatType>&)it->second;
+
+            auto t = arena.alloc<FloatType>(accuracy);
 
             cache[key] = (ArenaPointer<Type>&)t;
             return t;

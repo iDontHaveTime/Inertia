@@ -58,17 +58,23 @@ namespace Inertia{
         };
 
         inline std::string view_str(const LexerFile& file) const{
+            if(type == TokenType::TokenEOF) return "EOF";
             if(type == TokenType::StringLiteral || type == TokenType::CharLiteral) return str;
             return std::string(file.raw() + start, end - start);
         }
 
         inline std::string_view view(const LexerFile& file) const{
+            if(type == TokenType::TokenEOF) return "EOF";
             if(type == TokenType::StringLiteral || type == TokenType::CharLiteral) return str;
             return std::string_view((file.raw() + start), end - start);
         }
 
         inline size_t len() const noexcept{
             return end - start;
+        }
+
+        inline int getKeyword() const noexcept{
+            return type == TokenType::Keyword ? extraType : 0;
         }
 
         operator bool() const noexcept{

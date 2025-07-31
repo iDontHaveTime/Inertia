@@ -171,7 +171,7 @@ namespace Inertia{
             return file != nullptr;
         }
 
-        friend std::ostream& operator<<(std::ostream& lhs, LexerFile& rhs){
+        friend std::ostream& operator<<(std::ostream& lhs, const LexerFile& rhs){
             if(!rhs) return lhs;
             std::size_t len = rhs.len();
 
