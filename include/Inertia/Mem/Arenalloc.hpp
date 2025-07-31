@@ -190,6 +190,21 @@ namespace Inertia{
             return *this;
         }
 
+        ArenaReference(const ArenaReference& rhs){
+            i = rhs.i;
+            parent = rhs.parent;
+        }
+
+        ArenaReference& operator=(const ArenaReference& rhs){
+            i = rhs.i;
+            parent = rhs.parent;
+            return *this;
+        }
+
+        operator bool() const noexcept{
+            return parent != nullptr;
+        }
+
         ~ArenaReference() = default;
 
     };

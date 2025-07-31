@@ -1,7 +1,7 @@
 /* This is a block comment */
 // This is a line comment
 
-funcd i32 @main(){
+funcd i32 @main(i32 %argc, i8** %argv){
     
 
     ret i32 0;

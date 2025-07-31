@@ -1,3 +1,4 @@
+#include "Inertia/Codegen/Codegen.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/IRParser.hpp"
 #include "Inertia/IR/Type.hpp"
@@ -6,6 +7,8 @@
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
+#include "Inertia/Mem/Memstream.hpp"
+#include "Inertia/Target/x8664.hpp"
 #include <cstddef>
 #include <cstdio>
 
@@ -37,36 +40,13 @@ int main(){
 
     auto frame = parser.parse_tokens(out, talloc);
 
-    for(Function& func : frame.functions){
-        std::cout<<"funcd ";
-        Type* t = func.return_type;
-        unsigned int ptrl = 0;
-        while(t->getKind() == Type::POINTER){
-            ptrl++;
-            t = ((PointerType*)t)->pointee;
-        }
-        switch(t->getKind()){
-            case Type::INTEGER:
-                std::cout<<'i'<<((IntegerType*)t)->width;
-                break;
-            case Type::FLOAT:
-                std::cout<<'f'<<((FloatType*)t)->accuracy * 32;
-                break;
-            case Type::VOID:
-                std::cout<<"void";
-                break;
-            default:
-                break;
-        }
+    IRCodegen codegen;
 
-        while(ptrl--){
-            std::cout<<'*';
-        }
+    MemoryStream mss("examples/inertia.asm");
 
-        std::cout<<' '<<func.name;
+    Targetx86_64 tg;
 
-        std::cout<<std::endl;
-    }
+    codegen.codegen_assembly(mss, frame, &tg);
 
     return 0;
 }

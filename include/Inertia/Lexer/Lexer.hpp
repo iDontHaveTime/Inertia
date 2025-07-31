@@ -19,7 +19,7 @@ namespace Inertia{
         TokenType lookup[256] = {TokenType::Special};
         const char* alpha = "ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz";
         const char* num = "0123456789";
-        const char* symbols = "!@#$%^&*()_+-={}[]|\\?><,./\"':;~`";
+        const char* symbols = "!@#$%^&*()+-={}[]|\\?><,./\"':;~`";
         
         inline void ResetLookup() noexcept{
             for(size_t i = 0; i < 256; i++){
