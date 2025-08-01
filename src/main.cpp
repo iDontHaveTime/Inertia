@@ -1,5 +1,4 @@
 #include "Inertia/Codegen/Codegen.hpp"
-#include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/IRParser.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
@@ -44,7 +43,13 @@ int main(){
 
     MemoryStream mss("examples/inertia.asm");
 
-    Targetx86_64 tg;
+    Targetx86_64 tg(talloc.get_arena());
+
+    tg.PIC = true;
+
+    tg.abi.get_sysv(tg.regs);
+
+    std::cout<<tg.regs->rax->l64b->child->name<<std::endl;
 
     codegen.codegen_assembly(mss, frame, &tg);
 

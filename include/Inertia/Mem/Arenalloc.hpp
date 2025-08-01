@@ -63,7 +63,7 @@ namespace Inertia{
         }
 
         T* operator->() noexcept{
-            return get();
+            return (T*)get();
         }
 
         ArenaPointer<T> copy_for_map() noexcept{
@@ -132,6 +132,7 @@ namespace Inertia{
         // calls destructor, does not free memory, but the arena allocator doesnt call the destructor here anymore
         void destroy() noexcept{
             get();
+            if(!ptr) return;
             if(destructor) destructor(ptr);
             stack_alloc = true;
             destructor = nullptr;
@@ -168,6 +169,10 @@ namespace Inertia{
             return get();
         }
 
+        const T* operator->() const noexcept{
+            return get();
+        }
+
         T* operator->() noexcept{
             return get();
         }
@@ -178,13 +183,13 @@ namespace Inertia{
         }
 
         template<typename Y>
-        ArenaReference(const ArenaPointer<Y>& arenap){
+        ArenaReference(const ArenaPointer<Y>& arenap) noexcept{
             i = arenap.get_index();
             parent = arenap.get_parent();
         }
 
         template<typename Y>
-        ArenaReference& operator=(const ArenaPointer<Y>& arenap){
+        ArenaReference& operator=(const ArenaPointer<Y>& arenap) noexcept{
             i = arenap.get_index();
             parent = arenap.get_parent();
             return *this;

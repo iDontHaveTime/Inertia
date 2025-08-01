@@ -4,6 +4,7 @@
 namespace Inertia{
     struct TargetInfo{
         enum TargetType {x86_64} target;
+        bool PIC;
 
         TargetInfo() = default;
         TargetInfo(TargetType type) noexcept : target(type){};
