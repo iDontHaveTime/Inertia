@@ -7,6 +7,7 @@
 #include <string_view>
 
 namespace Inertia{
+    
     enum class IRNodeType{
         None,
         Literal,

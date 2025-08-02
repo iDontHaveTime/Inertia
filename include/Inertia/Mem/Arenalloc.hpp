@@ -148,12 +148,26 @@ namespace Inertia{
         friend class ArenaAlloc;
     };
 
+    struct __ArenaUnsafeCast__{
+        size_t i;
+        std::vector<ArenaPointer<void>>* parent;
+        __ArenaUnsafeCast__(size_t inx, std::vector<ArenaPointer<void>>* ptr) noexcept : i(inx), parent(ptr){};
+    };
+
     template<typename T>
     class ArenaReference{
         size_t i;
         std::vector<ArenaPointer<void>>* parent;
     public:
         ArenaReference() noexcept : i(0), parent(nullptr){};
+        ArenaReference(size_t inx, std::vector<ArenaPointer<void>>* ptr) noexcept : i(inx), parent(ptr){};
+
+        ArenaReference(const __ArenaUnsafeCast__& cst) : i(cst.i), parent(cst.parent){};
+        ArenaReference& operator=(const __ArenaUnsafeCast__& cst){
+            i = cst.i;
+            parent = cst.parent;
+            return *this;
+        }
 
         inline const T* get() const noexcept{
             if(!parent) return nullptr;
@@ -181,9 +195,26 @@ namespace Inertia{
             return get();
         }
 
+        template<typename Y>
+        ArenaReference<Y> cast() const noexcept{
+            return ArenaReference<Y>(i, parent);
+        }
+
+        __ArenaUnsafeCast__ __unsafe_cast__() const noexcept{
+            return __ArenaUnsafeCast__(i, parent);
+        }
+
         inline void unreference() noexcept{
             i = 0;
             parent = nullptr;
+        }
+
+        inline size_t get_i() const noexcept{
+            return i;
+        }
+
+        inline decltype(parent) get_parent() const noexcept{
+            return parent;
         }
 
         template<typename Y>

@@ -16,6 +16,7 @@ namespace Inertia{
         InstructionNode(InstructionType it) noexcept : IRNode(IRNodeType::Instruction), ins_type(it){};
     };
     class ReturnNode : public InstructionNode{
+    public:
         ReturnNode() noexcept : InstructionNode(InstructionType::RET){};
         ArenaReference<IRNode> node;
     };

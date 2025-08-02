@@ -6,7 +6,7 @@
 namespace Inertia{
     template<typename T>
     struct ArenaNode{
-        T val;
+        ArenaReference<T> val;
         ArenaReference<ArenaNode<T>> next;
     };
     
@@ -14,28 +14,63 @@ namespace Inertia{
     class ArenaLList{
         ArenaReference<ArenaNode<T>> head;
         ArenaReference<ArenaNode<T>> tail;
-
-        ArenaAlloc* arena = nullptr;
+        ArenaAlloc* allocator = nullptr;
 
     public:
         ArenaLList() = default;
-        ArenaLList(ArenaAlloc* _arena) noexcept: arena(_arena){};
+        ArenaLList(ArenaAlloc* alloc) noexcept : allocator(alloc){};
 
-        void set_arena(ArenaAlloc* _arena) noexcept{
+        void set_arena(ArenaAlloc* alloc){
             head.unreference();
             tail.unreference();
-            arena = _arena;
+            allocator = alloc;
         }
 
-        void push_back(const T& val){
-            if(!arena) return;
-            auto node = arena->alloc<ArenaNode<T>>();
-            node->val = val;
+        void push_back(ArenaReference<T> ref){
+            if(!allocator) return;
+            ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
+            node->val = ref;
             node->next = {};
+
             if(!head){
                 head = node;
                 tail = node;
-            } 
+            }
+            else{
+                tail->next = node;
+                tail = node;
+            }
+        }
+
+        template<typename Y>
+        void push_back_as(const Y& value){
+            if(!allocator) return;
+            ArenaReference<Y> item = allocator->alloc<Y>(value);
+            ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
+            node->val = item.__unsafe_cast__();
+            node->next = {};
+
+            if(!head){
+                head = node;
+                tail = node;
+            }
+            else{
+                tail->next = node;
+                tail = node;
+            }
+        }
+
+        void push_back(const T& value){
+            if(!allocator) return;
+            auto item = allocator->alloc<T>(value);
+            ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
+            node->val = item;
+            node->next = {};
+
+            if(!head){
+                head = node;
+                tail = node;
+            }
             else{
                 tail->next = node;
                 tail = node;
@@ -46,15 +81,30 @@ namespace Inertia{
             ArenaReference<ArenaNode<T>> current;
 
             iterator& operator++(){ 
-                current = current->next; return *this; 
+                current = current->next; 
+                return *this; 
             }
+
             T& operator*(){ 
-                return current->val; 
+                return *current->val; 
             }
+
             bool operator!=(const iterator& other) const{ 
                 return current.get() != other.current.get(); 
             }
+
+            T* operator->(){
+                return current->val.get();
+            }
         };
+
+        const ArenaReference<ArenaNode<T>>& get_head() const noexcept{
+            return head;
+        }
+
+        const ArenaReference<ArenaNode<T>> get_tail() const noexcept{
+            return tail;
+        }
 
         iterator begin(){ 
             return {head}; 

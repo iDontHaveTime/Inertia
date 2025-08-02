@@ -120,6 +120,7 @@ namespace Inertia{
                 return it->second;
 
             auto t = arena.alloc<Type>();
+            t->kind = Type::VOID;
 
             cache[key] = t;
             return t;

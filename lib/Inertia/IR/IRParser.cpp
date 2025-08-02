@@ -3,6 +3,7 @@
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/IR/IRNode.hpp"
+#include "Inertia/IR/Instruction.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/LexerToken.hpp"
@@ -70,6 +71,7 @@ expecterr expect(IRKeyword kwd, TokenStream& ss) noexcept{
 struct ParserContext{
     Frame frame;
     const LexerFile* file;
+    Function* under;
     ArenaAlloc* allocator;
     expectgroup<IRKeyword, 8> IRTypes = {
         IRKeyword::I8, IRKeyword::I16, IRKeyword::I32, IRKeyword::I64,
@@ -155,6 +157,8 @@ bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     consume(ss);
 
     Function& f = ctx.frame.funcs.emplace_back();
+    f.instructions.set_arena(ctx.allocator);
+    
     f.retType = ParseType(ss, ctx, talloc);
     if(!f.retType) return true;
 
@@ -209,9 +213,10 @@ bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     return false;
 }
 
-ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx){
+ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx, ArenaReference<Type>& tp){
     ArenaReference<LiteralNode> node = ctx.allocator->alloc<LiteralNode>();
     TokenType tt = ss.current().type;
+    node->type = tp;
     std::string val;
     bool neg = false;
     if(expect(TokenType::Minus, ss) == expecterr::SUCCESS){
@@ -223,6 +228,7 @@ ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx){
         return {};
     }
     val += ss.current().view(*ctx.file);
+    std::cout<<val<<std::endl;
 
     if(tt == TokenType::IntegerLiteral){
         node->value = std::stoull(val, nullptr, 10);
@@ -247,7 +253,6 @@ ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx){
     if(neg && tt != TokenType::FloatLiteral){
         node->value = -node->value;
     }
-
     consume(ss);
 
     return node;
@@ -255,6 +260,19 @@ ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx){
 
 bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     consume(ss);
+
+    ReturnNode node;
+    node.type = ParseType(ss, ctx, talloc);
+    if(!node.type) return true;
+
+    if(node.type->getKind() == Type::VOID){
+        ctx.under->instructions.push_back(node);
+        return false;
+    }
+
+    auto lit = ParseLiteral(ss, ctx, node.type);
+    node.node = lit.cast<IRNode>();
+    ctx.under->instructions.push_back_as<ReturnNode>(node);
 
     return false;
 }
@@ -269,9 +287,10 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
     if(!file) return {};
     TokenStream ss(tokens);
     ParserContext ctx;
+    ctx.allocator = &allocator;
     ctx.frame.filename = file->filename();
     ctx.file = file;
-    
+
     while(!ss.eof()){
         ctx.tok_type = ss.current().type;
         
@@ -279,11 +298,14 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
             ctx.kwd = (IRKeyword)ss.current().getKeyword();
             switch(ctx.kwd){
                 case IRKeyword::FUNCD:
+                    if(ctx.under) break;
                     if(ParseFunction(ss, ctx, talloc)){
+                        ctx.frame.funcs.pop_back();
                         std::cout<<"Error parsing function"<<std::endl;
                     }
                     break;
                 case IRKeyword::RET:
+                    if(!ctx.under) break;
                     if(ParseReturn(ss, ctx, talloc)){
                         std::cout<<"Error parsing return"<<std::endl;
                     }
@@ -298,6 +320,24 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
                 case TokenType::Percent:
                     if(ParseSSA(ss, ctx, talloc)){
                         std::cout<<"Error parsing ssa"<<std::endl;
+                    }
+                    break;
+                case TokenType::LeftBrace:
+                    consume(ss);
+                    if(!ctx.under){
+                        ctx.under = &ctx.frame.funcs.back();
+                    }
+                    else{
+                        break;
+                    }
+                    break;
+                case TokenType::RightBrace:
+                    consume(ss);
+                    if(ctx.under){
+                        ctx.under = nullptr;
+                    }
+                    else{
+                        break;
                     }
                     break;
                 default:
