@@ -13,6 +13,9 @@
 
 namespace Inertia{
     template<typename T>
+    class ArenaReference;
+
+    template<typename T>
     class ArenaPointer{
         T* ptr;
         std::vector<ArenaPointer<void>>* parent;
@@ -140,8 +143,9 @@ namespace Inertia{
             (*parent)[index].raw_field() = nullptr;
         }
 
+        operator ArenaReference<T>() const noexcept;
+
         friend class ArenaAlloc;
-        friend class Arenareference;
     };
 
     template<typename T>
@@ -195,14 +199,28 @@ namespace Inertia{
             return *this;
         }
 
-        ArenaReference(const ArenaReference& rhs){
+        ArenaReference(const ArenaReference& rhs) noexcept{
             i = rhs.i;
             parent = rhs.parent;
         }
 
-        ArenaReference& operator=(const ArenaReference& rhs){
+        ArenaReference& operator=(const ArenaReference& rhs) noexcept{
             i = rhs.i;
             parent = rhs.parent;
+            return *this;
+        }
+
+        ArenaReference(ArenaReference&& rhs) noexcept{
+            if(this == &rhs) return;
+            i = rhs.i;
+            parent = rhs.parent;
+            rhs.unreference();
+        }
+        ArenaReference& operator=(ArenaReference&& rhs) noexcept{
+            if(this == &rhs) return *this;
+            i = rhs.i;
+            parent = rhs.parent;
+            rhs.unreference();
             return *this;
         }
 
@@ -213,6 +231,11 @@ namespace Inertia{
         ~ArenaReference() = default;
 
     };
+
+    template<typename T>
+    ArenaPointer<T>::operator ArenaReference<T>() const noexcept{
+        return ArenaReference<T>(*this);
+    }
 
     class ArenaAlloc{
         void* arena = nullptr;

@@ -47,6 +47,7 @@ namespace Inertia{
         }
     };
     class LexerFile{
+        const char* fname = nullptr;
         char* file = nullptr;
         std::size_t length;
         int err = 0;
@@ -55,6 +56,7 @@ namespace Inertia{
         };
 
         inline void clear() noexcept{
+            fname = nullptr;
             if(file){
                 std::free(file);
                 file = nullptr;
@@ -72,6 +74,10 @@ namespace Inertia{
 
         ~LexerFile() noexcept{
             clear();
+        }
+
+        const char* filename() const noexcept{
+            return fname;
         }
 
         std::pair<LexerFileChunk, LexerFileChunk> split(size_t at, bool* result = nullptr) const{
@@ -120,6 +126,7 @@ namespace Inertia{
             if(!fileName){
                 return;
             }
+            fname = fileName;
 
             std::FILE* f = std::fopen(fileName, "rb");
             if(!f){

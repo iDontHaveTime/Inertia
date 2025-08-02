@@ -1,7 +1,8 @@
 #include "Inertia/IR/IRParser.hpp"
+#include "Inertia/IR/Frame.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
-#include "Inertia/IR/Instruction.hpp"
+#include "Inertia/IR/IRNode.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/LexerToken.hpp"
@@ -9,7 +10,6 @@
 #include "Inertia/Lexer/TokenType.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
 #include <cstddef>
-#include <cstdint>
 #include <string>
 
 namespace Inertia{
@@ -69,12 +69,15 @@ expecterr expect(IRKeyword kwd, TokenStream& ss) noexcept{
 
 struct ParserContext{
     Frame frame;
-    Function* under_function = nullptr;
     const LexerFile* file;
     ArenaAlloc* allocator;
     expectgroup<IRKeyword, 8> IRTypes = {
         IRKeyword::I8, IRKeyword::I16, IRKeyword::I32, IRKeyword::I64,
         IRKeyword::F32, IRKeyword::F64, IRKeyword::PTR, IRKeyword::VOID
+    };
+    expectgroup<TokenType, 5> IRLiterals = {
+        TokenType::CharLiteral, TokenType::IntegerLiteral, TokenType::BinaryLiteral,
+        TokenType::HexLiteral, TokenType::FloatLiteral,
     };
     IRKeyword kwd = IRKeyword::NONE;
     TokenType tok_type;
@@ -130,7 +133,9 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
 Argument ParseArgument(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     Argument newArg;
     newArg.type = ParseType(ss, ctx, talloc);
-    if(!newArg.type) return {};
+    if(!newArg.type){
+        return {};
+    }
 
     if(expect(TokenType::Percent, ss) == expecterr::SUCCESS){
         consume(ss);
@@ -149,152 +154,123 @@ Argument ParseArgument(TokenStream& ss, ParserContext& ctx, TypeAllocator& tallo
 bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     consume(ss);
 
-    Function new_func;
+    Function& f = ctx.frame.funcs.emplace_back();
+    f.retType = ParseType(ss, ctx, talloc);
+    if(!f.retType) return true;
 
-    new_func.return_type = ParseType(ss, ctx, talloc);
-    if(!new_func.return_type){
-        return true;
-    }
-
-    
     if(expect(TokenType::At, ss) == expecterr::SUCCESS){
         consume(ss);
-    }
-    else{
-        return true;
-    }
 
-    if(expect(TokenType::Alpha, ss) == expecterr::SUCCESS){
-        new_func.name = ss.current().view(*ctx.file);
-        consume(ss);
-    }
-    else{
-        return true;
-    }
-
-    if(expect(TokenType::LeftParen, ss) == expecterr::SUCCESS){
-        consume(ss);
-    }
-    else{
-        return true;
-    }
-
-    expecterr args = expect(TokenType::RightParen, ss);
-
-    if(args == expecterr::SUCCESS){
-        consume(ss);
-    }
-    else if(args == expecterr::FAILERR){
-        // args (most likely)
-        if(ctx.IRTypes.expect((IRKeyword)ss.current().getKeyword()) == expecterr::SUCCESS){
-            while(1){
-                new_func.args.push_back(ParseArgument(ss, ctx, talloc));
-                if(!new_func.args.back().type){
-                    return true;
-                }
-                if(expect(TokenType::RightParen, ss) == expecterr::SUCCESS){
-                    consume(ss);
-                    break;
-                }
-                else if(expect(TokenType::Comma, ss) == expecterr::SUCCESS){
-                    consume(ss);
-                }
-                else{
-                    return true;
-                }
-            }
+        if(expect(TokenType::Alpha, ss) == expecterr::SUCCESS){
+            f.name = ss.current().view(*ctx.file);
+            consume(ss);
         }
         else{
             return true;
         }
-
     }
     else{
         return true;
     }
+    
 
-    ctx.frame.functions.push_back(std::move(new_func));
+    if(expect(TokenType::LeftParen, ss) == expecterr::SUCCESS){
+        consume(ss);
+        if(expect(TokenType::RightParen, ss) == expecterr::SUCCESS){
+            consume(ss);
+            return false;
+        }
+        else{
+            while(true){
+                Argument arg = ParseArgument(ss, ctx, talloc);
+                if(!arg.type){
+                    return true;
+                }
 
-    if(expect(TokenType::LeftBrace, ss) == expecterr::SUCCESS){
-        ctx.under_function = &ctx.frame.functions.back();
+                f.args.push_back(arg);
+
+                if(expect(TokenType::RightParen, ss) == expecterr::SUCCESS){
+                    consume(ss);
+                    return false;
+                }
+                else if(expect(TokenType::Comma, ss) != expecterr::SUCCESS){
+                    return true;
+                }
+                else{
+                    consume(ss);
+                }
+            }
+        }
     }
     else{
-        // maybe flags
         return true;
     }
 
     return false;
 }
 
-bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
-    consume(ss);
-    ReturnInstruction ins;
-
-    if(ctx.IRTypes.expect((IRKeyword)ss.current().getKeyword()) == expecterr::SUCCESS){
-        ins.type = ParseType(ss, ctx, talloc);
-        if(!ins.type) return true;
-        if(ins.type->getKind() != Type::VOID){
-            if(expect(TokenType::Percent, ss) == expecterr::SUCCESS){
-                ins.ret_type = ReturnInstruction::SSA;
-                consume(ss);
-                ins.ret_val = ss.current().view(*ctx.file); // deal with it in codegen
-                consume(ss);
-            }
-            else{
-                if(expect(TokenType::Minus, ss) == expecterr::SUCCESS){
-                    ins.negative = true;
-                    consume(ss);
-                }
-                switch(ss.current().type){
-                    case TokenType::HexLiteral:
-                        ins.ret_type = ReturnInstruction::INTEGER;
-                        break;
-                    case TokenType::BinaryLiteral:
-                        ins.ret_type = ReturnInstruction::INTEGER;
-                        break;
-                    case TokenType::IntegerLiteral:
-                        ins.ret_type = ReturnInstruction::INTEGER;
-                        break;
-                    case TokenType::FloatLiteral:
-                        ins.ret_type = ReturnInstruction::FLOAT;
-                        break;
-                    case TokenType::CharLiteral:
-                        ins.ret_type = ReturnInstruction::INTEGER;
-                        break;
-                    default:
-                        return true;
-                }
-                ins.ret_val = ss.current().view(*ctx.file);
-                consume(ss);
-            }
-        }
-    }
-    else{
-        return true;
-    }
-
-    if(expect(TokenType::Semicolon, ss) == expecterr::SUCCESS){
+ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx){
+    ArenaReference<LiteralNode> node = ctx.allocator->alloc<LiteralNode>();
+    TokenType tt = ss.current().type;
+    std::string val;
+    bool neg = false;
+    if(expect(TokenType::Minus, ss) == expecterr::SUCCESS){
+        if(tt == TokenType::FloatLiteral) val += '-';
+        neg = true;
         consume(ss);
     }
-    else{
-        return true;
+    if(ctx.IRLiterals.expect(ss.current().type) != expecterr::SUCCESS){
+        return {};
+    }
+    val += ss.current().view(*ctx.file);
+
+    if(tt == TokenType::IntegerLiteral){
+        node->value = std::stoull(val, nullptr, 10);
+    }
+    else if(tt == TokenType::BinaryLiteral){
+        node->value = std::stoull(val, nullptr, 2);
+    }
+    else if(tt == TokenType::HexLiteral){
+        node->value = std::stoull(val, nullptr, 16);
+    }
+    else if(tt == TokenType::FloatLiteral){
+        double s = std::stod(val);
+        node->value = *(double*)&s;
+    }
+    else if(tt == TokenType::CharLiteral){
+        for(char c : val){
+            node->value <<= (sizeof(char) * 8);
+            node->value += c;
+        }
     }
 
-    if(ctx.under_function){
-        ctx.under_function->instructions.push_back((ctx.allocator->alloc<ReturnInstruction>(ins)));
+    if(neg && tt != TokenType::FloatLiteral){
+        node->value = -node->value;
     }
-    else{
-        return true;
-    }
+
+    consume(ss);
+
+    return node;
+}
+
+bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
+    consume(ss);
+
+    return false;
+}
+
+bool ParseSSA(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
+    consume(ss);
 
     return false;
 }
 
 Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
+    if(!file) return {};
     TokenStream ss(tokens);
     ParserContext ctx;
+    ctx.frame.filename = file->filename();
     ctx.file = file;
-    ctx.allocator = &allocator;
     
     while(!ss.eof()){
         ctx.tok_type = ss.current().type;
@@ -303,17 +279,11 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
             ctx.kwd = (IRKeyword)ss.current().getKeyword();
             switch(ctx.kwd){
                 case IRKeyword::FUNCD:
-                    if(ctx.under_function){
-                        break;
-                    }
                     if(ParseFunction(ss, ctx, talloc)){
                         std::cout<<"Error parsing function"<<std::endl;
                     }
                     break;
                 case IRKeyword::RET:
-                    if(!ctx.under_function){
-                        break;
-                    }
                     if(ParseReturn(ss, ctx, talloc)){
                         std::cout<<"Error parsing return"<<std::endl;
                     }
@@ -325,10 +295,9 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
         }
         else{
             switch(ctx.tok_type){
-                case TokenType::RightBrace:
-                    consume(ss);
-                    if(ctx.under_function){
-                        ctx.under_function = nullptr;
+                case TokenType::Percent:
+                    if(ParseSSA(ss, ctx, talloc)){
+                        std::cout<<"Error parsing ssa"<<std::endl;
                     }
                     break;
                 default:
@@ -339,109 +308,6 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
     }
 
     return ctx.frame;
-}
-
-std::string IRParser::type_to_string(Type* t){
-    if(!t) return "";
-    std::string res;
-    
-    uint32_t ptrl = 0;
-    while(t->getKind() == Type::POINTER){
-        ptrl++;
-        t = ((PointerType*)t)->pointee;
-    }
-
-    switch(t->getKind()){
-        case Type::INTEGER:
-            res += 'i';
-            res += std::to_string(((IntegerType*)t)->width);
-            break;
-        case Type::FLOAT:
-            res += 'f';
-            switch(((FloatType*)t)->accuracy){
-                case FloatType::FLOAT_ACC:
-                    res += "32";
-                    break;
-                case FloatType::DOUBLE_ACC:
-                    res += "64";
-                    break;
-            }
-            break;
-        case Type::VOID:
-            res += "void";
-            break;
-        default:
-            res += "unknown";
-            break;
-    }
-
-    while(ptrl--){
-        res += '*';
-    }
-    return res;
-}
-
-std::string IRParser::arg_to_string(Argument& arg){
-    if(!arg.type) return "";
-    std::string str = type_to_string(arg.type);
-    
-    str += " %";
-    str += arg.name;
-
-    return str;
-}
-
-std::string IRParser::function_to_string(Function& func){
-    if(!func.return_type) return "";
-    std::string str = "funcd ";
-    str += type_to_string(func.return_type);
-
-    str += " @";
-    str += func.name;
-
-    str += '(';
-
-    for(Argument& arg : func.args){
-        str += arg_to_string(arg);
-
-        if(&arg != &func.args.back()){
-            str += ", ";
-        }
-    }
-
-    str += ')';
-
-    if(func.instructions.size() > 0){
-        str += "{\n";
-
-        for(auto& ins : func.instructions){
-            str += ' ';
-            switch(ins->ins_type){
-                case Instruction::RET:{
-                        str += "ret ";
-                        ReturnInstruction* ret = (ReturnInstruction*)ins.get();
-                        str += type_to_string(ret->type);
-                        str += ' ';
-                        if(!ret){
-                            break;
-                        }
-                        if(ret->negative){
-                            str += '-';
-                        }
-                        if(ret->ret_type == ReturnInstruction::SSA){
-                            str += '%';
-                        }
-                        str += ret->ret_val;
-                    }
-                    break;
-            }
-            str += '\n';
-        }
-
-        str += "}";
-    }
-
-    return str;
 }
 
 

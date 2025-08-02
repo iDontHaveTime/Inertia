@@ -7,6 +7,7 @@
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
 #include "Inertia/Mem/Memstream.hpp"
+#include "Inertia/Target/Target.hpp"
 #include "Inertia/Target/x8664.hpp"
 #include <cstddef>
 #include <cstdio>
@@ -41,15 +42,21 @@ int main(){
 
     IRCodegen codegen;
 
-    MemoryStream mss("examples/inertia.asm");
+    MemoryStream mss("examples/inertia.S");
 
     Targetx86_64 tg(talloc.get_arena());
 
     tg.PIC = true;
+    tg.useFramePointer = true;
+    tg.syntax = TargetInfo::GNUAS;
+    tg.debug = true;
+
+    tg.dataSection = ".data";
+    tg.execSection = ".text";
+    tg.rodataSection = ".rodata";
+    tg.resSection = ".bss";
 
     tg.abi.get_sysv(tg.regs);
-
-    std::cout<<tg.regs->rax->l64b->child->name<<std::endl;
 
     codegen.codegen_assembly(mss, frame, &tg);
 

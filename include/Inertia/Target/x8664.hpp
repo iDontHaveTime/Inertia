@@ -129,6 +129,8 @@ namespace Inertia{
     struct ABIx86_64{
         ArenaReference<GeneralRegisterx86_64> stackPointer;
         ArenaReference<GeneralRegisterx86_64> framePointer;
+        ArenaReference<GeneralRegisterx86_64> returnRegister;
+        unsigned int alignFunctions = 16;
 
         void get_sysv(ArenaPointer<RegisterCollectionx86_64>& regs) noexcept{
             stackPointer = regs->rsp;
@@ -136,6 +138,8 @@ namespace Inertia{
 
             framePointer = regs->rbp;
             regs->rbp->flags |= RegisterFlags::CALEE_SAVED;
+
+            returnRegister = regs->rax;
         }
     };
     struct Targetx86_64 : public TargetInfo{

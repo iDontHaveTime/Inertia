@@ -1,25 +1,23 @@
 #ifndef INERTIA_INSTRUCTION_HPP
 #define INERTIA_INSTRUCTION_HPP
 
-#include "Inertia/IR/Type.hpp"
+#include "Inertia/IR/IRNode.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
-#include <string_view>
 
 namespace Inertia{
-    struct Instruction{
-        enum InstructionType {RET} ins_type;
-
-        Instruction() = default;
-        Instruction(InstructionType t) noexcept : ins_type(t){};
+    enum class InstructionType{
+        RET,
     };
+    class InstructionNode : public IRNode{
+    public:
+        InstructionType ins_type;
 
-    struct ReturnInstruction : public Instruction{
-        ArenaReference<Type> type;
-        enum ReturnType {INTEGER, FLOAT, SSA} ret_type;
-        std::string_view ret_val;
-        bool negative;
-
-        ReturnInstruction() noexcept : Instruction(RET){};
+        InstructionNode() noexcept : IRNode(IRNodeType::Instruction){};
+        InstructionNode(InstructionType it) noexcept : IRNode(IRNodeType::Instruction), ins_type(it){};
+    };
+    class ReturnNode : public InstructionNode{
+        ReturnNode() noexcept : InstructionNode(InstructionType::RET){};
+        ArenaReference<IRNode> node;
     };
 }
 

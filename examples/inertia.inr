@@ -2,7 +2,7 @@
 // This is a line comment
 
 funcd i32 @main(i32 %argc, i8** %argv){
-    
+    %x = add i32 0, 1
 
-    ret i32 0;
+    ret i32 0
 }

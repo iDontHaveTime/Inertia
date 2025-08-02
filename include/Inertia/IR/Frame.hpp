@@ -7,7 +7,8 @@
 namespace Inertia{
     class Frame{
     public:
-        std::vector<Function> functions;
+        const char* filename;
+        std::vector<Function> funcs;
     };
 }
 
