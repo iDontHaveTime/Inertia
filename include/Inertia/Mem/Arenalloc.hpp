@@ -8,7 +8,6 @@
 /** Heads up
   *  This is not thread safe, this should not be used in global context.
   *  If used in global/shared context, this should be thread local.
-  *  The tracked pointers should outlive this arena allocator.
 **/
 
 namespace Inertia{

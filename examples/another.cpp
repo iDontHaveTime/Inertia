@@ -1,13 +1,28 @@
 
 int x = 20;
-extern void hello();
+extern void foo();
 
 int main(){
-    auto ptr = hello;
+    auto ptr = foo;
+
+    __asm__ volatile(
+        "movq $16, %%rax"
+        :
+        :
+        : "rax"
+    );
 
     ptr();
 
-    hello();
+    int x = 0;
+    {
+        int (is) = 2;
+        x = is = 2;
+    }
+
+    x ^= x;
+
+    foo();
     x = 40;
-    return 0;
+    return x;
 }

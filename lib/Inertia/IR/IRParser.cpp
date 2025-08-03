@@ -266,7 +266,7 @@ bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     if(!node.type) return true;
 
     if(node.type->getKind() == Type::VOID){
-        ctx.under->instructions.push_back(node);
+        ctx.under->instructions.push_back_as<ReturnNode>(node);
         return false;
     }
 
@@ -279,6 +279,17 @@ bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
 
 bool ParseSSA(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     consume(ss);
+
+    std::string_view name = ss.current().view(*ctx.file);
+    consume(ss);
+
+    if(expect(TokenType::Equals, ss) != expecterr::SUCCESS){
+        return true;
+    }
+
+    consume(ss);
+
+    // instruction
 
     return false;
 }
@@ -318,6 +329,7 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
         else{
             switch(ctx.tok_type){
                 case TokenType::Percent:
+                    if(!ctx.under) break;
                     if(ParseSSA(ss, ctx, talloc)){
                         std::cout<<"Error parsing ssa"<<std::endl;
                     }
