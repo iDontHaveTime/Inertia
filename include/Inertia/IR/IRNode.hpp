@@ -4,7 +4,6 @@
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
 #include <cstdint>
-#include <string_view>
 
 namespace Inertia{
     
@@ -16,7 +15,6 @@ namespace Inertia{
     };
     class IRNode{
     public:
-        std::string_view name;
         ArenaReference<Type> type;
         IRNodeType node_type = IRNodeType::None;
 

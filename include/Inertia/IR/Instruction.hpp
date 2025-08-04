@@ -7,6 +7,7 @@
 namespace Inertia{
     enum class InstructionType{
         RET,
+        BINARYOP,
     };
     class InstructionNode : public IRNode{
     public:
@@ -19,6 +20,13 @@ namespace Inertia{
     public:
         ReturnNode() noexcept : InstructionNode(InstructionType::RET){};
         ArenaReference<IRNode> node;
+    };
+    class BinaryOPNode : public InstructionNode{
+    public:
+        BinaryOPNode() noexcept : InstructionNode(InstructionType::BINARYOP){};
+        enum BinaryOPType {ADD} optype;
+        ArenaReference<IRNode> lhs;
+        ArenaReference<IRNode> rhs;
     };
 }
 

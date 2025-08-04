@@ -258,6 +258,14 @@ namespace Inertia{
             return parent != nullptr;
         }
 
+        bool operator==(const ArenaReference& rhs){
+            return (i == rhs.i) && (parent == rhs.parent);
+        }
+
+        bool operator!=(const ArenaReference& rhs){
+            return (i != rhs.i) || (parent != rhs.parent);
+        }
+
         ~ArenaReference() = default;
 
     };

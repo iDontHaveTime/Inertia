@@ -131,6 +131,9 @@ namespace Inertia{
         ArenaReference<GeneralRegisterx86_64> framePointer;
         ArenaReference<GeneralRegisterx86_64> returnRegister;
         unsigned int alignFunctions = 16;
+        unsigned int shadowSpace = 0;
+
+        std::vector<ArenaReference<GeneralRegisterx86_64>> reg_args;
 
         void get_sysv(ArenaPointer<RegisterCollectionx86_64>& regs) noexcept{
             stackPointer = regs->rsp;
@@ -140,6 +143,14 @@ namespace Inertia{
             regs->rbp->flags |= RegisterFlags::CALEE_SAVED;
 
             returnRegister = regs->rax;
+
+            reg_args.reserve(8);
+            reg_args.push_back(regs->rdi);
+            reg_args.push_back(regs->rsi);
+            reg_args.push_back(regs->rdx);
+            reg_args.push_back(regs->rcx);
+            reg_args.push_back(regs->r8);
+            reg_args.push_back(regs->r9);
         }
     };
     struct Targetx86_64 : public TargetInfo{

@@ -1,8 +1,25 @@
 /* This is a block comment */
 // This is a line comment
 
+funcd i32 @add(i32 %a, i32 %b){
+    %c = add i32 %a, %b
+    ret i32 1
+}
+
+funcd void* @ret_gp(void* %arg1, i8 %arg2, f32* %arg3, void* %arg4, void* %arg5, void* %arg6, void* %arg7, void* %arg8){
+    ret void* %arg1
+    ret void* %arg2
+    ret void* %arg3
+    ret void* %arg4
+    ret void* %arg5
+    ret void* %arg6
+    ret void* %arg7
+    ret void* %arg8
+}
+
 funcd i32 @main(i32 %argc, i8** %argv){
     %x = add i32 0, 1
+    %y = add i32 %x, 10
 
     ret i32 0
 }

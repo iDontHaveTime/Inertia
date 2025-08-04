@@ -132,25 +132,27 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
     return ref;
 }
 
-Argument ParseArgument(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
-    Argument newArg;
-    newArg.type = ParseType(ss, ctx, talloc);
-    if(!newArg.type){
-        return {};
+bool ParseArgument(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc, Function& func){
+    ArenaReference<Argument> newArg = ctx.allocator->alloc<Argument>();
+    newArg->type = ParseType(ss, ctx, talloc);
+    if(!newArg->type){
+        return true;
     }
 
     if(expect(TokenType::Percent, ss) == expecterr::SUCCESS){
         consume(ss);
     }
     else{
-        return {};
+        return true;
     }
-
-    newArg.name = ss.current().view(*ctx.file);
+    
+    newArg->name = ss.current().view(*ctx.file);
+    func.ssa[ss.current().view(*ctx.file)] = newArg.cast<IRNode>();
+    func.args.push_back(newArg);
 
     consume(ss);
 
-    return newArg;
+    return false;
 }
 
 bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
@@ -158,6 +160,7 @@ bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
 
     Function& f = ctx.frame.funcs.emplace_back();
     f.instructions.set_arena(ctx.allocator);
+    f.args.set_arena(ctx.allocator);
     
     f.retType = ParseType(ss, ctx, talloc);
     if(!f.retType) return true;
@@ -165,13 +168,8 @@ bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     if(expect(TokenType::At, ss) == expecterr::SUCCESS){
         consume(ss);
 
-        if(expect(TokenType::Alpha, ss) == expecterr::SUCCESS){
-            f.name = ss.current().view(*ctx.file);
-            consume(ss);
-        }
-        else{
-            return true;
-        }
+        f.name = ss.current().view(*ctx.file);
+        consume(ss);
     }
     else{
         return true;
@@ -186,12 +184,9 @@ bool ParseFunction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
         }
         else{
             while(true){
-                Argument arg = ParseArgument(ss, ctx, talloc);
-                if(!arg.type){
+                if(ParseArgument(ss, ctx, talloc, f)){
                     return true;
                 }
-
-                f.args.push_back(arg);
 
                 if(expect(TokenType::RightParen, ss) == expecterr::SUCCESS){
                     consume(ss);
@@ -223,12 +218,12 @@ ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx, Ar
         if(tt == TokenType::FloatLiteral) val += '-';
         neg = true;
         consume(ss);
+        tt = ss.current().type;
     }
     if(ctx.IRLiterals.expect(ss.current().type) != expecterr::SUCCESS){
         return {};
     }
     val += ss.current().view(*ctx.file);
-    std::cout<<val<<std::endl;
 
     if(tt == TokenType::IntegerLiteral){
         node->value = std::stoull(val, nullptr, 10);
@@ -251,11 +246,15 @@ ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx, Ar
     }
 
     if(neg && tt != TokenType::FloatLiteral){
-        node->value = -node->value;
+        node->value = -(node->value);
     }
     consume(ss);
 
     return node;
+}
+
+ArenaReference<IRNode> GetSSAName(TokenStream& ss, ParserContext& ctx){
+    return ctx.under->ssa[ss.current().view(*ctx.file)];
 }
 
 bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
@@ -270,11 +269,75 @@ bool ParseReturn(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
         return false;
     }
 
-    auto lit = ParseLiteral(ss, ctx, node.type);
-    node.node = lit.cast<IRNode>();
+    if(expect(TokenType::Percent, ss) == expecterr::SUCCESS){
+        consume(ss);
+        node.node = GetSSAName(ss, ctx);
+        consume(ss);
+    }
+    else{
+        auto lit = ParseLiteral(ss, ctx, node.type);
+        node.node = lit.cast<IRNode>();
+    }
     ctx.under->instructions.push_back_as<ReturnNode>(node);
 
     return false;
+}
+
+ArenaReference<BinaryOPNode> ParseBinaryOP(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
+    ArenaReference<BinaryOPNode> bop = ctx.allocator->alloc<BinaryOPNode>();
+
+    switch((IRKeyword)ss.current().getKeyword()){
+        case IRKeyword::ADD:
+            bop->optype = BinaryOPNode::ADD;
+            break;
+        default:
+            return {};
+    }
+    consume(ss);
+
+    bop->type = ParseType(ss, ctx, talloc);
+    if(!bop->type){
+        return {};
+    }
+
+    if(expect(TokenType::Percent, ss) == expecterr::SUCCESS){
+        consume(ss);
+        bop->lhs = GetSSAName(ss, ctx);
+        consume(ss);
+    }
+    else{
+        bop->lhs = ParseLiteral(ss, ctx, bop->type).cast<IRNode>();
+    }
+
+    if(expect(TokenType::Comma, ss) == expecterr::SUCCESS){
+        consume(ss);
+    }
+    else{
+        return {};
+    }
+
+    if(expect(TokenType::Percent, ss) == expecterr::SUCCESS){
+        consume(ss);
+        bop->rhs = GetSSAName(ss, ctx);
+        consume(ss);
+    }
+    else{
+        bop->rhs = ParseLiteral(ss, ctx, bop->type).cast<IRNode>();
+    }
+
+    return bop;
+}
+
+ArenaReference<IRNode> ParseInstruction(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
+
+    switch((IRKeyword)ss.current().getKeyword()){
+        case IRKeyword::ADD:
+            return ParseBinaryOP(ss, ctx, talloc).cast<IRNode>();
+        default:
+            return {};
+    }
+
+    return {};
 }
 
 bool ParseSSA(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
@@ -289,6 +352,12 @@ bool ParseSSA(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
 
     consume(ss);
 
+    ArenaReference<IRNode> ins = ParseInstruction(ss, ctx, talloc);
+    if(!ins){
+        return true;
+    }
+
+    ctx.under->ssa[name] = ins;
     // instruction
 
     return false;

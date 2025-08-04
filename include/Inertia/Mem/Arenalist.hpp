@@ -77,24 +77,45 @@ namespace Inertia{
             }
         }
 
-        struct iterator{
+        struct const_iterator{
             ArenaReference<ArenaNode<T>> current;
 
-            iterator& operator++(){ 
+            const_iterator& operator++() noexcept{ 
                 current = current->next; 
                 return *this; 
             }
 
-            T& operator*(){ 
-                return *current->val; 
+            const ArenaReference<T>& operator*() const noexcept{
+                return current->val;
             }
 
-            bool operator!=(const iterator& other) const{ 
+            bool operator!=(const const_iterator& other) const noexcept{ 
                 return current.get() != other.current.get(); 
             }
 
-            T* operator->(){
-                return current->val.get();
+            const ArenaReference<T>& operator->() const noexcept{
+                return current->val;
+            }
+        };
+
+        struct iterator{
+            ArenaReference<ArenaNode<T>> current;
+
+            iterator& operator++() noexcept{ 
+                current = current->next; 
+                return *this; 
+            }
+
+            ArenaReference<T>& operator*() noexcept{
+                return current->val;
+            }
+
+            bool operator!=(const iterator& other) const noexcept{ 
+                return current.get() != other.current.get(); 
+            }
+
+            ArenaReference<T>& operator->() noexcept{
+                return current->val;
             }
         };
 
@@ -106,11 +127,19 @@ namespace Inertia{
             return tail;
         }
 
-        iterator begin(){ 
+        iterator begin() noexcept{ 
             return {head}; 
         }
 
-        iterator end(){
+        iterator end() noexcept{
+            return {ArenaReference<ArenaNode<T>>{}};
+        }
+
+        const_iterator begin() const noexcept{ 
+            return {head}; 
+        }
+
+        const_iterator end() const noexcept{
             return {ArenaReference<ArenaNode<T>>{}};
         }
 
