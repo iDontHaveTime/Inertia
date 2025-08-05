@@ -2,10 +2,12 @@
 #define INERTIA_LEXERFILE_HPP
 
 #include <cstddef>
-#include <cstdint>
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <ios>
 #include <iostream>
 #include <ostream>
 #include <utility>
@@ -47,18 +49,18 @@ namespace Inertia{
         }
     };
     class LexerFile{
-        const char* fname = nullptr;
+        std::filesystem::path path;
         char* file = nullptr;
-        std::size_t length;
+        size_t length;
         int err = 0;
         enum LexerFileErrCodes{
             FILE_NOT_FOUND = 1, ALLOC_ERROR = 2, READ_ERROR = 3
         };
 
         inline void clear() noexcept{
-            fname = nullptr;
+            path.clear();
             if(file){
-                std::free(file);
+                free(file);
                 file = nullptr;
             }
             err = 0;
@@ -68,7 +70,7 @@ namespace Inertia{
     public:
         LexerFile() noexcept : file(nullptr), length(0){}
 
-        LexerFile(const char* fileName) noexcept : file(nullptr), length(0){
+        LexerFile(const std::filesystem::path& fileName) noexcept : file(nullptr), length(0){
             open(fileName);
         }
 
@@ -76,8 +78,12 @@ namespace Inertia{
             clear();
         }
 
-        const char* filename() const noexcept{
-            return fname;
+        const std::filesystem::path filename() const noexcept{
+            return path.filename();
+        }
+
+        const std::filesystem::path& get_path() const noexcept{
+            return path;
         }
 
         std::pair<LexerFileChunk, LexerFileChunk> split(size_t at, bool* result = nullptr) const{
@@ -120,42 +126,42 @@ namespace Inertia{
             return *this;
         }
 
-        void open(const char* fileName){
+        void open(const std::filesystem::path& fileName){
             clear();
 
-            if(!fileName){
+            if(fileName.empty()){
                 return;
             }
-            fname = fileName;
+            path = fileName;
 
-            std::FILE* f = std::fopen(fileName, "rb");
-            if(!f){
-                err = FILE_NOT_FOUND;
+            std::ifstream ifstr(fileName, std::ios::binary | std::ios::ate);
+            if(!ifstr.is_open()){
+                err = LexerFileErrCodes::FILE_NOT_FOUND;
+                length = 0;
                 return;
             }
 
-            std::fseek(f, 0, SEEK_END);
-            length = std::ftell(f);
-            std::rewind(f);
+            length = ifstr.tellg();
+            ifstr.seekg(0, std::ios::beg);
 
-            file = (char*)std::malloc(length + 1);
+            file = (char*)malloc(length + 1);
             if(!file){
-                std::fclose(f);
+                ifstr.close();
                 err = ALLOC_ERROR;
                 length = 0;
                 return;
             }
 
-            if(std::fread(file, 1, length, f) != length){
+            if(!ifstr.read(file, length)){
+                ifstr.close();
                 err = READ_ERROR;
-                std::free(file);
+                free(file);
                 file = nullptr;
                 length = 0;
-                std::fclose(f);
                 return;
             }
 
-            std::fclose(f);
+            ifstr.close();
             *(file + length) = '\0';
         }
 
@@ -186,42 +192,6 @@ namespace Inertia{
                 lhs.put(rhs[i]);
             }
             return lhs;
-        }
-
-        // open from memory, dont add a +1 for null terminator
-        inline void open(const void* mem, size_t size){
-            clear();
-            if(*((char*)mem + size - 1) == '\0'){
-                size--;
-            }
-            length = size;
-            file = (char*)malloc(size + 1);
-            if(!file){
-                err = ALLOC_ERROR;
-                length = 0;
-                return;
-            }
-
-            memcpy(file, mem, length);
-
-            *((char*)file + length) = '\0';
-        }
-
-        // uses strlen, null termination needed
-        inline void open_str(const char* str){
-            clear();
-            length = strnlen(str, INTMAX_MAX);
-
-            file = (char*)malloc(length + 1);
-            if(!file){
-                err = ALLOC_ERROR;
-                length = 0;
-                return;
-            }
-
-            memcpy(file, str, length);
-
-            *((char*)file + length) = '\0';
         }
     };
 }

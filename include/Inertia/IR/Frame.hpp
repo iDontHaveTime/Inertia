@@ -2,12 +2,13 @@
 #define INERTIA_FRAME_HPP
 
 #include "Inertia/IR/Function.hpp"
+#include "Inertia/Lexer/LexerFile.hpp"
 #include <vector>
 
 namespace Inertia{
     class Frame{
     public:
-        const char* filename;
+        const LexerFile* file;
         std::vector<Function> funcs;
     };
 }

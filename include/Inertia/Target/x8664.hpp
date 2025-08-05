@@ -130,6 +130,7 @@ namespace Inertia{
         ArenaReference<GeneralRegisterx86_64> stackPointer;
         ArenaReference<GeneralRegisterx86_64> framePointer;
         ArenaReference<GeneralRegisterx86_64> returnRegister;
+        std::vector<ArenaReference<GeneralRegisterx86_64>> usableRegs;
         unsigned int alignFunctions = 16;
         unsigned int shadowSpace = 0;
 
@@ -141,6 +142,11 @@ namespace Inertia{
 
             framePointer = regs->rbp;
             regs->rbp->flags |= RegisterFlags::CALEE_SAVED;
+            regs->rbx->flags |= RegisterFlags::CALEE_SAVED;
+            regs->r12->flags |= RegisterFlags::CALEE_SAVED;
+            regs->r13->flags |= RegisterFlags::CALEE_SAVED;
+            regs->r14->flags |= RegisterFlags::CALEE_SAVED;
+            regs->r15->flags |= RegisterFlags::CALEE_SAVED;
 
             returnRegister = regs->rax;
 
@@ -151,6 +157,24 @@ namespace Inertia{
             reg_args.push_back(regs->rcx);
             reg_args.push_back(regs->r8);
             reg_args.push_back(regs->r9);
+
+            usableRegs.reserve(32);
+            usableRegs.push_back(regs->rax);
+            usableRegs.push_back(regs->rbx);
+            usableRegs.push_back(regs->rcx);
+            usableRegs.push_back(regs->rdx);
+            usableRegs.push_back(regs->rbp);
+            usableRegs.push_back(regs->rsp);
+            usableRegs.push_back(regs->rsi);
+            usableRegs.push_back(regs->rdi);
+            usableRegs.push_back(regs->r8);
+            usableRegs.push_back(regs->r9);
+            usableRegs.push_back(regs->r10);
+            usableRegs.push_back(regs->r11);
+            usableRegs.push_back(regs->r12);
+            usableRegs.push_back(regs->r13);
+            usableRegs.push_back(regs->r14);
+            usableRegs.push_back(regs->r15);
         }
     };
     struct Targetx86_64 : public TargetInfo{

@@ -83,6 +83,15 @@ struct ParserContext{
     };
     IRKeyword kwd = IRKeyword::NONE;
     TokenType tok_type;
+
+    ParserContext() = default;
+    ParserContext(IRParser* parser) noexcept{
+        file = parser->get_file();
+        frame.file = file;
+        allocator = &parser->get_allocator();
+    }
+
+    ~ParserContext() = default;
 };
 
 inline void consume(TokenStream& ss) noexcept{
@@ -235,8 +244,19 @@ ArenaReference<LiteralNode> ParseLiteral(TokenStream& ss, ParserContext& ctx, Ar
         node->value = std::stoull(val, nullptr, 16);
     }
     else if(tt == TokenType::FloatLiteral){
-        double s = std::stod(val);
-        node->value = *(double*)&s;
+        bool skip = false;
+        if(node->type == Type::FLOAT){
+            FloatType* ft = (FloatType*)node->type.get();
+            if(ft->accuracy == FloatType::FLOAT_ACC){
+                float s = std::stof(val);
+                node->value = *(float*)&s;
+                skip = true;
+            }
+        }
+        if(!skip){
+            double s = std::stod(val);
+            node->value = *(double*)&s;
+        }
     }
     else if(tt == TokenType::CharLiteral){
         for(char c : val){
@@ -366,10 +386,7 @@ bool ParseSSA(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
 Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
     if(!file) return {};
     TokenStream ss(tokens);
-    ParserContext ctx;
-    ctx.allocator = &allocator;
-    ctx.frame.filename = file->filename();
-    ctx.file = file;
+    ParserContext ctx(this);
 
     while(!ss.eof()){
         ctx.tok_type = ss.current().type;

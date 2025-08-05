@@ -18,6 +18,18 @@ namespace Inertia{
 
         Frame parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc);
 
+        const LexerFile* get_file() const noexcept{
+            return file;
+        }
+
+        ArenaAlloc& get_allocator() noexcept{
+            return allocator;
+        }
+
+        const ArenaAlloc& get_allocator() const noexcept{
+            return allocator;
+        }
+
         ~IRParser() = default;
     };
 }

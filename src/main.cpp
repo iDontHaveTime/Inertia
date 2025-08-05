@@ -30,7 +30,7 @@ LexerOutput GetLexedFile(const LexerFile& file){
 }
 
 int main(){
-    LexerFile file = "examples/inertia.inr";
+    LexerFile file("examples/inertia.inr");
 
     LexerOutput out = GetLexedFile(file);
 
@@ -47,7 +47,7 @@ int main(){
     Targetx86_64 tg(talloc.get_arena());
 
     tg.PIC = true;
-    tg.useFramePointer = true;
+    tg.useFramePointer = false;
     tg.syntax = TargetInfo::GNUAS;
     tg.debug = true;
 
