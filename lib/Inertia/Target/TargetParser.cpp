@@ -21,6 +21,7 @@ struct TargetParserCTX{
     TargetOutput tout;
     TokenStream ss;
     std::unordered_map<std::string_view, TargetParserType> lookup;
+    bool cppinj;
 
     TargetParserCTX() = delete;
     TargetParserCTX(const TargetFile& tfile, const LexerOutput& lout) noexcept : tout(tfile), ss(lout){};
@@ -166,13 +167,14 @@ bool ParseRegister(TargetParserCTX& ctx){
     }
 
     while(1){
+        if(ctx.ss.eof()) return true;
         if(expect(TokenType::RightBrace, ctx.ss) == expecterr::SUCCESS){
             consume(ctx);
             ctx.lookup[newEntry.name] = TargetParserType::REGISTER;
-            ctx.tout.registers.push_back(newEntry);
+            ctx.tout.registers.push_back(std::move(newEntry));
             break;
         }
-        if(expect((int)TargetKeyword::WIDTH, ctx.ss) == expecterr::SUCCESS){
+        else if(expect((int)TargetKeyword::WIDTH, ctx.ss) == expecterr::SUCCESS){
             consume(ctx);
 
             if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
@@ -189,7 +191,7 @@ bool ParseRegister(TargetParserCTX& ctx){
             newEntry.width = std::stoi(ctx.ss.current().view_str(*ctx.tout.file.lfile), nullptr, GetTypeBase(ctx.ss.current().type));
             consume(ctx);
         }
-        if(expect((int)TargetKeyword::PARENT, ctx.ss) == expecterr::SUCCESS){
+        else if(expect((int)TargetKeyword::PARENT, ctx.ss) == expecterr::SUCCESS){
             consume(ctx);
             if(!SaveableString(ctx.ss.current().type)){
                 return true;
@@ -197,7 +199,7 @@ bool ParseRegister(TargetParserCTX& ctx){
             newEntry.parent = ctx.ss.current().view(*ctx.tout.file.lfile);
             consume(ctx);
         }
-        if(expect((int)TargetKeyword::CLASS, ctx.ss) == expecterr::SUCCESS){
+        else if(expect((int)TargetKeyword::CLASS, ctx.ss) == expecterr::SUCCESS){
             consume(ctx);
 
             if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
@@ -231,13 +233,70 @@ bool ParseRegister(TargetParserCTX& ctx){
             
             consume(ctx);
         }
+        else if(expect((int)TargetKeyword::INIT, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+
+            if(expect(TokenType::LeftBrace, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+
+            if(!ctx.cppinj){
+                while(expect(TokenType::RightBrace, ctx.ss) != expecterr::SUCCESS){
+                    if(ctx.ss.eof()) return true;
+                    consume(ctx);
+                }
+                consume(ctx);
+            }
+            else{
+                while(expect(TokenType::RightBrace, ctx.ss) != expecterr::SUCCESS){
+                    if(ctx.ss.eof()) return true;
+                    newEntry.init.push_back(ctx.ss.current().view_str(*ctx.tout.file.lfile));
+                    consume(ctx);
+                }
+                consume(ctx);
+            }
+
+        }
     }
     
     return false;
 }
 
+bool ParseCPPINC(TargetParserCTX& ctx){
+    consume(ctx);
+    if(!ctx.cppinj) return true;
+
+    TokenType tt = ctx.ss.current().type;
+
+    if(tt != TokenType::CharLiteral && tt != TokenType::StringLiteral) return true;
+
+    std::string n = ctx.ss.current().view_str(*ctx.tout.file.lfile);
+
+    consume(ctx);
+
+    tt = ctx.ss.current().type;
+    if(tt != TokenType::Left){
+        ctx.tout.cppinc.emplace_back(std::move(n), CPPInclude::CPPIncludeType::Quotes);
+        return false;
+    }
+
+    consume(ctx);
+    ctx.tout.cppinc.emplace_back(std::move(n), CPPInclude::CPPIncludeType::Arrows);
+
+    tt = ctx.ss.current().type;
+    if(tt == TokenType::Right){
+        consume(ctx);
+    }
+
+    return false;
+}
+
 TargetOutput TargetParser::parse(const LexerOutput& lout){
     TargetParserCTX ctx(file, lout);
+    ctx.cppinj = cpp_injections;
 
     while(!ctx.ss.eof()){
         TokenType tt = ctx.ss.current().type;
@@ -261,6 +320,11 @@ TargetOutput TargetParser::parse(const LexerOutput& lout){
                     break;
                 case TargetKeyword::REGISTER:
                     if(ParseRegister(ctx)){
+                        return ctx.tout;
+                    }
+                    break;
+                case TargetKeyword::CPPINC:
+                    if(ParseCPPINC(ctx)){
                         return ctx.tout;
                     }
                     break;

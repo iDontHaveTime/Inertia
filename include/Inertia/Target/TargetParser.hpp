@@ -8,6 +8,7 @@
 namespace Inertia{
     struct TargetParser{
         const TargetFile file;
+        bool cpp_injections = false;
 
         TargetParser() = delete;
         TargetParser(const TargetFile& _file) noexcept : file(_file){};

@@ -18,9 +18,17 @@ struct Register_rax : public RegisterBase{
 struct Register_eax : public RegisterBase{
 	Register_eax() : RegisterBase("eax", 1, 32){}
 };
+struct Register_ax : public RegisterBase{
+	Register_ax() : RegisterBase("ax", 2, 16){}
+};
+struct Register_al : public RegisterBase{
+	Register_al() : RegisterBase("al", 3, 8){}
+};
 struct TargetBasex86_64 : public TargetBase{
 	Register_rax* rax;
 	Register_eax* eax;
+	Register_ax* ax;
+	Register_al* al;
 	TargetBasex86_64() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN){
 		init();
 	}
@@ -29,11 +37,19 @@ struct TargetBasex86_64 : public TargetBase{
 		reg_database["rax"] = rax;
 		eax = new Register_eax();
 		reg_database["eax"] = eax;
+		ax = new Register_ax();
+		reg_database["ax"] = ax;
+		al = new Register_al();
+		reg_database["al"] = al;
 		eax->set_parent(rax);
+		ax->set_parent(eax);
+		al->set_parent(ax);
 	}
 	~TargetBasex86_64() override{
 		delete rax;
 		delete eax;
+		delete ax;
+		delete al;
 	}
 };
 }
