@@ -1,0 +1,16 @@
+
+target = AArch64
+endian = little
+
+regclass [GPR64 GPR32]
+
+register x0{
+    class = GPR64
+    width = 64
+}
+
+register w0{
+    class = GPR64
+    width = 32
+    parent x0
+}

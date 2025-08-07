@@ -1,0 +1,19 @@
+#ifndef INERTIA_TARGETPARSER_HPP
+#define INERTIA_TARGETPARSER_HPP
+
+#include "Inertia/Lexer/LexerOutput.hpp"
+#include "Inertia/Target/TargetFile.hpp"
+#include "Inertia/Target/TargetOutput.hpp"
+
+namespace Inertia{
+    struct TargetParser{
+        const TargetFile file;
+
+        TargetParser() = delete;
+        TargetParser(const TargetFile& _file) noexcept : file(_file){};
+
+        TargetOutput parse(const LexerOutput& lout);
+    };
+}
+
+#endif // INERTIA_TARGETPARSER_HPP

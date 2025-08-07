@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 file(GLOB_RECURSE LIB_SOURCES "lib/Inertia/*.cpp")
+
 file(GLOB_RECURSE FRONTEND_SOURCES "src/*.cpp")
 
 
@@ -19,7 +20,15 @@ set(SANITIZE_LIBRARY ON)
 set(SANITIZE_EXECUTABLE ON)
 set(LTO_LIBRARY OFF)
 
-add_library(InertiaLib SHARED ${LIB_SOURCES})
+set(ADD_TARGETS OFF)
+
+if(ADD_TARGETS)
+    file(GLOB_RECURSE TARGET_SRCS "include/Inertia/Target/*.cpp")
+else()
+    
+endif()
+
+add_library(InertiaLib SHARED ${LIB_SOURCES} ${TARGET_SRCS})
 
 target_compile_options(InertiaLib PUBLIC -Wall -Wextra)
 target_include_directories(InertiaLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

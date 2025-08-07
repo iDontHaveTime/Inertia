@@ -90,7 +90,7 @@ namespace Inertia{
             InitLexer();
         }
 
-        void SetKeywords(KeywordMap& kwds) noexcept{
+        void SetKeywords(const KeywordMap& kwds) noexcept{
             usekwd = true;
             keywords = kwds;
         }
