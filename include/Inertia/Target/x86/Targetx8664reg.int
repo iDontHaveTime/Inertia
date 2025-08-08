@@ -1,5 +1,9 @@
 regclass [GPR64 GPR32 GPR16 GPR8]
 
+extension [avx] // should be used/checked when defining calling conventions
+
+// todo: stop these repetitive register defines 
+
 // data is just like a struct
 data reg_encode{
     bit<3> regid

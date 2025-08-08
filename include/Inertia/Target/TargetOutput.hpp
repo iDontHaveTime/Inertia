@@ -14,6 +14,7 @@ namespace Inertia{
         DATAENT,
         DATAFIELD,
         INSTRUCTION,
+        EXTENSION
     };
     enum class DataType{
         BIT,
@@ -42,6 +43,9 @@ namespace Inertia{
         std::string_view name;
         std::string_view format;
         std::vector<InstructionOperand> ops;
+    };
+    struct ExtensionEntry{
+        std::string_view name;
     };
     struct RegisterEntry{
         std::string name;
@@ -73,6 +77,7 @@ namespace Inertia{
         std::vector<DataEntry> datas;
         std::vector<CPPInclude> cppinc;
         std::vector<InstructionEntry> instructions;
+        std::vector<ExtensionEntry> extensions;
 
         TargetOutput(const TargetFile& lfile) noexcept : file(lfile){};
     };

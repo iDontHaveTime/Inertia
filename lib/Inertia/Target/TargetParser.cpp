@@ -151,6 +151,29 @@ bool ParseRegclass(TargetParserCTX& ctx){
     return false;
 }
 
+bool ParseExtension(TargetParserCTX& ctx){
+    consume(ctx);
+
+    if(expect(TokenType::LeftSquare, ctx.ss) == expecterr::SUCCESS){
+        consume(ctx);
+    }
+    else{
+        return true;
+    }
+
+    while(expect(TokenType::RightSquare, ctx.ss) != expecterr::SUCCESS){
+        if(!SaveableString(ctx.ss.current().type)) return true;
+        ExtensionEntry entry;
+        entry.name = ctx.ss.current().view();
+        ctx.lookup[entry.name] = TargetParserType::EXTENSION;
+        ctx.tout.extensions.push_back(entry);
+        consume(ctx);
+    }
+    consume(ctx);
+
+    return false;
+}
+
 bool ParseRegister(TargetParserCTX& ctx){
     consume(ctx);
 
@@ -487,6 +510,11 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
     
             if(tt == TokenType::Keyword){
                 switch((TargetKeyword)ctx.ss.current().getKeyword()){
+                    case TargetKeyword::EXTENSION:
+                        if(ParseExtension(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
                     case TargetKeyword::INSTRUCTION:
                         if(ParseInstruction(ctx)){
                             return ctx.tout;
