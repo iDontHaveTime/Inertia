@@ -14,12 +14,6 @@
 
 namespace Inertia{
 
-enum class TargetParserType{
-    REGCLASS,
-    REGISTER,
-    DATAENT,
-};
-
 struct TargetParserCTX{
     TargetOutput tout;
     TokenStream ss;
@@ -27,7 +21,7 @@ struct TargetParserCTX{
     bool cppinj;
 
     TargetParserCTX() = delete;
-    TargetParserCTX(const TargetFile& tfile, const LexerOutput& lout) noexcept : tout(tfile), ss(lout){};
+    TargetParserCTX(const TargetFile& tfile) noexcept : tout(tfile){};
 };
 
 inline void consume(TargetParserCTX& ctx) noexcept{
@@ -274,9 +268,11 @@ bool ParseRegister(TargetParserCTX& ctx){
             }
             if(it->second == TargetParserType::DATAENT){
                 size_t datai;
+                const DataEntry* dfound;
                 for(size_t i = 0; i < ctx.tout.datas.size(); i++){
                     if(ctx.tout.datas[i].name == it->first){
                         newEntry.dataIndeces.push_back(i);
+                        dfound = &ctx.tout.datas[i];
                         datai = i;
                         break;
                     }
@@ -294,6 +290,7 @@ bool ParseRegister(TargetParserCTX& ctx){
                         }
                         else{
                             if(NumberString(ctx.ss.current().type)){
+                                if(newEntry.inits.size() >= dfound->data.size()) continue;
                                 newEntry.inits.push_back({.init = true, .val = get_token_value(ctx), .di = datai});
                             }
                             consume(ctx);
@@ -396,6 +393,7 @@ bool ParseData(TargetParserCTX& ctx){
             }
 
             dt.name = ctx.ss.current().view();
+            ctx.lookup[dt.name] = TargetParserType::DATAFIELD;
             consume(ctx);
 
             if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
@@ -416,55 +414,59 @@ bool ParseData(TargetParserCTX& ctx){
     return true;
 }
 
-TargetOutput TargetParser::parse(const LexerOutput& lout){
-    TargetParserCTX ctx(file, lout);
+TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
+    if(files.empty()) return {file};
+    TargetParserCTX ctx(file);
     ctx.cppinj = cpp_injections;
 
-    while(!ctx.ss.eof()){
-        TokenType tt = ctx.ss.current().type;
-
-        if(tt == TokenType::Keyword){
-            switch((TargetKeyword)ctx.ss.current().getKeyword()){
-                case TargetKeyword::DATA:
-                    if(ParseData(ctx)){
-                        return ctx.tout;
-                    }
-                    break;
-                case TargetKeyword::TARGET:
-                    if(ParseTarget(ctx)){
-                        return ctx.tout;
-                    }
-                    break;
-                case TargetKeyword::ENDIAN:
-                    if(ParseEndian(ctx)){
-                        return ctx.tout;
-                    }
-                    break;
-                case TargetKeyword::REGCLASS:
-                    if(ParseRegclass(ctx)){
-                        return ctx.tout;
-                    }
-                    break;
-                case TargetKeyword::REGISTER:
-                    if(ParseRegister(ctx)){
-                        return ctx.tout;
-                    }
-                    break;
-                case TargetKeyword::CPPINC:
-                    if(ParseCPPINC(ctx)){
-                        return ctx.tout;
-                    }
-                    break;
-                default:
-                    consume(ctx);
-                    break;
+    for(LexerOutput* lout : files){
+        ctx.ss.open(lout);
+        while(!ctx.ss.eof()){
+            TokenType tt = ctx.ss.current().type;
+    
+            if(tt == TokenType::Keyword){
+                switch((TargetKeyword)ctx.ss.current().getKeyword()){
+                    case TargetKeyword::DATA:
+                        if(ParseData(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
+                    case TargetKeyword::TARGET:
+                        if(ParseTarget(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
+                    case TargetKeyword::ENDIAN:
+                        if(ParseEndian(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
+                    case TargetKeyword::REGCLASS:
+                        if(ParseRegclass(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
+                    case TargetKeyword::REGISTER:
+                        if(ParseRegister(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
+                    case TargetKeyword::CPPINC:
+                        if(ParseCPPINC(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
+                    default:
+                        consume(ctx);
+                        break;
+                }
             }
-        }
-        else{
-            switch(tt){
-                default:
-                    consume(ctx);
-                    break;
+            else{
+                switch(tt){
+                    default:
+                        consume(ctx);
+                        break;
+                }
             }
         }
     }

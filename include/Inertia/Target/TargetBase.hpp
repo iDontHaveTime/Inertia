@@ -2,7 +2,6 @@
 #define INERTIA_TARGETBASE_HPP
 
 #include "Inertia/Mem/Archmem.hpp"
-#include <cstdint>
 #include <string_view>
 #include <unordered_map>
 
@@ -41,7 +40,7 @@ namespace InertiaTarget{
         virtual ~TargetBase();
     };
     struct InstructionBase{
-        uint8_t opcode;
+        std::string_view format;
     };
 };
 

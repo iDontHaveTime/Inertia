@@ -251,11 +251,16 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
                 InitData(ctx, ctx.inp.datas[i], 2);
             }
 
+            size_t field = 0;
             for(const DataInitEntry& din : regen.inits){
                 if(!din.init){
+                    field++;
                     continue;
                 }
-                InitData(ctx, ctx.inp.datas[din.di], 2, true, din.val);
+                const auto& dt = ctx.inp.datas[din.di].data[field];
+
+                ctx.hpp<<'\t'<<'\t'<<dt.name<<" = "<<std::to_string(din.val)<<';'<<std::endl;
+                field++;
             }
 
             ctx.hpp<<'\t'<<'}'<<std::endl;

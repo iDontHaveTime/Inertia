@@ -14,6 +14,11 @@ namespace Inertia{
         TokenStream() noexcept : tokens(nullptr){};
         TokenStream(const LexerOutput& toks) noexcept : tokens(&toks){};
 
+        void open(const LexerOutput* lxout) noexcept{
+            tokens = lxout;
+            index = 0;
+        }
+
         TokenStream(TokenStream&& rhs) noexcept{
             if(this != &rhs){
                 tokens = rhs.tokens;

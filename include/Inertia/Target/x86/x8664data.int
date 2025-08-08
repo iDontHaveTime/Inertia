@@ -1,0 +1,13 @@
+data REX{
+    bit<4> rex = 0b0100 // limited to 64 width per field
+    bit W // 64bit operands
+    bit R // extends reg field
+    bit X // extends index field of the sib byte
+    bit B // extends r/m field
+}
+
+data MODRM{
+    bit<2> mod // 00 - register 
+    bit<3> reg // register
+    bit<3> rm
+}

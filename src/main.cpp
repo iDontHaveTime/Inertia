@@ -51,7 +51,9 @@ int compile_aarch64t(){
 
     TargetParser tp(&lfile);
 
-    auto out = tp.parse(lexr.lex(lfile));
+    auto lxo = lexr.lex(lfile);
+    
+    auto out = tp.parse({&lxo});
 
     TargetCodegen cg(out);
 
@@ -72,10 +74,13 @@ int compile_x8664t(){
     lexr.SetKeywords(CreateTargetKeywordMap());
 
     LexerFile lfile("include/Inertia/Target/x86/Targetx8664.int");
+    LexerFile regfile("include/Inertia/Target/x86/Targetx8664reg.int");
 
     TargetParser tp(&lfile);
+    auto lxo = lexr.lex(lfile);
+    auto lxo2 = lexr.lex(regfile);
 
-    auto out = tp.parse(lexr.lex(lfile));
+    auto out = tp.parse({&lxo2, &lxo});
 
     TargetCodegen cg(out);
 

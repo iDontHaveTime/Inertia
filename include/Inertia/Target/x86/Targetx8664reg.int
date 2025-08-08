@@ -1,0 +1,406 @@
+regclass [GPR64 GPR32 GPR16 GPR8]
+
+// data is just like a struct
+data reg_encode{
+    bit<3> regid
+}
+
+// rax family
+register rax{
+    class = GPR64
+    width = 64
+    reg_encode(0)
+}
+register eax{
+    class = GPR32
+    width = 32
+    parent rax
+    reg_encode(0)
+}
+register ax{
+    class = GPR16
+    width = 16
+    parent eax
+    reg_encode(0)
+}
+register al{
+    class = GPR8
+    width = 8
+    parent ax
+    reg_encode(0)
+}
+
+// rcx family
+register rcx{
+    class = GPR64
+    width = 64
+    reg_encode(1)
+}
+register ecx{
+    class = GPR32
+    width = 32
+    parent rcx
+    reg_encode(1)
+}
+register cx{
+    class = GPR16
+    width = 16
+    parent ecx
+    reg_encode(1)
+}
+register cl{
+    class = GPR8
+    width = 8
+    parent cx
+    reg_encode(1)
+}
+
+// rdx family
+register rdx{
+    class = GPR64
+    width = 64
+    reg_encode(2)
+}
+register edx{
+    class = GPR32
+    width = 32
+    parent rdx
+    reg_encode(2)
+}
+register dx{
+    class = GPR16
+    width = 16
+    parent edx
+    reg_encode(2)
+}
+register dl{
+    class = GPR8
+    width = 8
+    parent dx
+    reg_encode(2)
+}
+
+// rbx family
+register rbx{
+    class = GPR64
+    width = 64
+    reg_encode(3)
+}
+register ebx{
+    class = GPR32
+    width = 32
+    parent rbx
+    reg_encode(3)
+}
+register bx{
+    class = GPR16
+    width = 16
+    parent ebx
+    reg_encode(3)
+}
+register bl{
+    class = GPR8
+    width = 8
+    parent bx
+    reg_encode(3)
+}
+
+// rsp family
+register rsp{
+    class = GPR64
+    width = 64
+    reg_encode(4)
+}
+register esp{
+    class = GPR32
+    width = 32
+    parent rsp
+    reg_encode(4)
+}
+register sp{
+    class = GPR16
+    width = 16
+    parent esp
+    reg_encode(4)
+}
+register spl{
+    class = GPR8
+    width = 8
+    parent sp
+    reg_encode(4)
+}
+
+// rbp family
+register rbp{
+    class = GPR64
+    width = 64
+    reg_encode(5)
+}
+register ebp{
+    class = GPR32
+    width = 32
+    parent rbp
+    reg_encode(5)
+}
+register bp{
+    class = GPR16
+    width = 16
+    parent ebp
+    reg_encode(5)
+}
+register bpl{
+    class = GPR8
+    width = 8
+    parent bp
+    reg_encode(5)
+}
+
+// rsi family
+register rsi{
+    class = GPR64
+    width = 64
+    reg_encode(6)
+}
+register esi{
+    class = GPR32
+    width = 32
+    parent rsi
+    reg_encode(6)
+}
+register si{
+    class = GPR16
+    width = 16
+    parent esi
+    reg_encode(6)
+}
+register sil{
+    class = GPR8
+    width = 8
+    parent si
+    reg_encode(6)
+}
+
+// rdi family
+register rdi{
+    class = GPR64
+    width = 64
+    reg_encode(7)
+}
+register edi{
+    class = GPR32
+    width = 32
+    parent rdi
+    reg_encode(7)
+}
+register di{
+    class = GPR16
+    width = 16
+    parent edi
+    reg_encode(7)
+}
+register dil{
+    class = GPR8
+    width = 8
+    parent di
+    reg_encode(7)
+}
+
+// r8 family
+register r8{
+    class = GPR64
+    width = 64
+    reg_encode(0)
+}
+register r8d{
+    class = GPR32
+    width = 32
+    parent r8
+    reg_encode(0)
+}
+register r8w{
+    class = GPR16
+    width = 16
+    parent r8d
+    reg_encode(0)
+}
+register r8b{
+    class = GPR8
+    width = 8
+    parent r8w
+    reg_encode(0)
+}
+
+// r9 family
+register r9{
+    class = GPR64
+    width = 64
+    reg_encode(1)
+}
+register r9d{
+    class = GPR32
+    width = 32
+    parent r9
+    reg_encode(1)
+}
+register r9w{
+    class = GPR16
+    width = 16
+    parent r9d
+    reg_encode(1)
+}
+register r9b{
+    class = GPR8
+    width = 8
+    parent r9w
+    reg_encode(1)
+}
+
+// r10 family
+register r10{
+    class = GPR64
+    width = 64
+    reg_encode(2)
+}
+register r10d{
+    class = GPR32
+    width = 32
+    parent r10
+    reg_encode(2)
+}
+register r10w{
+    class = GPR16
+    width = 16
+    parent r10d
+    reg_encode(2)
+}
+register r10b{
+    class = GPR8
+    width = 8
+    parent r10w
+    reg_encode(2)
+}
+
+// r11 family
+register r11{
+    class = GPR64
+    width = 64
+    reg_encode(3)
+}
+register r11d{
+    class = GPR32
+    width = 32
+    parent r11
+    reg_encode(3)
+}
+register r11w{
+    class = GPR16
+    width = 16
+    parent r11d
+    reg_encode(3)
+}
+register r11b{
+    class = GPR8
+    width = 8
+    parent r11w
+    reg_encode(3)
+}
+
+// r12 family
+register r12{
+    class = GPR64
+    width = 64
+    reg_encode(4)
+}
+register r12d{
+    class = GPR32
+    width = 32
+    parent r12
+    reg_encode(4)
+}
+register r12w{
+    class = GPR16
+    width = 16
+    parent r12d
+    reg_encode(4)
+}
+register r12b{
+    class = GPR8
+    width = 8
+    parent r12w
+    reg_encode(4)
+}
+
+// r13 family
+register r13{
+    class = GPR64
+    width = 64
+    reg_encode(5)
+}
+register r13d{
+    class = GPR32
+    width = 32
+    parent r13
+    reg_encode(5)
+}
+register r13w{
+    class = GPR16
+    width = 16
+    parent r13d
+    reg_encode(5)
+}
+register r13b{
+    class = GPR8
+    width = 8
+    parent r13w
+    reg_encode(5)
+}
+
+// r14 family
+register r14{
+    class = GPR64
+    width = 64
+    reg_encode(6)
+}
+register r14d{
+    class = GPR32
+    width = 32
+    parent r14
+    reg_encode(6)
+}
+register r14w{
+    class = GPR16
+    width = 16
+    parent r14d
+    reg_encode(6)
+}
+register r14b{
+    class = GPR8
+    width = 8
+    parent r14w
+    reg_encode(6)
+}
+
+// r15 family
+register r15{
+    class = GPR64
+    width = 64
+    reg_encode(7)
+}
+register r15d{
+    class = GPR32
+    width = 32
+    parent r15
+    reg_encode(7)
+}
+register r15w{
+    class = GPR16
+    width = 16
+    parent r15d
+    reg_encode(7)
+}
+register r15b{
+    class = GPR8
+    width = 8
+    parent r15w
+    reg_encode(7)
+}

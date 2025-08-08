@@ -1,51 +1,6 @@
 target = x86_64 // sets the target's name
 endian = little // sets the target's endian
 
-regclass [GPR64 GPR32 GPR16 GPR8] // defines an enum
-
-// data is just like a struct
-data reg_encode{
-    bit need_rex // bit is 1 bit, obviously
-}
-
-register rax{
-    class = GPR64
-    width = 64
-    reg_encode(1) // inherits the data's fields
-}
-
-register eax{
-    class = GPR32
-    width = 32
-    parent rax
-    reg_encode(0) // put a * to skip
-}
-
-register ax{
-    class = GPR16
-    width = 16
-    parent eax
-    reg_encode(0)
-}
-
-register al{
-    class = GPR8
-    width = 8
-    parent ax
-    reg_encode(0)
-}
-
-data REX{
-    bit<4> rex = 0b0100 // limited to 64 width per field
-    bit W
-    bit R
-    bit X
-    bit B
-}
-
-instr mov(GPR64 lhs, GPR64 rhs){
-    opcode = 0x89
-    encoding = {
-        
-    }
+instr mov(GPR64 dest, GPR64 src){
+    format = "movq %$0, %$1"(src.name, dest.name)
 }

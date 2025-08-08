@@ -12,27 +12,387 @@ enum class RegisterClassx86_64{
 	GPR8,
 };
 struct Register_rax : public RegisterBase{
-	uint64_t need_rex : 1;
+	uint64_t regid : 3;
 	Register_rax() : RegisterBase("rax", 0, 64){
-		need_rex = 1;
+		regid = 0;
 	}
 };
 struct Register_eax : public RegisterBase{
-	uint64_t need_rex : 1;
+	uint64_t regid : 3;
 	Register_eax() : RegisterBase("eax", 1, 32){
-		need_rex = 0;
+		regid = 0;
 	}
 };
 struct Register_ax : public RegisterBase{
-	uint64_t need_rex : 1;
+	uint64_t regid : 3;
 	Register_ax() : RegisterBase("ax", 2, 16){
-		need_rex = 0;
+		regid = 0;
 	}
 };
 struct Register_al : public RegisterBase{
-	uint64_t need_rex : 1;
+	uint64_t regid : 3;
 	Register_al() : RegisterBase("al", 3, 8){
-		need_rex = 0;
+		regid = 0;
+	}
+};
+struct Register_rcx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rcx() : RegisterBase("rcx", 0, 64){
+		regid = 1;
+	}
+};
+struct Register_ecx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_ecx() : RegisterBase("ecx", 1, 32){
+		regid = 1;
+	}
+};
+struct Register_cx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_cx() : RegisterBase("cx", 2, 16){
+		regid = 1;
+	}
+};
+struct Register_cl : public RegisterBase{
+	uint64_t regid : 3;
+	Register_cl() : RegisterBase("cl", 3, 8){
+		regid = 1;
+	}
+};
+struct Register_rdx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rdx() : RegisterBase("rdx", 0, 64){
+		regid = 2;
+	}
+};
+struct Register_edx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_edx() : RegisterBase("edx", 1, 32){
+		regid = 2;
+	}
+};
+struct Register_dx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_dx() : RegisterBase("dx", 2, 16){
+		regid = 2;
+	}
+};
+struct Register_dl : public RegisterBase{
+	uint64_t regid : 3;
+	Register_dl() : RegisterBase("dl", 3, 8){
+		regid = 2;
+	}
+};
+struct Register_rbx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rbx() : RegisterBase("rbx", 0, 64){
+		regid = 3;
+	}
+};
+struct Register_ebx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_ebx() : RegisterBase("ebx", 1, 32){
+		regid = 3;
+	}
+};
+struct Register_bx : public RegisterBase{
+	uint64_t regid : 3;
+	Register_bx() : RegisterBase("bx", 2, 16){
+		regid = 3;
+	}
+};
+struct Register_bl : public RegisterBase{
+	uint64_t regid : 3;
+	Register_bl() : RegisterBase("bl", 3, 8){
+		regid = 3;
+	}
+};
+struct Register_rsp : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rsp() : RegisterBase("rsp", 0, 64){
+		regid = 4;
+	}
+};
+struct Register_esp : public RegisterBase{
+	uint64_t regid : 3;
+	Register_esp() : RegisterBase("esp", 1, 32){
+		regid = 4;
+	}
+};
+struct Register_sp : public RegisterBase{
+	uint64_t regid : 3;
+	Register_sp() : RegisterBase("sp", 2, 16){
+		regid = 4;
+	}
+};
+struct Register_spl : public RegisterBase{
+	uint64_t regid : 3;
+	Register_spl() : RegisterBase("spl", 3, 8){
+		regid = 4;
+	}
+};
+struct Register_rbp : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rbp() : RegisterBase("rbp", 0, 64){
+		regid = 5;
+	}
+};
+struct Register_ebp : public RegisterBase{
+	uint64_t regid : 3;
+	Register_ebp() : RegisterBase("ebp", 1, 32){
+		regid = 5;
+	}
+};
+struct Register_bp : public RegisterBase{
+	uint64_t regid : 3;
+	Register_bp() : RegisterBase("bp", 2, 16){
+		regid = 5;
+	}
+};
+struct Register_bpl : public RegisterBase{
+	uint64_t regid : 3;
+	Register_bpl() : RegisterBase("bpl", 3, 8){
+		regid = 5;
+	}
+};
+struct Register_rsi : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rsi() : RegisterBase("rsi", 0, 64){
+		regid = 6;
+	}
+};
+struct Register_esi : public RegisterBase{
+	uint64_t regid : 3;
+	Register_esi() : RegisterBase("esi", 1, 32){
+		regid = 6;
+	}
+};
+struct Register_si : public RegisterBase{
+	uint64_t regid : 3;
+	Register_si() : RegisterBase("si", 2, 16){
+		regid = 6;
+	}
+};
+struct Register_sil : public RegisterBase{
+	uint64_t regid : 3;
+	Register_sil() : RegisterBase("sil", 3, 8){
+		regid = 6;
+	}
+};
+struct Register_rdi : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rdi() : RegisterBase("rdi", 0, 64){
+		regid = 7;
+	}
+};
+struct Register_edi : public RegisterBase{
+	uint64_t regid : 3;
+	Register_edi() : RegisterBase("edi", 1, 32){
+		regid = 7;
+	}
+};
+struct Register_di : public RegisterBase{
+	uint64_t regid : 3;
+	Register_di() : RegisterBase("di", 2, 16){
+		regid = 7;
+	}
+};
+struct Register_dil : public RegisterBase{
+	uint64_t regid : 3;
+	Register_dil() : RegisterBase("dil", 3, 8){
+		regid = 7;
+	}
+};
+struct Register_r8 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r8() : RegisterBase("r8", 0, 64){
+		regid = 0;
+	}
+};
+struct Register_r8d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r8d() : RegisterBase("r8d", 1, 32){
+		regid = 0;
+	}
+};
+struct Register_r8w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r8w() : RegisterBase("r8w", 2, 16){
+		regid = 0;
+	}
+};
+struct Register_r8b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r8b() : RegisterBase("r8b", 3, 8){
+		regid = 0;
+	}
+};
+struct Register_r9 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r9() : RegisterBase("r9", 0, 64){
+		regid = 1;
+	}
+};
+struct Register_r9d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r9d() : RegisterBase("r9d", 1, 32){
+		regid = 1;
+	}
+};
+struct Register_r9w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r9w() : RegisterBase("r9w", 2, 16){
+		regid = 1;
+	}
+};
+struct Register_r9b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r9b() : RegisterBase("r9b", 3, 8){
+		regid = 1;
+	}
+};
+struct Register_r10 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r10() : RegisterBase("r10", 0, 64){
+		regid = 2;
+	}
+};
+struct Register_r10d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r10d() : RegisterBase("r10d", 1, 32){
+		regid = 2;
+	}
+};
+struct Register_r10w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r10w() : RegisterBase("r10w", 2, 16){
+		regid = 2;
+	}
+};
+struct Register_r10b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r10b() : RegisterBase("r10b", 3, 8){
+		regid = 2;
+	}
+};
+struct Register_r11 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r11() : RegisterBase("r11", 0, 64){
+		regid = 3;
+	}
+};
+struct Register_r11d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r11d() : RegisterBase("r11d", 1, 32){
+		regid = 3;
+	}
+};
+struct Register_r11w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r11w() : RegisterBase("r11w", 2, 16){
+		regid = 3;
+	}
+};
+struct Register_r11b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r11b() : RegisterBase("r11b", 3, 8){
+		regid = 3;
+	}
+};
+struct Register_r12 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r12() : RegisterBase("r12", 0, 64){
+		regid = 4;
+	}
+};
+struct Register_r12d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r12d() : RegisterBase("r12d", 1, 32){
+		regid = 4;
+	}
+};
+struct Register_r12w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r12w() : RegisterBase("r12w", 2, 16){
+		regid = 4;
+	}
+};
+struct Register_r12b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r12b() : RegisterBase("r12b", 3, 8){
+		regid = 4;
+	}
+};
+struct Register_r13 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r13() : RegisterBase("r13", 0, 64){
+		regid = 5;
+	}
+};
+struct Register_r13d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r13d() : RegisterBase("r13d", 1, 32){
+		regid = 5;
+	}
+};
+struct Register_r13w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r13w() : RegisterBase("r13w", 2, 16){
+		regid = 5;
+	}
+};
+struct Register_r13b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r13b() : RegisterBase("r13b", 3, 8){
+		regid = 5;
+	}
+};
+struct Register_r14 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r14() : RegisterBase("r14", 0, 64){
+		regid = 6;
+	}
+};
+struct Register_r14d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r14d() : RegisterBase("r14d", 1, 32){
+		regid = 6;
+	}
+};
+struct Register_r14w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r14w() : RegisterBase("r14w", 2, 16){
+		regid = 6;
+	}
+};
+struct Register_r14b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r14b() : RegisterBase("r14b", 3, 8){
+		regid = 6;
+	}
+};
+struct Register_r15 : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r15() : RegisterBase("r15", 0, 64){
+		regid = 7;
+	}
+};
+struct Register_r15d : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r15d() : RegisterBase("r15d", 1, 32){
+		regid = 7;
+	}
+};
+struct Register_r15w : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r15w() : RegisterBase("r15w", 2, 16){
+		regid = 7;
+	}
+};
+struct Register_r15b : public RegisterBase{
+	uint64_t regid : 3;
+	Register_r15b() : RegisterBase("r15b", 3, 8){
+		regid = 7;
 	}
 };
 struct TargetBasex86_64 : public TargetBase{
@@ -40,6 +400,66 @@ struct TargetBasex86_64 : public TargetBase{
 	Register_eax* eax;
 	Register_ax* ax;
 	Register_al* al;
+	Register_rcx* rcx;
+	Register_ecx* ecx;
+	Register_cx* cx;
+	Register_cl* cl;
+	Register_rdx* rdx;
+	Register_edx* edx;
+	Register_dx* dx;
+	Register_dl* dl;
+	Register_rbx* rbx;
+	Register_ebx* ebx;
+	Register_bx* bx;
+	Register_bl* bl;
+	Register_rsp* rsp;
+	Register_esp* esp;
+	Register_sp* sp;
+	Register_spl* spl;
+	Register_rbp* rbp;
+	Register_ebp* ebp;
+	Register_bp* bp;
+	Register_bpl* bpl;
+	Register_rsi* rsi;
+	Register_esi* esi;
+	Register_si* si;
+	Register_sil* sil;
+	Register_rdi* rdi;
+	Register_edi* edi;
+	Register_di* di;
+	Register_dil* dil;
+	Register_r8* r8;
+	Register_r8d* r8d;
+	Register_r8w* r8w;
+	Register_r8b* r8b;
+	Register_r9* r9;
+	Register_r9d* r9d;
+	Register_r9w* r9w;
+	Register_r9b* r9b;
+	Register_r10* r10;
+	Register_r10d* r10d;
+	Register_r10w* r10w;
+	Register_r10b* r10b;
+	Register_r11* r11;
+	Register_r11d* r11d;
+	Register_r11w* r11w;
+	Register_r11b* r11b;
+	Register_r12* r12;
+	Register_r12d* r12d;
+	Register_r12w* r12w;
+	Register_r12b* r12b;
+	Register_r13* r13;
+	Register_r13d* r13d;
+	Register_r13w* r13w;
+	Register_r13b* r13b;
+	Register_r14* r14;
+	Register_r14d* r14d;
+	Register_r14w* r14w;
+	Register_r14b* r14b;
+	Register_r15* r15;
+	Register_r15d* r15d;
+	Register_r15w* r15w;
+	Register_r15b* r15b;
 	TargetBasex86_64() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN){
 		init();
 	}
@@ -52,15 +472,240 @@ struct TargetBasex86_64 : public TargetBase{
 		reg_database["ax"] = ax;
 		al = new Register_al();
 		reg_database["al"] = al;
+		rcx = new Register_rcx();
+		reg_database["rcx"] = rcx;
+		ecx = new Register_ecx();
+		reg_database["ecx"] = ecx;
+		cx = new Register_cx();
+		reg_database["cx"] = cx;
+		cl = new Register_cl();
+		reg_database["cl"] = cl;
+		rdx = new Register_rdx();
+		reg_database["rdx"] = rdx;
+		edx = new Register_edx();
+		reg_database["edx"] = edx;
+		dx = new Register_dx();
+		reg_database["dx"] = dx;
+		dl = new Register_dl();
+		reg_database["dl"] = dl;
+		rbx = new Register_rbx();
+		reg_database["rbx"] = rbx;
+		ebx = new Register_ebx();
+		reg_database["ebx"] = ebx;
+		bx = new Register_bx();
+		reg_database["bx"] = bx;
+		bl = new Register_bl();
+		reg_database["bl"] = bl;
+		rsp = new Register_rsp();
+		reg_database["rsp"] = rsp;
+		esp = new Register_esp();
+		reg_database["esp"] = esp;
+		sp = new Register_sp();
+		reg_database["sp"] = sp;
+		spl = new Register_spl();
+		reg_database["spl"] = spl;
+		rbp = new Register_rbp();
+		reg_database["rbp"] = rbp;
+		ebp = new Register_ebp();
+		reg_database["ebp"] = ebp;
+		bp = new Register_bp();
+		reg_database["bp"] = bp;
+		bpl = new Register_bpl();
+		reg_database["bpl"] = bpl;
+		rsi = new Register_rsi();
+		reg_database["rsi"] = rsi;
+		esi = new Register_esi();
+		reg_database["esi"] = esi;
+		si = new Register_si();
+		reg_database["si"] = si;
+		sil = new Register_sil();
+		reg_database["sil"] = sil;
+		rdi = new Register_rdi();
+		reg_database["rdi"] = rdi;
+		edi = new Register_edi();
+		reg_database["edi"] = edi;
+		di = new Register_di();
+		reg_database["di"] = di;
+		dil = new Register_dil();
+		reg_database["dil"] = dil;
+		r8 = new Register_r8();
+		reg_database["r8"] = r8;
+		r8d = new Register_r8d();
+		reg_database["r8d"] = r8d;
+		r8w = new Register_r8w();
+		reg_database["r8w"] = r8w;
+		r8b = new Register_r8b();
+		reg_database["r8b"] = r8b;
+		r9 = new Register_r9();
+		reg_database["r9"] = r9;
+		r9d = new Register_r9d();
+		reg_database["r9d"] = r9d;
+		r9w = new Register_r9w();
+		reg_database["r9w"] = r9w;
+		r9b = new Register_r9b();
+		reg_database["r9b"] = r9b;
+		r10 = new Register_r10();
+		reg_database["r10"] = r10;
+		r10d = new Register_r10d();
+		reg_database["r10d"] = r10d;
+		r10w = new Register_r10w();
+		reg_database["r10w"] = r10w;
+		r10b = new Register_r10b();
+		reg_database["r10b"] = r10b;
+		r11 = new Register_r11();
+		reg_database["r11"] = r11;
+		r11d = new Register_r11d();
+		reg_database["r11d"] = r11d;
+		r11w = new Register_r11w();
+		reg_database["r11w"] = r11w;
+		r11b = new Register_r11b();
+		reg_database["r11b"] = r11b;
+		r12 = new Register_r12();
+		reg_database["r12"] = r12;
+		r12d = new Register_r12d();
+		reg_database["r12d"] = r12d;
+		r12w = new Register_r12w();
+		reg_database["r12w"] = r12w;
+		r12b = new Register_r12b();
+		reg_database["r12b"] = r12b;
+		r13 = new Register_r13();
+		reg_database["r13"] = r13;
+		r13d = new Register_r13d();
+		reg_database["r13d"] = r13d;
+		r13w = new Register_r13w();
+		reg_database["r13w"] = r13w;
+		r13b = new Register_r13b();
+		reg_database["r13b"] = r13b;
+		r14 = new Register_r14();
+		reg_database["r14"] = r14;
+		r14d = new Register_r14d();
+		reg_database["r14d"] = r14d;
+		r14w = new Register_r14w();
+		reg_database["r14w"] = r14w;
+		r14b = new Register_r14b();
+		reg_database["r14b"] = r14b;
+		r15 = new Register_r15();
+		reg_database["r15"] = r15;
+		r15d = new Register_r15d();
+		reg_database["r15d"] = r15d;
+		r15w = new Register_r15w();
+		reg_database["r15w"] = r15w;
+		r15b = new Register_r15b();
+		reg_database["r15b"] = r15b;
 		eax->set_parent(rax);
 		ax->set_parent(eax);
 		al->set_parent(ax);
+		ecx->set_parent(rcx);
+		cx->set_parent(ecx);
+		cl->set_parent(cx);
+		edx->set_parent(rdx);
+		dx->set_parent(edx);
+		dl->set_parent(dx);
+		ebx->set_parent(rbx);
+		bx->set_parent(ebx);
+		bl->set_parent(bx);
+		esp->set_parent(rsp);
+		sp->set_parent(esp);
+		spl->set_parent(sp);
+		ebp->set_parent(rbp);
+		bp->set_parent(ebp);
+		bpl->set_parent(bp);
+		esi->set_parent(rsi);
+		si->set_parent(esi);
+		sil->set_parent(si);
+		edi->set_parent(rdi);
+		di->set_parent(edi);
+		dil->set_parent(di);
+		r8d->set_parent(r8);
+		r8w->set_parent(r8d);
+		r8b->set_parent(r8w);
+		r9d->set_parent(r9);
+		r9w->set_parent(r9d);
+		r9b->set_parent(r9w);
+		r10d->set_parent(r10);
+		r10w->set_parent(r10d);
+		r10b->set_parent(r10w);
+		r11d->set_parent(r11);
+		r11w->set_parent(r11d);
+		r11b->set_parent(r11w);
+		r12d->set_parent(r12);
+		r12w->set_parent(r12d);
+		r12b->set_parent(r12w);
+		r13d->set_parent(r13);
+		r13w->set_parent(r13d);
+		r13b->set_parent(r13w);
+		r14d->set_parent(r14);
+		r14w->set_parent(r14d);
+		r14b->set_parent(r14w);
+		r15d->set_parent(r15);
+		r15w->set_parent(r15d);
+		r15b->set_parent(r15w);
 	}
 	~TargetBasex86_64() override{
 		delete rax;
 		delete eax;
 		delete ax;
 		delete al;
+		delete rcx;
+		delete ecx;
+		delete cx;
+		delete cl;
+		delete rdx;
+		delete edx;
+		delete dx;
+		delete dl;
+		delete rbx;
+		delete ebx;
+		delete bx;
+		delete bl;
+		delete rsp;
+		delete esp;
+		delete sp;
+		delete spl;
+		delete rbp;
+		delete ebp;
+		delete bp;
+		delete bpl;
+		delete rsi;
+		delete esi;
+		delete si;
+		delete sil;
+		delete rdi;
+		delete edi;
+		delete di;
+		delete dil;
+		delete r8;
+		delete r8d;
+		delete r8w;
+		delete r8b;
+		delete r9;
+		delete r9d;
+		delete r9w;
+		delete r9b;
+		delete r10;
+		delete r10d;
+		delete r10w;
+		delete r10b;
+		delete r11;
+		delete r11d;
+		delete r11w;
+		delete r11b;
+		delete r12;
+		delete r12d;
+		delete r12w;
+		delete r12b;
+		delete r13;
+		delete r13d;
+		delete r13w;
+		delete r13b;
+		delete r14;
+		delete r14d;
+		delete r14w;
+		delete r14b;
+		delete r15;
+		delete r15d;
+		delete r15w;
+		delete r15b;
 	}
 };
 }

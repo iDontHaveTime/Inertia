@@ -6,6 +6,12 @@
 #include "Inertia/Target/TargetOutput.hpp"
 
 namespace Inertia{
+    enum class TargetParserType{
+        REGCLASS,
+        REGISTER,
+        DATAENT,
+        DATAFIELD,
+    };
     struct TargetParser{
         const TargetFile file;
         bool cpp_injections = false;
@@ -13,7 +19,7 @@ namespace Inertia{
         TargetParser() = delete;
         TargetParser(const TargetFile& _file) noexcept : file(_file){};
 
-        TargetOutput parse(const LexerOutput& lout);
+        TargetOutput parse(std::vector<LexerOutput*> files);
     };
 }
 
