@@ -8,6 +8,13 @@
 #include <vector>
 
 namespace Inertia{
+    enum class TargetParserType{
+        REGCLASS,
+        REGISTER,
+        DATAENT,
+        DATAFIELD,
+        INSTRUCTION,
+    };
     enum class DataType{
         BIT,
     };
@@ -20,12 +27,21 @@ namespace Inertia{
         std::string_view name;
         DataType type = DataType::BIT;
         int width = 1;
-        bool had_default = false;
         uintmax_t def_init = 0;
+        bool had_default = false;
     };
     struct DataEntry{
         std::string_view name;
         std::vector<Data> data;
+    };
+    struct InstructionOperand{
+        std::string_view name;
+        TargetParserType type;
+    };
+    struct InstructionEntry{
+        std::string_view name;
+        std::string_view format;
+        std::vector<InstructionOperand> ops;
     };
     struct RegisterEntry{
         std::string name;
@@ -56,6 +72,7 @@ namespace Inertia{
         std::vector<RegisterEntry> registers;
         std::vector<DataEntry> datas;
         std::vector<CPPInclude> cppinc;
+        std::vector<InstructionEntry> instructions;
 
         TargetOutput(const TargetFile& lfile) noexcept : file(lfile){};
     };

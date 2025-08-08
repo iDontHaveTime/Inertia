@@ -414,6 +414,67 @@ bool ParseData(TargetParserCTX& ctx){
     return true;
 }
 
+bool ParseInstruction(TargetParserCTX& ctx){
+    consume(ctx);
+
+    if(!SaveableString(ctx.ss.current().type)) return true;
+
+    std::string_view name = ctx.ss.current().view();
+    consume(ctx);
+
+    if(expect(TokenType::LeftParen, ctx.ss) == expecterr::SUCCESS){
+        consume(ctx);
+    }
+    else{
+        return true;
+    }
+
+    ctx.lookup[name] = TargetParserType::INSTRUCTION;
+    InstructionEntry entry;
+    entry.name = name;
+
+    while(1){
+        auto it = ctx.lookup.find(ctx.ss.current().view());
+        if(it == ctx.lookup.end()) return true;
+        InstructionOperand opr;
+        opr.type = it->second;
+        consume(ctx);
+        if(!SaveableString(ctx.ss.current().type)) return true;
+        opr.name = ctx.ss.current().view();
+        consume(ctx);
+        entry.ops.push_back(opr);
+        if(expect(TokenType::Comma, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+        }
+        else{
+            if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+                break;
+            }
+            else{
+                return true;
+            }
+        }
+    }
+
+    if(expect(TokenType::LeftBrace, ctx.ss) != expecterr::SUCCESS){
+        return true;
+    }
+
+    while(1){
+        if(expect(TokenType::RightBrace, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            break;
+        }
+        else{
+            consume(ctx);
+        }
+    }
+    ctx.tout.instructions.push_back(entry);
+
+    return false;
+}
+
 TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
     if(files.empty()) return {file};
     TargetParserCTX ctx(file);
@@ -426,6 +487,11 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
     
             if(tt == TokenType::Keyword){
                 switch((TargetKeyword)ctx.ss.current().getKeyword()){
+                    case TargetKeyword::INSTRUCTION:
+                        if(ParseInstruction(ctx)){
+                            return ctx.tout;
+                        }
+                        break;
                     case TargetKeyword::DATA:
                         if(ParseData(ctx)){
                             return ctx.tout;

@@ -6,12 +6,6 @@
 #include "Inertia/Target/TargetOutput.hpp"
 
 namespace Inertia{
-    enum class TargetParserType{
-        REGCLASS,
-        REGISTER,
-        DATAENT,
-        DATAFIELD,
-    };
     struct TargetParser{
         const TargetFile file;
         bool cpp_injections = false;
