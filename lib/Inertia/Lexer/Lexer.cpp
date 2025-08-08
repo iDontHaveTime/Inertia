@@ -32,10 +32,11 @@ enum class CommentType : uint8_t{
 };
 
 
-struct alignas(64) LexerContext{
+struct alignas(16) LexerContext{
     const char* cur;
     const char* const end;
-    size_t tokStart = 0, tokEnd = 0, line = 1;
+    const char* tokStart = nullptr, *tokEnd = nullptr;
+    size_t line = 1;
     LexerState state = LexerState::Normal;
     CommentType com = CommentType::Line;
     bool incom = false;
@@ -46,9 +47,14 @@ struct alignas(64) LexerContext{
     const Lexer* lex;
     short utf = 0;
     
-    LexerContext(const char* s, const char* e) noexcept : cur(s), end(e){};
+    LexerContext(const char* s, const char* e) noexcept : cur(s), end(e){
+        tokStart = tokEnd = s;
+    };
     LexerContext(const char* s, const char* e, TokenType lcom, TokenType mlstr, TokenType mlend, const Lexer* lxr) : 
-        cur(s), end(e), multiline_start(mlstr), multiline_end(mlend), linecom(lcom), lex(lxr){};
+        cur(s), end(e), multiline_start(mlstr), multiline_end(mlend), linecom(lcom), lex(lxr){
+            
+        tokStart = tokEnd = s;
+    };
 };
 
 inline bool PeekableForward(LexerContext& ctx) noexcept{
@@ -700,32 +706,11 @@ LexerOutput Lexer::split_lex(const LexerFile* file){
     return lex_2chunk(sp1, sp2, file);
 }
 
-LexerOutput Lexer::lex_chunk(const LexerFileChunk& chunk) const{
-    LexerOutput out;
-    TokenBuild build;
-    out.file = chunk.parent;
-    LexerContext ctx(chunk.raw(), chunk.raw() + chunk.len(), this->line_comment, this->multiline_start, this->multiline_end, this);
-    
-    while(ctx.cur != ctx.end){
-        ctx.look = look(*ctx.cur);
-
-        CallBasedOnState(ctx, out, build);
-
-        ctx.cur++; ctx.tokEnd++;
-    }
-
-    EndOfLexing(ctx, out, build);
-
-    return out;
-}
-
-LexerOutput Lexer::merge_output(LexerOutput&& out1, LexerOutput&& out2, size_t split){
+LexerOutput Lexer::merge_output(LexerOutput&& out1, LexerOutput&& out2){
     if(!out1.tokens.empty() && !out2.tokens.empty()){
         size_t line_offset = out1.tokens.back().line - 1;
         for(Token& tok : out2.tokens){
             tok.line += line_offset;
-            tok.start += split;
-            tok.end += split;
         }
     }
 
@@ -754,35 +739,17 @@ LexerOutput Lexer::lex_2chunk(const LexerFileChunk& chunk1, const LexerFileChunk
     LexerOutput fout; 
     fout.file = file;
 
-    return merge_output(std::move(out1), std::move(out2), chunk1.len());
+    return merge_output(std::move(out1), std::move(out2));
 }
 
-LexerOutput Lexer::lex_perf(const LexerFile& file, size_t assumed) const{
+LexerOutput Lexer::lex_raw(const char* start, const char* end, size_t assumed) const{
     LexerOutput out;
-    TokenBuild build;
-    out.tokens.reserve(assumed);
-    out.file = &file;
-    LexerContext ctx(file.raw(), file.fend(), this->line_comment, this->multiline_start, this->multiline_end, this);
-    
-    while(ctx.cur != ctx.end){
-        ctx.look = look(*ctx.cur);
-
-        CallBasedOnState(ctx, out, build);
-
-        ctx.cur++; ctx.tokEnd++;
+    if(assumed){
+        out.tokens.reserve(assumed);
     }
-
-    EndOfLexing(ctx, out, build);
-
-    return out;
-}
-
-LexerOutput Lexer::lex(const LexerFile& file) const{
-    LexerOutput out;
     TokenBuild build;
-    out.file = &file;
-    LexerContext ctx(file.raw(), file.fend(), this->line_comment, this->multiline_start, this->multiline_end, this);
-    
+    LexerContext ctx(start, end, this->line_comment, this->multiline_start, this->multiline_end, this);
+
     while(ctx.cur != ctx.end){
         ctx.look = look(*ctx.cur);
 

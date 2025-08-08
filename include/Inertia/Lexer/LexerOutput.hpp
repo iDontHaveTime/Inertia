@@ -19,7 +19,7 @@ namespace Inertia{
         LexerOutput& operator=(LexerOutput& rhs) = default;
         LexerOutput(LexerOutput& rhs) = default;
 
-        LexerOutput(LexerOutput&& rhs){
+        LexerOutput(LexerOutput&& rhs) noexcept{
             if(this != &rhs){
                 file = rhs.file;
                 tokens = std::move(rhs.tokens);
@@ -27,7 +27,7 @@ namespace Inertia{
             }
         }
 
-        LexerOutput& operator=(LexerOutput&& rhs){
+        LexerOutput& operator=(LexerOutput&& rhs) noexcept{
             if(this != &rhs){
                 file = rhs.file;
                 tokens = std::move(rhs.tokens);
@@ -42,7 +42,7 @@ namespace Inertia{
             return tokens.size();
         }
 
-        inline size_t TokensWithType(TokenType t) const{
+        inline size_t TokensWithType(TokenType t) const noexcept{
             size_t res = 0;
             for(size_t i = 0; i < tokens.size(); i++) if(tokens[i].type == t) res++;
             return res;
@@ -55,43 +55,43 @@ namespace Inertia{
             return tokens[index];
         }
 
-        inline void push(size_t start, size_t end, TokenType type, size_t line){
+        inline void push(const char* start, const char* end, TokenType type, size_t line){
             if(start == end){
                 end++;
             }
             tokens.emplace_back(start, end, type, line);
         }
 
-        inline void push(size_t start, size_t end, TokenType type, size_t line, uint32_t ex){
+        inline void push(const char* start, const char* end, TokenType type, size_t line, uint32_t ex){
             if(start == end){
                 end++;
             }
             tokens.emplace_back(start, end, type, line, ex);
         }
 
-        inline void push(size_t start, size_t end, TokenType type, size_t line, TokenBuild& bld){
+        inline void push(const char* start, const char* end, TokenType type, size_t line, TokenBuild& bld){
             if(start == end){
                 end++;
             }
             tokens.emplace_back(start, end, type, line, bld);
         }
 
-        auto begin(){
+        auto begin() noexcept{
             return tokens.begin();
         }
-        auto end(){
+        auto end() noexcept{
             return tokens.end();
         }
-        auto begin() const{
+        auto begin() const noexcept{
             return tokens.begin();
         }
-        auto end() const{
+        auto end() const noexcept{
             return tokens.end();
         }
-        auto cbegin() const{
+        auto cbegin() const noexcept{
             return tokens.cbegin();
         }
-        auto cend() const{
+        auto cend() const noexcept{
             return tokens.cend();
         }
     };

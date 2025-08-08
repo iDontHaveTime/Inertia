@@ -332,8 +332,14 @@ namespace Inertia{
             }
             return TokenType::Special;
         }
+        // lexes raw buffer
+        LexerOutput lex_raw(const char* start, const char* end, size_t assumed) const;
         // Simple lexing, nothing much, single threaded
-        LexerOutput lex(const LexerFile& file) const;
+        inline LexerOutput lex(const LexerFile& file) const{
+            auto out = lex_raw(file.raw(), file.fend(), 0);
+            out.file = &file;
+            return out;
+        }
         // assumes the amount of tokens to output from a file
         size_t assume(const LexerFile& file) const noexcept;
         // finds split in a file, uses find_split(const char*, const char*) internally
@@ -341,9 +347,17 @@ namespace Inertia{
         // finds split in a buffer, aware of comments, strings, etc... 
         size_t find_split(const char* start, const char* end) const;
         // lexes just one chunk
-        LexerOutput lex_chunk(const LexerFileChunk& chunk) const;
+        inline LexerOutput lex_chunk(const LexerFileChunk& chunk) const{
+            auto out = lex_raw(chunk.raw(), chunk.raw() + chunk.len(), 0);
+            out.file = chunk.parent;
+            return out;
+        }
         // preallocates the token count, use assume(file) for best results
-        LexerOutput lex_perf(const LexerFile& file, size_t assumed) const;
+        inline LexerOutput lex_perf(const LexerFile& file, size_t assumed) const{
+            auto out = lex_raw(file.raw(), file.fend(), assumed);
+            out.file = &file;
+            return out;
+        }
         
         /* EXPERIMENTAL 
            THIS USES THREADING, USE AT YOUR OWN RISK!
@@ -353,8 +367,8 @@ namespace Inertia{
         LexerOutput split_lex(const LexerFile* file);
         // lexes 2 chunks
         LexerOutput lex_2chunk(const LexerFileChunk& chunk1, const LexerFileChunk& chunk2, const LexerFile* file);
-        // merges two outputs and patches up lines, and positions
-        LexerOutput merge_output(LexerOutput&& out1, LexerOutput&& out2, size_t split);
+        // merges two outputs and patches up lines
+        LexerOutput merge_output(LexerOutput&& out1, LexerOutput&& out2);
     };
 };
 

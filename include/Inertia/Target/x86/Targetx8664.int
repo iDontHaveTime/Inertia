@@ -1,7 +1,7 @@
 target = x86_64
 endian = little
 
-regclass [GPR64 GPR32 GPR16 GPR8L GPR8H]
+regclass [GPR64 GPR32 GPR16 GPR8]
 
 register rax{
     class = GPR64
@@ -21,7 +21,7 @@ register ax{
 }
 
 register al{
-    class = GPR8L
+    class = GPR8
     width = 8
     parent ax
 }

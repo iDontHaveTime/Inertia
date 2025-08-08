@@ -9,8 +9,7 @@ enum class RegisterClassx86_64{
 	GPR64,
 	GPR32,
 	GPR16,
-	GPR8L,
-	GPR8H,
+	GPR8,
 };
 struct Register_rax : public RegisterBase{
 	Register_rax() : RegisterBase("rax", 0, 64){}

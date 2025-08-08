@@ -95,7 +95,7 @@ bool ParseTarget(TargetParserCTX& ctx) noexcept{
 
     if(!SaveableString(ctx.ss.current().type)) return true;
 
-    ctx.tout.target = ctx.ss.current().view_str(*ctx.tout.file.lfile);
+    ctx.tout.target = ctx.ss.current().view_str();
     consume(ctx);
     return false;
 }
@@ -140,7 +140,7 @@ bool ParseRegclass(TargetParserCTX& ctx){
 
     while(expect(TokenType::RightSquare, ctx.ss) != expecterr::SUCCESS){
         if(!SaveableString(ctx.ss.current().type)) return true;
-        std::string_view r = ctx.ss.current().view(*ctx.tout.file.lfile);
+        std::string_view r = ctx.ss.current().view();
         ctx.tout.regclasses.push_back(r);
         ctx.lookup[r] = TargetParserType::REGCLASS;
         consume(ctx);
@@ -155,7 +155,7 @@ bool ParseRegister(TargetParserCTX& ctx){
 
     RegisterEntry newEntry;
 
-    newEntry.name = ctx.ss.current().view(*ctx.tout.file.lfile);
+    newEntry.name = ctx.ss.current().view();
 
     consume(ctx);
 
@@ -188,7 +188,7 @@ bool ParseRegister(TargetParserCTX& ctx){
                 return true;
             }
 
-            newEntry.width = std::stoi(ctx.ss.current().view_str(*ctx.tout.file.lfile), nullptr, GetTypeBase(ctx.ss.current().type));
+            newEntry.width = std::stoi(ctx.ss.current().view_str(), nullptr, GetTypeBase(ctx.ss.current().type));
             consume(ctx);
         }
         else if(expect((int)TargetKeyword::PARENT, ctx.ss) == expecterr::SUCCESS){
@@ -196,7 +196,7 @@ bool ParseRegister(TargetParserCTX& ctx){
             if(!SaveableString(ctx.ss.current().type)){
                 return true;
             }
-            newEntry.parent = ctx.ss.current().view(*ctx.tout.file.lfile);
+            newEntry.parent = ctx.ss.current().view();
             consume(ctx);
         }
         else if(expect((int)TargetKeyword::CLASS, ctx.ss) == expecterr::SUCCESS){
@@ -213,7 +213,7 @@ bool ParseRegister(TargetParserCTX& ctx){
                 return true;
             }
 
-            std::string_view tofind = ctx.ss.current().view(*ctx.tout.file.lfile);
+            std::string_view tofind = ctx.ss.current().view();
             auto it = ctx.lookup.find(tofind);
 
             if(it == ctx.lookup.end()){
@@ -253,7 +253,7 @@ bool ParseRegister(TargetParserCTX& ctx){
             else{
                 while(expect(TokenType::RightBrace, ctx.ss) != expecterr::SUCCESS){
                     if(ctx.ss.eof()) return true;
-                    newEntry.init.push_back(ctx.ss.current().view_str(*ctx.tout.file.lfile));
+                    newEntry.init.push_back(ctx.ss.current().view_str());
                     consume(ctx);
                 }
                 consume(ctx);
@@ -273,7 +273,7 @@ bool ParseCPPINC(TargetParserCTX& ctx){
 
     if(tt != TokenType::CharLiteral && tt != TokenType::StringLiteral) return true;
 
-    std::string n = ctx.ss.current().view_str(*ctx.tout.file.lfile);
+    std::string n = ctx.ss.current().view_str();
 
     consume(ctx);
 
