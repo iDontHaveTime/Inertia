@@ -5,5 +5,5 @@ func i32 @main()
     alloc i32 x
 
 
-    ret void
+    ret i32 0
 end

@@ -12,16 +12,28 @@ enum class RegisterClassx86_64{
 	GPR8,
 };
 struct Register_rax : public RegisterBase{
-	Register_rax() : RegisterBase("rax", 0, 64){}
+	uint64_t need_rex : 1;
+	Register_rax() : RegisterBase("rax", 0, 64){
+		need_rex = 1;
+	}
 };
 struct Register_eax : public RegisterBase{
-	Register_eax() : RegisterBase("eax", 1, 32){}
+	uint64_t need_rex : 1;
+	Register_eax() : RegisterBase("eax", 1, 32){
+		need_rex = 0;
+	}
 };
 struct Register_ax : public RegisterBase{
-	Register_ax() : RegisterBase("ax", 2, 16){}
+	uint64_t need_rex : 1;
+	Register_ax() : RegisterBase("ax", 2, 16){
+		need_rex = 0;
+	}
 };
 struct Register_al : public RegisterBase{
-	Register_al() : RegisterBase("al", 3, 8){}
+	uint64_t need_rex : 1;
+	Register_al() : RegisterBase("al", 3, 8){
+		need_rex = 0;
+	}
 };
 struct TargetBasex86_64 : public TargetBase{
 	Register_rax* rax;

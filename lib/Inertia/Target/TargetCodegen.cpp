@@ -1,7 +1,9 @@
 #include "Inertia/Target/TargetCodegen.hpp"
 #include "Inertia/Target/TargetOutput.hpp"
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <string>
 #include <string_view>
 
 namespace Inertia{
@@ -55,6 +57,41 @@ inline void FinalizeFileGen(TargetCodegenCTX& ctx){
 
     ctx.cpp<<'}'<<std::endl;
     ctx.cpp<<'}'<<std::endl;
+}
+
+inline void WriteTabs(std::ofstream& stream, int n){
+    while(n--){
+        stream<<'\t';
+    }
+}
+
+bool WriteData(TargetCodegenCTX& ctx, const DataEntry& de, int tabs){
+    bool cons = false;
+    for(const Data& dt : de.data){
+        WriteTabs(ctx.hpp, tabs);
+        ctx.hpp<<"uint64_t "<<dt.name;
+
+        ctx.hpp<<" : "<<std::to_string(dt.width);
+
+        ctx.hpp<<';'<<std::endl;
+        if(dt.had_default) cons = true;
+    }
+    return cons;
+}
+
+void InitData(TargetCodegenCTX& ctx, const DataEntry& de, int tabs, bool custom = false, uintmax_t with = 0){
+    for(const Data& dt : de.data){
+        if(!dt.had_default && !custom) continue;
+        WriteTabs(ctx.hpp, tabs);
+        ctx.hpp<<dt.name<<" = ";
+        if(custom){
+            ctx.hpp<<std::to_string(with);
+        }
+        else{
+            ctx.hpp<<std::to_string(dt.def_init);
+        }
+        ctx.hpp<<';'<<std::endl;
+    }
 }
 
 #define mac_str(x) #x
@@ -177,7 +214,15 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
     }
 
     for(const RegisterEntry& regen : ctx.inp.registers){
+        bool cons = false;
         ctx.hpp<<"struct "<<"Register_"<<regen.name<<" : public RegisterBase"<<'{'<<std::endl;
+
+        for(size_t i : regen.dataIndeces){
+            if(WriteData(ctx, ctx.inp.datas[i], 1)){
+                cons = true;
+            }
+        }
+        if(regen.inits.size() > 0) cons = true;
 
         ctx.hpp<<'\t'<<"Register_"<<regen.name<<'('<<')'<<" : "<<"RegisterBase"<<'(';
 
@@ -192,7 +237,7 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
 
         ctx.hpp<<buff<<')'<<'{';
 
-        if(regen.init.empty()){
+        if(!cons){
             ctx.hpp<<'}'<<std::endl;
         }
         else{
@@ -200,6 +245,17 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
 
             for(const std::string& sw : regen.init){
                 ctx.hpp<<'\t'<<'\t'<<sw<<std::endl;
+            }
+
+            for(size_t i : regen.dataIndeces){
+                InitData(ctx, ctx.inp.datas[i], 2);
+            }
+
+            for(const DataInitEntry& din : regen.inits){
+                if(!din.init){
+                    continue;
+                }
+                InitData(ctx, ctx.inp.datas[din.di], 2, true, din.val);
             }
 
             ctx.hpp<<'\t'<<'}'<<std::endl;
@@ -215,6 +271,7 @@ bool TargetCodegen::output(){
     if(!input.file){
         return true;
     }
+    if(input.target.empty()) return true;
 
     std::filesystem::path fullpath = input.file.get_path();
 

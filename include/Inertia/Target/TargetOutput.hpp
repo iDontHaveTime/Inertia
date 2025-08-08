@@ -3,16 +3,38 @@
 
 #include "Inertia/Mem/Archmem.hpp"
 #include "Inertia/Target/TargetFile.hpp"
+#include <cstdint>
 #include <string_view>
 #include <vector>
 
 namespace Inertia{
+    enum class DataType{
+        BIT,
+    };
+    struct DataInitEntry{
+        bool init;
+        uintmax_t val;
+        size_t di;
+    };
+    struct Data{
+        std::string_view name;
+        DataType type = DataType::BIT;
+        int width = 1;
+        bool had_default = false;
+        uintmax_t def_init = 0;
+    };
+    struct DataEntry{
+        std::string_view name;
+        std::vector<Data> data;
+    };
     struct RegisterEntry{
         std::string name;
         int classid = 0;
         int width = 0;
 
         std::vector<std::string> init;
+        std::vector<size_t> dataIndeces;
+        std::vector<DataInitEntry> inits;
 
         std::string_view parent;
     };
@@ -32,6 +54,7 @@ namespace Inertia{
 
         std::vector<std::string_view> regclasses;
         std::vector<RegisterEntry> registers;
+        std::vector<DataEntry> datas;
         std::vector<CPPInclude> cppinc;
 
         TargetOutput(const TargetFile& lfile) noexcept : file(lfile){};

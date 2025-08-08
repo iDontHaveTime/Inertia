@@ -382,9 +382,9 @@ int LexerTest(){
     }
 
     Inertia::Lexer lexr;
-    lexr.line_comment = "//";
-    lexr.multiline_start = "/'*";
-    lexr.multiline_end = "/'*"; colons inserted due to how C++ comments work
+    lexr.line_comment = TokenType::SlashSlash;
+    lexr.multiline_end = TokenType::StarSlash;
+    lexr.multiline_start = TokenType::SlashStar;
     
     Inertia::LexerOutput out = lexr.lex(file);
     return 0;

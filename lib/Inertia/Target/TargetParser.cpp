@@ -7,6 +7,8 @@
 #include "Inertia/Target/TargetFile.hpp"
 #include "Inertia/Target/TargetKeywords.hpp"
 #include "Inertia/Target/TargetOutput.hpp"
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 
@@ -14,7 +16,8 @@ namespace Inertia{
 
 enum class TargetParserType{
     REGCLASS,
-    REGISTER
+    REGISTER,
+    DATAENT,
 };
 
 struct TargetParserCTX{
@@ -128,6 +131,10 @@ bool ParseEndian(TargetParserCTX& ctx) noexcept{
     return false;
 }
 
+uintmax_t get_token_value(TargetParserCTX& ctx){
+    return std::stoull(ctx.ss.current().view_str(), nullptr, GetTypeBase(ctx.ss.current().type));
+}
+
 bool ParseRegclass(TargetParserCTX& ctx){
     consume(ctx);
 
@@ -188,7 +195,7 @@ bool ParseRegister(TargetParserCTX& ctx){
                 return true;
             }
 
-            newEntry.width = std::stoi(ctx.ss.current().view_str(), nullptr, GetTypeBase(ctx.ss.current().type));
+            newEntry.width = get_token_value(ctx);
             consume(ctx);
         }
         else if(expect((int)TargetKeyword::PARENT, ctx.ss) == expecterr::SUCCESS){
@@ -258,7 +265,45 @@ bool ParseRegister(TargetParserCTX& ctx){
                 }
                 consume(ctx);
             }
-
+        }
+        else{
+            auto it = ctx.lookup.find(ctx.ss.current().view());
+            if(it == ctx.lookup.end()){
+                consume(ctx);
+                continue;
+            }
+            if(it->second == TargetParserType::DATAENT){
+                size_t datai;
+                for(size_t i = 0; i < ctx.tout.datas.size(); i++){
+                    if(ctx.tout.datas[i].name == it->first){
+                        newEntry.dataIndeces.push_back(i);
+                        datai = i;
+                        break;
+                    }
+                }
+                consume(ctx);
+                if(expect(TokenType::LeftParen, ctx.ss) == expecterr::SUCCESS){
+                    consume(ctx);
+                    while(1){
+                        if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                            break;
+                        }
+                        else if(expect(TokenType::Star, ctx.ss) == expecterr::SUCCESS){
+                            newEntry.inits.push_back({.init = false, .val = 0, .di = datai});
+                            consume(ctx);
+                        }
+                        else{
+                            if(NumberString(ctx.ss.current().type)){
+                                newEntry.inits.push_back({.init = true, .val = get_token_value(ctx), .di = datai});
+                            }
+                            consume(ctx);
+                        }
+                    }
+                }
+            }
+            else{
+                consume(ctx);
+            }
         }
     }
     
@@ -294,6 +339,83 @@ bool ParseCPPINC(TargetParserCTX& ctx){
     return false;
 }
 
+bool ParseData(TargetParserCTX& ctx){
+    consume(ctx);
+
+    if(!SaveableString(ctx.ss.current().type)) return {};
+
+    std::string_view name;
+
+    if(expect_next(TokenType::LeftBrace, ctx.ss) != expecterr::SUCCESS){
+        return true;
+    }
+    else{
+        name = ctx.ss.current().view();
+        ctx.lookup[name] = TargetParserType::DATAENT;
+        consume(ctx);
+    }
+
+    consume(ctx);
+
+    DataEntry newData;
+    newData.name = name;
+
+    while(1){
+        if(ctx.ss.eof()) return true;
+        if(expect(TokenType::RightBrace, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            ctx.tout.datas.push_back(newData);
+            return false;
+        }
+        else if(expect((int)TargetKeyword::BIT, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            Data dt;
+            dt.type = DataType::BIT;
+            dt.had_default = false;
+            if(expect(TokenType::Left, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+                if(!NumberString(ctx.ss.current().type)){
+                    continue;
+                }
+                dt.width = get_token_value(ctx);
+                if(dt.width > 64) dt.width = 64;
+                consume(ctx);
+                if(expect(TokenType::Right, ctx.ss) == expecterr::SUCCESS){
+                    consume(ctx);
+                }
+                else{
+                    continue;
+                }
+            }
+            else{
+                dt.width = 1;
+            }
+
+            if(!SaveableString(ctx.ss.current().type)){
+                continue;
+            }
+
+            dt.name = ctx.ss.current().view();
+            consume(ctx);
+
+            if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
+                dt.had_default = true;
+                consume(ctx);
+                if(!NumberString(ctx.ss.current().type)) continue;
+                dt.def_init = get_token_value(ctx);
+                consume(ctx);
+            }
+
+            newData.data.push_back(dt);
+        }
+        else{
+            consume(ctx);
+        }
+    }
+
+    return true;
+}
+
 TargetOutput TargetParser::parse(const LexerOutput& lout){
     TargetParserCTX ctx(file, lout);
     ctx.cppinj = cpp_injections;
@@ -303,6 +425,11 @@ TargetOutput TargetParser::parse(const LexerOutput& lout){
 
         if(tt == TokenType::Keyword){
             switch((TargetKeyword)ctx.ss.current().getKeyword()){
+                case TargetKeyword::DATA:
+                    if(ParseData(ctx)){
+                        return ctx.tout;
+                    }
+                    break;
                 case TargetKeyword::TARGET:
                     if(ParseTarget(ctx)){
                         return ctx.tout;
