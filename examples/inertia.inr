@@ -2,8 +2,6 @@
 // This is a line comment
 
 func int<32> @main()
-    alloc int<32> x
-
-
+    
     ret int<32> 0
 end

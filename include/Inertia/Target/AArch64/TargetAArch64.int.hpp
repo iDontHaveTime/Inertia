@@ -16,21 +16,27 @@ struct Register_w0 : public RegisterBase{
 	Register_w0() : RegisterBase("w0", (int)RegisterClassAArch64::GPR64, 32){}
 };
 struct TargetBaseAArch64 : public TargetBase{
+	char* buff = nullptr;
 	Register_x0* x0;
 	Register_w0* w0;
 	TargetBaseAArch64() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN){
 		init();
 	}
 	void init() override{
-		x0 = new Register_x0();
+		buff = new char[(sizeof(Register_x0)+sizeof(Register_w0))];
+		char* buff_ptr = buff;
+		x0 = new(buff_ptr) Register_x0();
+		buff_ptr += sizeof(Register_x0);
 		reg_database["x0"] = x0;
-		w0 = new Register_w0();
+		w0 = new(buff_ptr) Register_w0();
+		buff_ptr += sizeof(Register_w0);
 		reg_database["w0"] = w0;
 		w0->set_parent(x0);
 	}
-	~TargetBaseAArch64() override{
-		delete x0;
-		delete w0;
+	~TargetBaseAArch64() noexcept override{
+		w0->~Register_w0();
+		x0->~Register_x0();
+		delete[] buff;
 	}
 };
 }

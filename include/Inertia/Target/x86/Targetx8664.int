@@ -3,3 +3,6 @@ target = x86_64 // sets the target's name
 endian = little // sets the target's endian
 
 // instructions design
+instr mov64rr(GPR64 dest, GPR64 src){
+    
+}
