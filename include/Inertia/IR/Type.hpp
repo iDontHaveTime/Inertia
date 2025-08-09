@@ -110,7 +110,7 @@ namespace Inertia{
         ArenaAlloc arena;
         std::unordered_map<TypeKey, ArenaPointer<Type>> cache;
     public:
-        TypeAllocator(size_t initialSize = 8192) : arena(initialSize){};
+        TypeAllocator(size_t initialSize = 8192) noexcept : arena(initialSize){};
 
         ArenaPointer<Type> getVoid(void){
             TypeKey key(Type::VOID);

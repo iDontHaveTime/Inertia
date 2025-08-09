@@ -9,6 +9,7 @@
 #include "Inertia/Mem/Arenalloc.hpp"
 #include "Inertia/Lexer/TokenExpect.hpp"
 #include <cstddef>
+#include <cstdint>
 
 namespace Inertia{
 
@@ -16,9 +17,9 @@ struct ParserContext{
     Frame frame;
     const LexerFile* file;
     ArenaAlloc* allocator;
-    expectgroup<IRKeyword, 8> IRTypes = {
-        IRKeyword::I8, IRKeyword::I16, IRKeyword::I32, IRKeyword::I64,
-        IRKeyword::FLOAT, IRKeyword::DOUBLE, IRKeyword::PTR, IRKeyword::VOID
+    expectgroup<IRKeyword, 5> IRTypes = {
+        IRKeyword::INT, IRKeyword::FLOAT, IRKeyword::DOUBLE, 
+        IRKeyword::PTR, IRKeyword::VOID
     };
     expectgroup<TokenType, 5> IRLiterals = {
         TokenType::CharLiteral, TokenType::IntegerLiteral, TokenType::BinaryLiteral,
@@ -40,30 +41,92 @@ inline void consume(TokenStream& ss) noexcept{
     ss<<1;
 }
 
+uint8_t hexchar_to_val(char c) noexcept{
+    if(c <= '9' && c >= '0') return c - '0';
+    if(c <= 'F' && c >= 'A') return (c - 'A') + 10;
+    if(c <= 'f' && c >= 'a') return (c - 'a') + 10;
+    return (uint8_t)-1;
+}
+
+uintmax_t GetTokenValue(TokenStream& ss){
+    uintmax_t val = 0;
+    std::string_view str = ss.current().view();
+    if(str.empty()) return 0;
+    switch(ss.current().type){
+        case TokenType::CharLiteral:
+            for(char c : str){
+                val <<= 8;
+                val += c;
+            }
+            break;
+        case TokenType::IntegerLiteral:
+            for(char c : str){
+                val *= 10;
+                val += c - '0';
+            }
+            break;
+        case TokenType::HexLiteral:{
+                size_t i = 0;
+                if(str[0] == '0' && (str[1] == 'x' || str[1] == 'X')) i += 2;
+                if(i >= str.length()) return 0;
+                for(; i < str.length(); i++){
+                    val <<= 4;
+                    val += hexchar_to_val(str[i]);
+                }
+            }
+            break;
+        case TokenType::BinaryLiteral:{
+                size_t i = 0;
+                if(str[0] == '0' && (str[1] == 'b' || str[1] == 'B')) i += 2;
+                if(i >= str.length()) return 0;
+                for(; i < str.length(); i++){
+                    val <<= 1;
+                    val += str[i] - '0';
+                }
+            }
+            break;
+        default: return 0;
+    }
+    return val;
+}
+
 ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
     ArenaReference<Type> ref;
     if(ctx.IRTypes.expect((IRKeyword)ss.current().getKeyword()) == expecterr::SUCCESS){
         switch((IRKeyword)ss.current().getKeyword()){
-            case IRKeyword::I8:
-                ref = talloc.getInteger(8);
-                break;
-            case IRKeyword::I16:
-                ref = talloc.getInteger(16);
-                break;
-            case IRKeyword::I32:
-                ref = talloc.getInteger(32);
-                break;
-            case IRKeyword::I64:
-                ref = talloc.getInteger(64);
+            case IRKeyword::INT:
+                consume(ss);
+                if(expect(TokenType::Left, ss) == expecterr::SUCCESS){
+                    consume(ss);
+                }
+                else{
+                    return {};
+                }
+                if(ctx.IRLiterals.expect(ss.current().type) == expecterr::SUCCESS){
+                    ref = talloc.getInteger(GetTokenValue(ss));
+                    consume(ss);
+                }
+                else{
+                    return {};
+                }
+                if(expect(TokenType::Right, ss) == expecterr::SUCCESS){
+                    consume(ss);
+                }
+                else{
+                    return {};
+                }
                 break;
             case IRKeyword::FLOAT:
                 ref = talloc.getFloat(FloatType::FLOAT_ACC);
+                consume(ss);
                 break;
             case IRKeyword::DOUBLE:
                 ref = talloc.getFloat(FloatType::DOUBLE_ACC);
+                consume(ss);
                 break;
             case IRKeyword::VOID:
                 ref = talloc.getVoid();
+                consume(ss);
                 break;
             default:
                 return {};
@@ -72,7 +135,6 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
     else{
         return {};
     }
-    consume(ss);
 
     while(ss.current().type == TokenType::Star){
         ref = talloc.getPointer(ref.get());

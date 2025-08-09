@@ -1,6 +1,5 @@
+// this file implicitly includes x86/Targetx8664reg.int
 target = x86_64 // sets the target's name
 endian = little // sets the target's endian
 
-instr mov(GPR64 dest, GPR64 src){
-    format = "movq %$0, %$1"(src.name, dest.name)
-}
+// instructions design

@@ -50,8 +50,8 @@ namespace Inertia{
             return *this;
         }
 
-        Token(const char* s, const char*  e, TokenType t, size_t l) : line(l), start(s), end(e), type(t){};
-        Token(const char*  s, const char*  e, TokenType t, size_t l, uint32_t ex) : line(l), start(s), end(e), extraType(ex), type(t){};
+        Token(const char* s, const char*  e, TokenType t, size_t l) noexcept : line(l), start(s), end(e), type(t){};
+        Token(const char*  s, const char*  e, TokenType t, size_t l, uint32_t ex) noexcept : line(l), start(s), end(e), extraType(ex), type(t){};
         Token(const char*  s, const char*  e, TokenType t, size_t l, TokenBuild& bld) : line(l), start(s), end(e), type(t){
             str = std::string(bld.data(), bld.index);
         };
@@ -62,7 +62,7 @@ namespace Inertia{
             return std::string(start, end - start);
         }
 
-        inline std::string_view view() const{
+        inline std::string_view view() const noexcept{
             if(type == TokenType::TokenEOF) return "EOF";
             if(type == TokenType::StringLiteral || type == TokenType::CharLiteral) return str;
             return std::string_view(start, end - start);

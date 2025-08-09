@@ -48,9 +48,9 @@ namespace Inertia{
             return res;
         }
 
-        const Token& operator[](size_t index) const{
+        const Token& operator[](size_t index) const noexcept{
             if(index >= tokens.size()){
-                throw std::out_of_range("Out of range in LexerOutput tokens");
+                return dummyTok;
             }
             return tokens[index];
         }

@@ -35,21 +35,15 @@ namespace Inertia{
         std::string_view name;
         std::vector<Data> data;
     };
-    struct InstructionOperand{
-        std::string_view name;
-        TargetParserType type;
-    };
     struct InstructionEntry{
-        std::string_view name;
-        std::string_view format;
-        std::vector<InstructionOperand> ops;
+        
     };
     struct ExtensionEntry{
         std::string_view name;
     };
     struct RegisterEntry{
         std::string name;
-        int classid = 0;
+        std::string_view classname;
         int width = 0;
 
         std::vector<std::string> init;

@@ -1,9 +1,9 @@
 /* This is a block comment */
 // This is a line comment
 
-func i32 @main()
-    alloc i32 x
+func int<32> @main()
+    alloc int<32> x
 
 
-    ret i32 0
+    ret int<32> 0
 end

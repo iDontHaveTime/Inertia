@@ -13,385 +13,385 @@ enum class RegisterClassx86_64{
 };
 struct Register_rax : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rax() : RegisterBase("rax", 0, 64){
+	Register_rax() : RegisterBase("rax", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 0;
 	}
 };
 struct Register_eax : public RegisterBase{
 	uint64_t regid : 3;
-	Register_eax() : RegisterBase("eax", 1, 32){
+	Register_eax() : RegisterBase("eax", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 0;
 	}
 };
 struct Register_ax : public RegisterBase{
 	uint64_t regid : 3;
-	Register_ax() : RegisterBase("ax", 2, 16){
+	Register_ax() : RegisterBase("ax", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 0;
 	}
 };
 struct Register_al : public RegisterBase{
 	uint64_t regid : 3;
-	Register_al() : RegisterBase("al", 3, 8){
+	Register_al() : RegisterBase("al", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 0;
 	}
 };
 struct Register_rcx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rcx() : RegisterBase("rcx", 0, 64){
+	Register_rcx() : RegisterBase("rcx", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 1;
 	}
 };
 struct Register_ecx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_ecx() : RegisterBase("ecx", 1, 32){
+	Register_ecx() : RegisterBase("ecx", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 1;
 	}
 };
 struct Register_cx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_cx() : RegisterBase("cx", 2, 16){
+	Register_cx() : RegisterBase("cx", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 1;
 	}
 };
 struct Register_cl : public RegisterBase{
 	uint64_t regid : 3;
-	Register_cl() : RegisterBase("cl", 3, 8){
+	Register_cl() : RegisterBase("cl", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 1;
 	}
 };
 struct Register_rdx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rdx() : RegisterBase("rdx", 0, 64){
+	Register_rdx() : RegisterBase("rdx", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 2;
 	}
 };
 struct Register_edx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_edx() : RegisterBase("edx", 1, 32){
+	Register_edx() : RegisterBase("edx", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 2;
 	}
 };
 struct Register_dx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_dx() : RegisterBase("dx", 2, 16){
+	Register_dx() : RegisterBase("dx", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 2;
 	}
 };
 struct Register_dl : public RegisterBase{
 	uint64_t regid : 3;
-	Register_dl() : RegisterBase("dl", 3, 8){
+	Register_dl() : RegisterBase("dl", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 2;
 	}
 };
 struct Register_rbx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rbx() : RegisterBase("rbx", 0, 64){
+	Register_rbx() : RegisterBase("rbx", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 3;
 	}
 };
 struct Register_ebx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_ebx() : RegisterBase("ebx", 1, 32){
+	Register_ebx() : RegisterBase("ebx", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 3;
 	}
 };
 struct Register_bx : public RegisterBase{
 	uint64_t regid : 3;
-	Register_bx() : RegisterBase("bx", 2, 16){
+	Register_bx() : RegisterBase("bx", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 3;
 	}
 };
 struct Register_bl : public RegisterBase{
 	uint64_t regid : 3;
-	Register_bl() : RegisterBase("bl", 3, 8){
+	Register_bl() : RegisterBase("bl", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 3;
 	}
 };
 struct Register_rsp : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rsp() : RegisterBase("rsp", 0, 64){
+	Register_rsp() : RegisterBase("rsp", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 4;
 	}
 };
 struct Register_esp : public RegisterBase{
 	uint64_t regid : 3;
-	Register_esp() : RegisterBase("esp", 1, 32){
+	Register_esp() : RegisterBase("esp", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 4;
 	}
 };
 struct Register_sp : public RegisterBase{
 	uint64_t regid : 3;
-	Register_sp() : RegisterBase("sp", 2, 16){
+	Register_sp() : RegisterBase("sp", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 4;
 	}
 };
 struct Register_spl : public RegisterBase{
 	uint64_t regid : 3;
-	Register_spl() : RegisterBase("spl", 3, 8){
+	Register_spl() : RegisterBase("spl", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 4;
 	}
 };
 struct Register_rbp : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rbp() : RegisterBase("rbp", 0, 64){
+	Register_rbp() : RegisterBase("rbp", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 5;
 	}
 };
 struct Register_ebp : public RegisterBase{
 	uint64_t regid : 3;
-	Register_ebp() : RegisterBase("ebp", 1, 32){
+	Register_ebp() : RegisterBase("ebp", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 5;
 	}
 };
 struct Register_bp : public RegisterBase{
 	uint64_t regid : 3;
-	Register_bp() : RegisterBase("bp", 2, 16){
+	Register_bp() : RegisterBase("bp", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 5;
 	}
 };
 struct Register_bpl : public RegisterBase{
 	uint64_t regid : 3;
-	Register_bpl() : RegisterBase("bpl", 3, 8){
+	Register_bpl() : RegisterBase("bpl", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 5;
 	}
 };
 struct Register_rsi : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rsi() : RegisterBase("rsi", 0, 64){
+	Register_rsi() : RegisterBase("rsi", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 6;
 	}
 };
 struct Register_esi : public RegisterBase{
 	uint64_t regid : 3;
-	Register_esi() : RegisterBase("esi", 1, 32){
+	Register_esi() : RegisterBase("esi", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 6;
 	}
 };
 struct Register_si : public RegisterBase{
 	uint64_t regid : 3;
-	Register_si() : RegisterBase("si", 2, 16){
+	Register_si() : RegisterBase("si", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 6;
 	}
 };
 struct Register_sil : public RegisterBase{
 	uint64_t regid : 3;
-	Register_sil() : RegisterBase("sil", 3, 8){
+	Register_sil() : RegisterBase("sil", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 6;
 	}
 };
 struct Register_rdi : public RegisterBase{
 	uint64_t regid : 3;
-	Register_rdi() : RegisterBase("rdi", 0, 64){
+	Register_rdi() : RegisterBase("rdi", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 7;
 	}
 };
 struct Register_edi : public RegisterBase{
 	uint64_t regid : 3;
-	Register_edi() : RegisterBase("edi", 1, 32){
+	Register_edi() : RegisterBase("edi", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 7;
 	}
 };
 struct Register_di : public RegisterBase{
 	uint64_t regid : 3;
-	Register_di() : RegisterBase("di", 2, 16){
+	Register_di() : RegisterBase("di", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 7;
 	}
 };
 struct Register_dil : public RegisterBase{
 	uint64_t regid : 3;
-	Register_dil() : RegisterBase("dil", 3, 8){
+	Register_dil() : RegisterBase("dil", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 7;
 	}
 };
 struct Register_r8 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r8() : RegisterBase("r8", 0, 64){
+	Register_r8() : RegisterBase("r8", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 0;
 	}
 };
 struct Register_r8d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r8d() : RegisterBase("r8d", 1, 32){
+	Register_r8d() : RegisterBase("r8d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 0;
 	}
 };
 struct Register_r8w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r8w() : RegisterBase("r8w", 2, 16){
+	Register_r8w() : RegisterBase("r8w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 0;
 	}
 };
 struct Register_r8b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r8b() : RegisterBase("r8b", 3, 8){
+	Register_r8b() : RegisterBase("r8b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 0;
 	}
 };
 struct Register_r9 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r9() : RegisterBase("r9", 0, 64){
+	Register_r9() : RegisterBase("r9", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 1;
 	}
 };
 struct Register_r9d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r9d() : RegisterBase("r9d", 1, 32){
+	Register_r9d() : RegisterBase("r9d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 1;
 	}
 };
 struct Register_r9w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r9w() : RegisterBase("r9w", 2, 16){
+	Register_r9w() : RegisterBase("r9w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 1;
 	}
 };
 struct Register_r9b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r9b() : RegisterBase("r9b", 3, 8){
+	Register_r9b() : RegisterBase("r9b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 1;
 	}
 };
 struct Register_r10 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r10() : RegisterBase("r10", 0, 64){
+	Register_r10() : RegisterBase("r10", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 2;
 	}
 };
 struct Register_r10d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r10d() : RegisterBase("r10d", 1, 32){
+	Register_r10d() : RegisterBase("r10d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 2;
 	}
 };
 struct Register_r10w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r10w() : RegisterBase("r10w", 2, 16){
+	Register_r10w() : RegisterBase("r10w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 2;
 	}
 };
 struct Register_r10b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r10b() : RegisterBase("r10b", 3, 8){
+	Register_r10b() : RegisterBase("r10b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 2;
 	}
 };
 struct Register_r11 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r11() : RegisterBase("r11", 0, 64){
+	Register_r11() : RegisterBase("r11", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 3;
 	}
 };
 struct Register_r11d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r11d() : RegisterBase("r11d", 1, 32){
+	Register_r11d() : RegisterBase("r11d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 3;
 	}
 };
 struct Register_r11w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r11w() : RegisterBase("r11w", 2, 16){
+	Register_r11w() : RegisterBase("r11w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 3;
 	}
 };
 struct Register_r11b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r11b() : RegisterBase("r11b", 3, 8){
+	Register_r11b() : RegisterBase("r11b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 3;
 	}
 };
 struct Register_r12 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r12() : RegisterBase("r12", 0, 64){
+	Register_r12() : RegisterBase("r12", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 4;
 	}
 };
 struct Register_r12d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r12d() : RegisterBase("r12d", 1, 32){
+	Register_r12d() : RegisterBase("r12d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 4;
 	}
 };
 struct Register_r12w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r12w() : RegisterBase("r12w", 2, 16){
+	Register_r12w() : RegisterBase("r12w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 4;
 	}
 };
 struct Register_r12b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r12b() : RegisterBase("r12b", 3, 8){
+	Register_r12b() : RegisterBase("r12b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 4;
 	}
 };
 struct Register_r13 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r13() : RegisterBase("r13", 0, 64){
+	Register_r13() : RegisterBase("r13", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 5;
 	}
 };
 struct Register_r13d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r13d() : RegisterBase("r13d", 1, 32){
+	Register_r13d() : RegisterBase("r13d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 5;
 	}
 };
 struct Register_r13w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r13w() : RegisterBase("r13w", 2, 16){
+	Register_r13w() : RegisterBase("r13w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 5;
 	}
 };
 struct Register_r13b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r13b() : RegisterBase("r13b", 3, 8){
+	Register_r13b() : RegisterBase("r13b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 5;
 	}
 };
 struct Register_r14 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r14() : RegisterBase("r14", 0, 64){
+	Register_r14() : RegisterBase("r14", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 6;
 	}
 };
 struct Register_r14d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r14d() : RegisterBase("r14d", 1, 32){
+	Register_r14d() : RegisterBase("r14d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 6;
 	}
 };
 struct Register_r14w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r14w() : RegisterBase("r14w", 2, 16){
+	Register_r14w() : RegisterBase("r14w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 6;
 	}
 };
 struct Register_r14b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r14b() : RegisterBase("r14b", 3, 8){
+	Register_r14b() : RegisterBase("r14b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 6;
 	}
 };
 struct Register_r15 : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r15() : RegisterBase("r15", 0, 64){
+	Register_r15() : RegisterBase("r15", (int)RegisterClassx86_64::GPR64, 64){
 		regid = 7;
 	}
 };
 struct Register_r15d : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r15d() : RegisterBase("r15d", 1, 32){
+	Register_r15d() : RegisterBase("r15d", (int)RegisterClassx86_64::GPR32, 32){
 		regid = 7;
 	}
 };
 struct Register_r15w : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r15w() : RegisterBase("r15w", 2, 16){
+	Register_r15w() : RegisterBase("r15w", (int)RegisterClassx86_64::GPR16, 16){
 		regid = 7;
 	}
 };
 struct Register_r15b : public RegisterBase{
 	uint64_t regid : 3;
-	Register_r15b() : RegisterBase("r15b", 3, 8){
+	Register_r15b() : RegisterBase("r15b", (int)RegisterClassx86_64::GPR8, 8){
 		regid = 7;
 	}
 };

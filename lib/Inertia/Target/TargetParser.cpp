@@ -248,12 +248,7 @@ bool ParseRegister(TargetParserCTX& ctx){
                 return true;
             }
 
-            for(size_t i = 0; i < ctx.tout.regclasses.size(); i++){
-                if(ctx.tout.regclasses[i] == tofind){
-                    newEntry.classid = (int)i;
-                    break;
-                }
-            }
+            newEntry.classname = tofind;
             
             consume(ctx);
         }
@@ -440,60 +435,7 @@ bool ParseData(TargetParserCTX& ctx){
 bool ParseInstruction(TargetParserCTX& ctx){
     consume(ctx);
 
-    if(!SaveableString(ctx.ss.current().type)) return true;
-
-    std::string_view name = ctx.ss.current().view();
-    consume(ctx);
-
-    if(expect(TokenType::LeftParen, ctx.ss) == expecterr::SUCCESS){
-        consume(ctx);
-    }
-    else{
-        return true;
-    }
-
-    ctx.lookup[name] = TargetParserType::INSTRUCTION;
-    InstructionEntry entry;
-    entry.name = name;
-
-    while(1){
-        auto it = ctx.lookup.find(ctx.ss.current().view());
-        if(it == ctx.lookup.end()) return true;
-        InstructionOperand opr;
-        opr.type = it->second;
-        consume(ctx);
-        if(!SaveableString(ctx.ss.current().type)) return true;
-        opr.name = ctx.ss.current().view();
-        consume(ctx);
-        entry.ops.push_back(opr);
-        if(expect(TokenType::Comma, ctx.ss) == expecterr::SUCCESS){
-            consume(ctx);
-        }
-        else{
-            if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
-                consume(ctx);
-                break;
-            }
-            else{
-                return true;
-            }
-        }
-    }
-
-    if(expect(TokenType::LeftBrace, ctx.ss) != expecterr::SUCCESS){
-        return true;
-    }
-
-    while(1){
-        if(expect(TokenType::RightBrace, ctx.ss) == expecterr::SUCCESS){
-            consume(ctx);
-            break;
-        }
-        else{
-            consume(ctx);
-        }
-    }
-    ctx.tout.instructions.push_back(entry);
+    
 
     return false;
 }

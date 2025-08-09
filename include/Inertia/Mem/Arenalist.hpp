@@ -20,7 +20,7 @@ namespace Inertia{
         ArenaLList() = default;
         ArenaLList(ArenaAlloc* alloc) noexcept : allocator(alloc){};
 
-        void set_arena(ArenaAlloc* alloc){
+        void set_arena(ArenaAlloc* alloc) noexcept{
             head.unreference();
             tail.unreference();
             allocator = alloc;

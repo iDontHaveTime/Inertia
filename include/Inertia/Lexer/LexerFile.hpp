@@ -21,8 +21,8 @@ namespace Inertia{
         std::string_view view;
         const LexerFile* parent;
 
-        LexerFileChunk() : view(){};
-        LexerFileChunk(const char* data, size_t len, const LexerFile* _parent) : view(data, len), parent(_parent){};
+        LexerFileChunk() noexcept : view(){};
+        LexerFileChunk(const char* data, size_t len, const LexerFile* _parent) noexcept : view(data, len), parent(_parent){};
 
         char operator[](size_t i) const{
             if(i >= view.length()){
@@ -86,7 +86,7 @@ namespace Inertia{
             return path;
         }
 
-        std::pair<LexerFileChunk, LexerFileChunk> split(size_t at, bool* result = nullptr) const{
+        std::pair<LexerFileChunk, LexerFileChunk> split(size_t at, bool* result = nullptr) const noexcept{
             if(!file || length <= 1){
                 if(result) *result = false;
                 std::cerr<<"Splitting file into chunks failed"<<std::endl;
@@ -114,7 +114,7 @@ namespace Inertia{
         LexerFile(const LexerFile&) = delete;
         LexerFile& operator=(const LexerFile&) = delete;
 
-        LexerFile& operator=(LexerFile&& rhs){
+        LexerFile& operator=(LexerFile&& rhs) noexcept{
             if(this != &rhs){
                 clear();
                 file = rhs.file;
@@ -175,7 +175,7 @@ namespace Inertia{
 
         char operator[](size_t i) const{
             if(i >= length){
-                throw std::out_of_range("Access in lexer file is out of range");
+                throw std::out_of_range("Access in lexer file is out of range"); // was used for debugging
             }
             return *(file + i);
         }
@@ -186,9 +186,9 @@ namespace Inertia{
 
         friend std::ostream& operator<<(std::ostream& lhs, const LexerFile& rhs){
             if(!rhs) return lhs;
-            std::size_t len = rhs.len();
+            size_t len = rhs.len();
 
-            for(std::size_t i = 0; i < len; i++){
+            for(size_t i = 0; i < len; i++){
                 lhs.put(rhs[i]);
             }
             return lhs;

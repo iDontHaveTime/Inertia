@@ -39,9 +39,6 @@ namespace InertiaTarget{
         virtual void init();
         virtual ~TargetBase();
     };
-    struct InstructionBase{
-        std::string_view format;
-    };
 };
 
 #endif // INERTIA_TARGETBASE_HPP

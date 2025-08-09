@@ -258,11 +258,11 @@ namespace Inertia{
             return parent != nullptr;
         }
 
-        bool operator==(const ArenaReference& rhs){
+        bool operator==(const ArenaReference& rhs) const noexcept{
             return (i == rhs.i) && (parent == rhs.parent);
         }
 
-        bool operator!=(const ArenaReference& rhs){
+        bool operator!=(const ArenaReference& rhs) const noexcept{
             return (i != rhs.i) || (parent != rhs.parent);
         }
 
@@ -399,7 +399,7 @@ namespace Inertia{
             ptrs.clear();
         }
 
-        ~ArenaAlloc(){
+        ~ArenaAlloc() noexcept{
             if(!arena) return;
             if(!ptrs.empty()){
                 slime_pointers();

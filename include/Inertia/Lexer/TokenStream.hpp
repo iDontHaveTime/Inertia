@@ -43,7 +43,7 @@ namespace Inertia{
         TokenStream(const TokenStream&) noexcept = default;
         TokenStream& operator=(const TokenStream&) noexcept = default;
 
-        const Token& current() const{
+        const Token& current() const noexcept{
             if(!tokens){
                 return dummyTok;
             }
@@ -77,16 +77,16 @@ namespace Inertia{
             return index != 0;
         }
 
-        inline const Token& peek() const{
+        inline const Token& peek() const noexcept{
             if(!tokens) return dummyTok;
             return peekable() ? (*tokens)[index + 1] : tokens->tokens.back();
         }
 
-        inline const Token& peekf() const{
+        inline const Token& peekf() const noexcept{
             return peek();
         }
 
-        inline const Token& peekb() const{
+        inline const Token& peekb() const noexcept{
             if(!tokens) return dummyTok;
             return peekableb() ? (*tokens)[index - 1] : tokens->tokens.front();
         }

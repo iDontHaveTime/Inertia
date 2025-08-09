@@ -227,11 +227,11 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
         ctx.hpp<<'\t'<<"Register_"<<regen.name<<'('<<')'<<" : "<<"RegisterBase"<<'(';
 
         ctx.hpp<<'"'<<regen.name<<'"'<<", ";
+        
+        CastTo(ctx.hpp, "int");
+        ctx.hpp<<ctx.regcName<<"::"<<regen.classname<<", ";
+
         char buff[128];
-
-        snprintf(buff, 128, "%d", regen.classid);
-
-        ctx.hpp<<buff<<", ";
 
         snprintf(buff, 128, "%d", regen.width);
 

@@ -15,7 +15,7 @@ namespace Inertia{
         T group[n];
 
         template<typename... Args>
-        expectgroup(Args... args){
+        expectgroup(Args... args) noexcept{
             static_assert(sizeof...(args) == n, "Argument count not equals to N");
             size_t i = 0;
             auto unpack_args = [&](auto&&... vals){
@@ -24,7 +24,7 @@ namespace Inertia{
             unpack_args(args...);
         }
 
-        inline expecterr expect(T tt){
+        inline expecterr expect(T tt) noexcept{
             for(size_t i = 0; i < n; i++){
                 if(group[i] == tt){
                     return expecterr::SUCCESS;
