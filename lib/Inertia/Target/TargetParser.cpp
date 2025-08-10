@@ -471,14 +471,24 @@ bool ParseInstruction(TargetParserCTX& ctx){
         else{
             name = ctx.ss.current().view();
             auto it = ctx.lookup.find(name);
+            if(it == ctx.lookup.end()) return true;
             switch(it->second){
                 case TargetParserType::REGCLASS:
+                    consume(ctx);
+                    entry.ops.push_back({
+                        .name = name,
+                        .extra_name = ctx.ss.current().view(),
+                        .type = it->second
+                    });
+                    consume(ctx);
                     break;
                 case TargetParserType::REGISTER:
                     entry.ops.push_back({
                         .name = name,
+                        .extra_name = {},
                         .type = it->second
                     });
+                    consume(ctx);
                     break;
                 case TargetParserType::DATAENT: // these are left for future
                     [[fallthrough]];
@@ -488,6 +498,16 @@ bool ParseInstruction(TargetParserCTX& ctx){
                     [[fallthrough]];
                 case TargetParserType::EXTENSION:
                     return true;
+            }
+            if(expect(TokenType::Comma, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+                continue;
+            }
+            else if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                continue;
+            }
+            else{
+                return true;
             }
         }
     }

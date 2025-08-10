@@ -36,7 +36,8 @@ namespace Inertia{
         std::vector<Data> data;
     };
     struct InstructionOperand{
-        std::string_view name;
+        std::string_view name; // register/class name
+        std::string_view extra_name; // operand name
         TargetParserType type;
     };
     struct InstructionEntry{
