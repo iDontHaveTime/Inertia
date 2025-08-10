@@ -777,6 +777,10 @@ struct TargetBasex86_64 : public TargetBase{
 		delete[] buff;
 	}
 };
+void mov64rr();
+void mov32rr();
+void mov16rr();
+void mov8rr();
 }
 }
 

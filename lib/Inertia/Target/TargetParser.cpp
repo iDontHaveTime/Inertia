@@ -174,6 +174,7 @@ bool ParseExtension(TargetParserCTX& ctx){
     return false;
 }
 
+// register NAME {class, width} // also parent
 bool ParseRegister(TargetParserCTX& ctx){
     consume(ctx);
 
@@ -325,6 +326,7 @@ bool ParseRegister(TargetParserCTX& ctx){
     return false;
 }
 
+// __cpp_inc__ "HEADER" optionally <>
 bool ParseCPPINC(TargetParserCTX& ctx){
     consume(ctx);
     if(!ctx.cppinj) return true;
@@ -354,6 +356,7 @@ bool ParseCPPINC(TargetParserCTX& ctx){
     return false;
 }
 
+// data NAME {}
 bool ParseData(TargetParserCTX& ctx){
     consume(ctx);
 
@@ -432,10 +435,62 @@ bool ParseData(TargetParserCTX& ctx){
     return true;
 }
 
+// instr NAME(ARGS...){...}
+/* EXAMPLES:
+instr mul(rax, rdx, GPR64 src){
+    ...
+}
+*/
+
 bool ParseInstruction(TargetParserCTX& ctx){
     consume(ctx);
-
     
+    if(!SaveableString(ctx.ss.current().type)){
+        return true;
+    }
+
+    std::string_view name = ctx.ss.current().view();
+
+    InstructionEntry& entry = ctx.tout.instructions.emplace_back(name);
+    ctx.lookup[name] = TargetParserType::INSTRUCTION;
+    consume(ctx);
+
+    if(expect(TokenType::LeftParen, ctx.ss) == expecterr::SUCCESS){
+        consume(ctx);
+    }
+    else{
+        return true;
+    }
+
+    while(1){
+        if(ctx.ss.eof()) return true;
+        if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            break;
+        }
+        else{
+            name = ctx.ss.current().view();
+            auto it = ctx.lookup.find(name);
+            switch(it->second){
+                case TargetParserType::REGCLASS:
+                    break;
+                case TargetParserType::REGISTER:
+                    entry.ops.push_back({
+                        .name = name,
+                        .type = it->second
+                    });
+                    break;
+                case TargetParserType::DATAENT: // these are left for future
+                    [[fallthrough]];
+                case TargetParserType::DATAFIELD:
+                    [[fallthrough]];
+                case TargetParserType::INSTRUCTION:
+                    [[fallthrough]];
+                case TargetParserType::EXTENSION:
+                    return true;
+            }
+        }
+    }
 
     return false;
 }

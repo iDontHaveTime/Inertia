@@ -6,3 +6,20 @@ endian = little // sets the target's endian
 instr mov64rr(GPR64 dest, GPR64 src){
     
 }
+
+instr mov32rr(GPR32 dest, GPR32 src){
+    
+}
+
+instr mov16rr(GPR16 dest, GPR16 src){
+    
+}
+
+instr mov8rr(GPR8 dest, GPR8 src){
+    
+}
+
+/* mul concept?
+instr mul64r(rax, rdx, GPR64 src){} // mark rax and rdx into arguments
+
+*/
