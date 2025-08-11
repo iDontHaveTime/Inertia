@@ -52,7 +52,7 @@ int compile_aarch64t(){
     TargetParser tp(&lfile);
 
     auto lxo = lexr.lex(lfile);
-    
+
     auto out = tp.parse({&lxo});
 
     TargetCodegen cg(out);
@@ -77,6 +77,7 @@ int compile_x8664t(){
     LexerFile regfile("include/Inertia/Target/x86/Targetx8664reg.int");
 
     TargetParser tp(&lfile);
+    //tp.cpp_injections = true;
     auto lxo = lexr.lex(lfile);
     auto lxo2 = lexr.lex(regfile);
 

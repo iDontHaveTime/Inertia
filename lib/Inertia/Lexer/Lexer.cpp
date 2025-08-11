@@ -76,8 +76,10 @@ inline void EatToken(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
     bool isMultilineStart = (ctx.type == ctx.multiline_start);
     bool isLineComment = (ctx.type == ctx.linecom && ctx.com == CommentType::Line);
     bool isMultilineEnd = (ctx.type == ctx.multiline_end);
+    bool changedComment = false; 
 
     if(isMultilineStart && !ctx.incom){
+        changedComment = true;
         ctx.incom = true;
         ctx.com = CommentType::Block;
     }
@@ -98,7 +100,7 @@ inline void EatToken(LexerContext& ctx, LexerOutput& out, TokenBuild& build){
         out.push(ctx.tokStart, ctx.tokEnd, ctx.type, ctx.line);
     }
 
-    if(isMultilineEnd && ctx.incom){
+    if(isMultilineEnd && ctx.incom && !changedComment){
         ctx.incom = false;
         ctx.com = CommentType::Line;
     }

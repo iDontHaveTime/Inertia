@@ -335,18 +335,18 @@ bool ParseCPPINC(TargetParserCTX& ctx){
 
     if(tt != TokenType::CharLiteral && tt != TokenType::StringLiteral) return true;
 
-    std::string n = ctx.ss.current().view_str();
+    std::string_view n = ctx.ss.current().view();
 
     consume(ctx);
 
     tt = ctx.ss.current().type;
     if(tt != TokenType::Left){
-        ctx.tout.cppinc.emplace_back(std::move(n), CPPInclude::CPPIncludeType::Quotes);
+        ctx.tout.cppinc.emplace_back(n, CPPInclude::CPPIncludeType::Quotes);
         return false;
     }
 
     consume(ctx);
-    ctx.tout.cppinc.emplace_back(std::move(n), CPPInclude::CPPIncludeType::Arrows);
+    ctx.tout.cppinc.emplace_back(n, CPPInclude::CPPIncludeType::Arrows);
 
     tt = ctx.ss.current().type;
     if(tt == TokenType::Right){
@@ -512,6 +512,79 @@ bool ParseInstruction(TargetParserCTX& ctx){
         }
     }
 
+    if(expect(TokenType::LeftBrace, ctx.ss) == expecterr::SUCCESS){
+        consume(ctx);
+    }
+    else{
+        return true;
+    }
+
+    while(1){
+        if(ctx.ss.eof()) return true;
+        if(expect(TokenType::RightBrace, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            break;
+        }
+        else if(expect((int)TargetKeyword::FORMAT, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+            TokenType tt = ctx.ss.current().type;
+            if(tt != TokenType::StringLiteral && tt != TokenType::CharLiteral){
+                return true;
+            }
+            entry.fmt.fmt = ctx.ss.current().view();
+            
+            consume(ctx);
+            
+            // format
+            if(expect(TokenType::LeftParen, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+
+            while(1){
+                if(ctx.ss.eof()) return true;
+                if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                    consume(ctx);
+                    break;
+                }
+                else{
+                    InstructionFormatee& fmtee = entry.fmt.formatees.emplace_back(ctx.ss.current().view());
+                    consume(ctx);
+                    fmtee.field = InstructionFormatee::FormatField::NONE;
+                    if(expect(TokenType::Dot, ctx.ss) == expecterr::SUCCESS){
+                        consume(ctx);
+                        if(expect((int)TargetKeyword::NAME, ctx.ss) == expecterr::SUCCESS){
+                            fmtee.field = InstructionFormatee::FormatField::NAME;
+                            consume(ctx);
+                        }
+                    }
+                    if(expect(TokenType::Comma, ctx.ss) == expecterr::SUCCESS){
+                        consume(ctx);
+                        continue;
+                    }
+                    else if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                        consume(ctx);
+                        break;
+                    }
+                    else{
+                        return true;
+                    }
+                }
+            }
+        }
+        else{
+            consume(ctx);
+        }
+    }
+
     return false;
 }
 
@@ -529,41 +602,49 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
                 switch((TargetKeyword)ctx.ss.current().getKeyword()){
                     case TargetKeyword::EXTENSION:
                         if(ParseExtension(ctx)){
+                            std::cout<<"Error in parsing extension"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::INSTRUCTION:
                         if(ParseInstruction(ctx)){
+                            std::cout<<"Error in parsing instruction"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::DATA:
                         if(ParseData(ctx)){
+                            std::cout<<"Error in parsing data"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::TARGET:
                         if(ParseTarget(ctx)){
+                            std::cout<<"Error in parsing target"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::ENDIAN:
                         if(ParseEndian(ctx)){
+                            std::cout<<"Error in parsing endian"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::REGCLASS:
                         if(ParseRegclass(ctx)){
+                            std::cout<<"Error in parsing regclass"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::REGISTER:
                         if(ParseRegister(ctx)){
+                            std::cout<<"Error in parsing register"<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::CPPINC:
                         if(ParseCPPINC(ctx)){
+                            std::cout<<"Error in parsing cppinc"<<std::endl;
                             return ctx.tout;
                         }
                         break;

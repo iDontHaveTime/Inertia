@@ -7,7 +7,7 @@
 
 namespace InertiaTarget{
     struct RegisterBase{
-        std::string name;
+        std::string_view name;
         int classid;
         int width;
         RegisterBase* child = nullptr;
@@ -25,10 +25,9 @@ namespace InertiaTarget{
             other->parent = this;
         }
         
-        RegisterBase(const std::string& _name, int id, int w) noexcept : name(_name), classid(id), width(w){};
+        RegisterBase(const std::string_view& _name, int id, int w) noexcept : name(_name), classid(id), width(w){};
     };
     struct TargetBase{
-        
         std::unordered_map<std::string_view, RegisterBase*> reg_database;
         Inertia::Endian endian;
         

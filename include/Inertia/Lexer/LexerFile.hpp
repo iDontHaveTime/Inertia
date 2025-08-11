@@ -51,7 +51,8 @@ namespace Inertia{
     class LexerFile{
         std::filesystem::path path;
         char* file = nullptr;
-        size_t length;
+        size_t length : ((sizeof(size_t) * 8) - 1);
+        bool to_free : 1;
         int err = 0;
         enum LexerFileErrCodes{
             FILE_NOT_FOUND = 1, ALLOC_ERROR = 2, READ_ERROR = 3
@@ -59,18 +60,22 @@ namespace Inertia{
 
         inline void clear() noexcept{
             path.clear();
-            if(file){
+            if(file && to_free){
                 free(file);
-                file = nullptr;
             }
+            file = nullptr;
+            to_free = false;
             err = 0;
             length = 0;
         }
 
     public:
         LexerFile() noexcept : file(nullptr), length(0){}
+        LexerFile(char* buff, size_t n, bool _to_free_ = false) noexcept{
+            open(buff, n, _to_free_);
+        }
 
-        LexerFile(const std::filesystem::path& fileName) noexcept : file(nullptr), length(0){
+        LexerFile(const std::filesystem::path& fileName) : file(nullptr), length(0){
             open(fileName);
         }
 
@@ -126,8 +131,17 @@ namespace Inertia{
             return *this;
         }
 
+        void open(char* buff, size_t n, bool _free_ = false) noexcept{
+            if(!buff || !n) return;
+            clear();
+            file = buff;
+            length = n;
+            to_free = _free_;
+        }
+
         void open(const std::filesystem::path& fileName){
             clear();
+            to_free = true;
 
             if(fileName.empty()){
                 return;

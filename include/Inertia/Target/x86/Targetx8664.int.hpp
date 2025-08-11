@@ -777,10 +777,11 @@ struct TargetBasex86_64 : public TargetBase{
 		delete[] buff;
 	}
 };
-void mov64rr();
-void mov32rr();
-void mov16rr();
-void mov8rr();
+void mov64rr(const RegisterBase* dest, const RegisterBase* src);
+void mov32rr(const RegisterBase* dest, const RegisterBase* src);
+void mov16rr(const RegisterBase* dest, const RegisterBase* src);
+void mov8rr(const RegisterBase* dest, const RegisterBase* src);
+void mul64r(const Register_rax* rax, const Register_rdx* rdx, const RegisterBase* src);
 }
 }
 

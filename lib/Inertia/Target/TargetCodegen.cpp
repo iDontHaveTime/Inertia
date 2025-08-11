@@ -297,9 +297,28 @@ constexpr const char* func_type = "void";
 std::ofstream& WriteFunction(const InstructionEntry& ins, std::ofstream& stream){
     stream<<func_type<<' '<<ins.name<<'(';
 
+    for(const InstructionOperand& op : ins.ops){
+        if(op.type == TargetParserType::REGISTER){
+            stream<<"const Register_"<<op.name<<'*'<<' '<<op.name;
+        }
+        else if(op.type == TargetParserType::REGCLASS){
+            stream<<"const RegisterBase*"<<' '<<op.extra_name;
+        }
+        else{
+            continue;
+        }
+        if(&op != &ins.ops.back()){
+            stream<<", ";
+        }
+    }
     // args
 
     stream<<')';
+    return stream;
+}
+
+std::ofstream& WriteFormat(const InstructionEntry& ins, std::ofstream& stream){
+    stream<<mac_str(constexpr)<<" std::string_view "<<ins.name<<"_fmt"<<" = \""<<ins.fmt.fmt<<'"';
     return stream;
 }
 
@@ -312,7 +331,9 @@ bool DeclareFunctions(TargetCodegenCTX& ctx){
 
     for(const InstructionEntry& ins : ctx.inp.instructions){
         WriteFunction(ins, ctx.cpp)<<'{'<<std::endl;
-
+        
+        ctx.cpp<<'\t';
+        WriteFormat(ins, ctx.cpp)<<';'<<std::endl;
 
         ctx.cpp<<'}'<<std::endl;
     }
@@ -325,6 +346,7 @@ bool TargetCodegen::output(){
         return true;
     }
     if(input.target.empty()) return true;
+    if(input.file.get_path().empty()) return true;
 
     std::filesystem::path fullpath = input.file.get_path();
 

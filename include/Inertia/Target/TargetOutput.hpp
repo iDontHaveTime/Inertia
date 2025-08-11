@@ -40,9 +40,24 @@ namespace Inertia{
         std::string_view extra_name; // operand name
         TargetParserType type;
     };
+    struct InstructionFormatee{
+        std::string_view name;
+        enum class FormatField{
+            NONE,
+            NAME
+        } field;
+
+        InstructionFormatee() = default;
+        InstructionFormatee(const std::string_view& str) noexcept : name(str){};
+    };
+    struct InstructionFormat{
+        std::string_view fmt;
+        std::vector<InstructionFormatee> formatees;
+    };
     struct InstructionEntry{
         std::string_view name;
         std::vector<InstructionOperand> ops;
+        InstructionFormat fmt;
 
         InstructionEntry() = default;
         InstructionEntry(const std::string_view& view) noexcept : name(view), ops(){};
@@ -51,7 +66,7 @@ namespace Inertia{
         std::string_view name;
     };
     struct RegisterEntry{
-        std::string name;
+        std::string_view name;
         std::string_view classname;
         int width = 0;
 
@@ -62,12 +77,12 @@ namespace Inertia{
         std::string_view parent;
     };
     struct CPPInclude{
-        std::string name;
+        std::string_view name;
         enum class CPPIncludeType{
             Arrows, Quotes
         } type;
         CPPInclude() = default;
-        CPPInclude(const std::string& str, CPPIncludeType t) : name(str), type(t){};
+        CPPInclude(const std::string_view& str, CPPIncludeType t) : name(str), type(t){};
     };
     struct TargetOutput{
         const TargetFile file;
