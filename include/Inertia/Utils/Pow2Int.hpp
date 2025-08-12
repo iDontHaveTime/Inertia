@@ -2,11 +2,12 @@
 #define INERTIA_POW2INT_HPP
 
 #include <cstdint>
+#include "Inertia/Mem/Archmem.hpp"
 
 namespace Inertia{
     class Pow2Int{
         uint32_t val;
-        void convert(uint32_t v) noexcept{
+        CONSTEXPRCPP void convert(uint32_t v) noexcept{
             if(!v){
                 val = 1;
                 return;
@@ -26,25 +27,24 @@ namespace Inertia{
         }
     public:
 
-        Pow2Int() = default;
-        Pow2Int(uint32_t v) noexcept{
+        CONSTEXPRCPP Pow2Int() noexcept = default;
+
+        CONSTEXPRCPP Pow2Int(uint32_t v) noexcept{
             convert(v);
         }
 
-        Pow2Int& operator=(uint32_t v) noexcept{
+        CONSTEXPRCPP Pow2Int& operator=(uint32_t v) noexcept{
             convert(v);
             return *this;
         }
-        Pow2Int& operator=(Pow2Int&) = default;
 
-        operator uint32_t() noexcept{
-            return val;
-        }
-        operator const uint32_t() const noexcept{
+        CONSTEXPRCPP Pow2Int& operator=(const Pow2Int&) noexcept = default;
+
+        CONSTEXPRCPP operator uint32_t() const noexcept{
             return val;
         }
 
-        ~Pow2Int() = default;
+        ~Pow2Int() noexcept = default;
     };
 }
 

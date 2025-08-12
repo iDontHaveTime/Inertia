@@ -14,7 +14,7 @@ namespace Inertia{
     class AutoPointer{
         T* ptr;
 
-        inline void destruct(){
+        inline void destruct() noexcept{
             if(ptr){
                 if(type == AutoPointerType::Array){
                     delete[] ptr;

@@ -9,7 +9,7 @@ namespace Inertia{
         std::vector<T> allocated;
     public:
 
-        Allocator() = default;
+        Allocator() noexcept = default;
 
         Allocator(size_t reserve){
             allocated.reserve(reserve);
@@ -26,9 +26,9 @@ namespace Inertia{
         Allocator(Allocator&) = delete;
         Allocator& operator=(Allocator&) = delete;
 
-        Allocator(Allocator&& rhs) : allocated(std::move(rhs.allocated)){}
+        Allocator(Allocator&& rhs) noexcept : allocated(std::move(rhs.allocated)){}
         
-        Allocator& operator=(Allocator&& rhs){
+        Allocator& operator=(Allocator&& rhs) noexcept{
             if(this != &rhs){
                 allocated = std::move(rhs.allocated);
             }
@@ -41,7 +41,7 @@ namespace Inertia{
             return &allocated.back();
         }
 
-        ~Allocator() = default;
+        ~Allocator() noexcept = default;
     };
 }
 

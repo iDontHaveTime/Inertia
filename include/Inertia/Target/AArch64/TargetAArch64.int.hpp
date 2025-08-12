@@ -10,10 +10,10 @@ enum class RegisterClassAArch64{
 	GPR32,
 };
 struct Register_x0 : public RegisterBase{
-	Register_x0() : RegisterBase("x0", (int)RegisterClassAArch64::GPR64, 64){}
+	Register_x0() : RegisterBase("x0", (int)RegisterClassAArch64::GPR64, 64){};
 };
 struct Register_w0 : public RegisterBase{
-	Register_w0() : RegisterBase("w0", (int)RegisterClassAArch64::GPR64, 32){}
+	Register_w0() : RegisterBase("w0", (int)RegisterClassAArch64::GPR64, 32){};
 };
 struct TargetBaseAArch64 : public TargetBase{
 	char* buff = nullptr;

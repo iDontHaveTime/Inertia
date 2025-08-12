@@ -49,17 +49,17 @@ namespace Inertia{
             rhs.destructor = nullptr;
             rhs.index = 0;
         }
-        ArenaPointer& operator=(ArenaPointer&& rhs){
+        ArenaPointer& operator=(ArenaPointer&& rhs) noexcept{
             if(this != &rhs){
                 ptr = rhs.ptr;
                 parent = rhs.parent;
                 destructor = (decltype(destructor))rhs.destructor;
                 index = rhs.index;
 
-
-                rhs.ptr = nullptr;
-                rhs.parent = nullptr;
+                rhs.index = 0;
                 rhs.destructor = nullptr;
+                rhs.parent = nullptr;
+                rhs.ptr = nullptr;
             }
             return *this;
         }
@@ -161,8 +161,8 @@ namespace Inertia{
         ArenaReference() noexcept : i(0), parent(nullptr){};
         ArenaReference(size_t inx, std::vector<ArenaPointer<void>>* ptr) noexcept : i(inx), parent(ptr){};
 
-        ArenaReference(const __ArenaUnsafeCast__& cst) : i(cst.i), parent(cst.parent){};
-        ArenaReference& operator=(const __ArenaUnsafeCast__& cst){
+        ArenaReference(const __ArenaUnsafeCast__& cst) noexcept : i(cst.i), parent(cst.parent){};
+        ArenaReference& operator=(const __ArenaUnsafeCast__& cst) noexcept{
             i = cst.i;
             parent = cst.parent;
             return *this;
@@ -266,7 +266,7 @@ namespace Inertia{
             return (i != rhs.i) || (parent != rhs.parent);
         }
 
-        ~ArenaReference() = default;
+        ~ArenaReference() noexcept = default;
 
     };
 
@@ -390,7 +390,7 @@ namespace Inertia{
             return arena;
         }
 
-        ArenaAlloc() = default;
+        ArenaAlloc() noexcept = default;
         ArenaAlloc(size_t size) noexcept{
             reserve(size);
         }

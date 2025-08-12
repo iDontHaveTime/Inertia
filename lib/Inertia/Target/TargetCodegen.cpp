@@ -258,7 +258,7 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
         ctx.hpp<<buff<<')'<<'{';
 
         if(!cons){
-            ctx.hpp<<'}'<<std::endl;
+            ctx.hpp<<'}'<<';'<<std::endl;
         }
         else{
             ctx.hpp<<std::endl;

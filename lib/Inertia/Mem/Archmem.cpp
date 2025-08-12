@@ -3,17 +3,6 @@
 
 namespace Inertia{
 
-const Endian MachineEndian = HardwareEndian();
-
-Endian HardwareEndian(){
-    uint32_t x = 1;
-    char* byte_ptr = (char*)(&x);
-    if(byte_ptr[0] == 1){
-        return Endian::IN_LITTLE_ENDIAN;
-    }
-    return Endian::IN_BIG_ENDIAN;
-}
-
 void FlipMemEndian(void* mem, size_t size) noexcept{
     size_t lhs = 0, rhs = size - 1;
 

@@ -14,7 +14,7 @@ namespace Inertia{
             return kind;
         }
 
-        Type() = default;
+        Type() noexcept = default;
         Type(TypeKind _kind) noexcept : kind(_kind){};
 
         virtual ~Type() = default;

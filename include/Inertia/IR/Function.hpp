@@ -1,7 +1,7 @@
 #ifndef INERTIA_FUNCTION_HPP
 #define INERTIA_FUNCTION_HPP
 
-#include "Utils/Pow2Int.hpp"
+#include "Inertia/Utils/Pow2Int.hpp"
 #include <cstdint>
 #include <string_view>
 

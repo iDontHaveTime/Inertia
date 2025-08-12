@@ -14,11 +14,11 @@ namespace Inertia{
         size_t pos = 0;
     public:
         
-        inrstr(){
+        inrstr() noexcept{
             buff[0] = '\0';
         }
 
-        inrstr(const char* str){
+        inrstr(const char* str) noexcept{
             if(!str) return;
             size_t slen = strlen(str);
             if(slen == 0){
@@ -34,10 +34,10 @@ namespace Inertia{
             }
         }
 
-        inrstr(inrstr& rhs) = default;
-        inrstr& operator=(inrstr& rhs) = default;
+        inrstr(inrstr& rhs) noexcept = default;
+        inrstr& operator=(inrstr& rhs) noexcept = default;
 
-        inrstr(inrstr&& rhs){
+        inrstr(inrstr&& rhs) noexcept{
             if(this != &rhs){
                 memcpy(buff, rhs.buff, rhs.pos);
                 pos = rhs.pos;
@@ -46,7 +46,7 @@ namespace Inertia{
             return *this;
         }
 
-        inrstr& operator=(inrstr&& rhs){
+        inrstr& operator=(inrstr&& rhs) noexcept{
             if(this != &rhs){
                 memcpy(buff, rhs.buff, rhs.pos);
                 pos = rhs.pos;
@@ -78,12 +78,12 @@ namespace Inertia{
             return buff;
         }
 
-        char operator[](size_t index){{
+        char operator[](size_t index) noexcept{
             if(index >= max){
                 return '\0';
             }
             return buff[index];
-        }}
+        }
 
         friend std::ostream& operator<<(std::ostream& lhs, const inrstr& rhs){
             if(rhs.pos == 0) return lhs;
@@ -92,7 +92,7 @@ namespace Inertia{
             }
         }
 
-        ~inrstr() = default;
+        ~inrstr() noexcept = default;
     };
 }
 

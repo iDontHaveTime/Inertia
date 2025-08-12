@@ -17,7 +17,7 @@ namespace Inertia{
         ArenaAlloc* allocator = nullptr;
 
     public:
-        ArenaLList() = default;
+        ArenaLList() noexcept = default;
         ArenaLList(ArenaAlloc* alloc) noexcept : allocator(alloc){};
 
         void set_arena(ArenaAlloc* alloc) noexcept{
@@ -143,7 +143,7 @@ namespace Inertia{
             return {ArenaReference<ArenaNode<T>>{}};
         }
 
-        ~ArenaLList() = default;
+        ~ArenaLList() noexcept = default;
     };
 }
 

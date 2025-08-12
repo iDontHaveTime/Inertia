@@ -24,7 +24,7 @@ namespace Inertia{
             unpack_args(args...);
         }
 
-        inline expecterr expect(T tt) noexcept{
+        inline expecterr expect(T tt) const noexcept{
             for(size_t i = 0; i < n; i++){
                 if(group[i] == tt){
                     return expecterr::SUCCESS;

@@ -10,12 +10,25 @@ namespace Inertia{
     enum class Endian : uint8_t{
         IN_UNKNOWN_ENDIAN, IN_LITTLE_ENDIAN = 1, IN_BIG_ENDIAN = 2
     };
+    #if __cplusplus >= 202002L
+        #define CONSTEXPRCPP constexpr
+    #else
+        #define CONSTEXPRCPP
+    #endif
     enum class Bitness : uint8_t{
         M_UNKNOWN_BIT, M_64_BIT, M_32_BIT 
     };
-    Endian HardwareEndian();
-
-    extern const Endian MachineEndian;
+    constexpr Endian HardwareEndian(){
+        switch(std::endian::native){
+            case std::endian::little:
+                return Endian::IN_LITTLE_ENDIAN;
+            case std::endian::big:
+                return Endian::IN_BIG_ENDIAN;
+            default:
+                return Endian::IN_UNKNOWN_ENDIAN;
+        }
+    }
+    constexpr Endian MachineEndian = HardwareEndian();
     
     void FlipMemEndian(void* mem, size_t size) noexcept;
 

@@ -12,7 +12,7 @@ namespace Inertia{
         char buffer[1024] = {0};
         size_t index = 0;
 
-        TokenBuild() : index(0){};
+        TokenBuild() noexcept = default;
 
         inline void add_char(char c) noexcept{
             if(index < sizeof(buffer))
@@ -78,6 +78,8 @@ namespace Inertia{
             }
             return lhs;
         }
+
+        ~TokenBuild() noexcept = default;
     };
 }
 
