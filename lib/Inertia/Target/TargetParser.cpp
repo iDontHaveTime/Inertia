@@ -92,7 +92,7 @@ bool ParseTarget(TargetParserCTX& ctx) noexcept{
 
     if(!SaveableString(ctx.ss.current().type)) return true;
 
-    ctx.tout.target = ctx.ss.current().view_str();
+    ctx.tout.target = ctx.ss.current().view();
     consume(ctx);
     return false;
 }
@@ -525,6 +525,84 @@ bool ParseInstruction(TargetParserCTX& ctx){
             consume(ctx);
             break;
         }
+        else if(expect((int)TargetKeyword::RESULT, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+            std::string_view v = ctx.ss.current().view();
+            bool found = false;
+            for(const InstructionOperand& op : entry.ops){
+                if(op.type == TargetParserType::REGISTER){
+                    if(op.name == v){
+                        found = true;
+                        break;
+                    }
+                }
+                else if(op.type == TargetParserType::REGCLASS){
+                    if(op.extra_name == v){
+                        found = true;
+                        break;
+                    }
+                }
+                else{
+                    return true;
+                }
+            }
+            if(!found) return true;
+            entry.result = v;
+            consume(ctx);
+        }
+        else if(expect((int)TargetKeyword::CLOBBER, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+            if(expect(TokenType::LeftSquare, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+            while(1){
+                if(ctx.ss.eof()) return true;
+                if(expect(TokenType::RightSquare, ctx.ss) == expecterr::SUCCESS){
+                    consume(ctx);
+                    break;
+                }
+                else{
+                    std::string_view v = ctx.ss.current().view();
+                    bool found = false;
+                    for(const InstructionOperand& op : entry.ops){
+                        if(op.type == TargetParserType::REGISTER){
+                            if(op.name == v){
+                                found = true;
+                                break;
+                            }
+                        }
+                        else if(op.type == TargetParserType::REGCLASS){
+                            if(op.extra_name == v){
+                                found = true;
+                                break;
+                            }
+                        }
+                        else{
+                            return true;
+                        }
+                    }
+                    if(!found) return true;
+                    if(entry.clobberC == entry.clobbers.max_size()) return true;
+                    entry.clobbers[entry.clobberC++] = v;
+                    consume(ctx);
+                }
+            }
+        }
         else if(expect((int)TargetKeyword::FORMAT, ctx.ss) == expecterr::SUCCESS){
             consume(ctx);
             if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
@@ -663,7 +741,7 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
         }
     }
 
-    return ctx.tout;
+    return std::move(ctx.tout);
 }
 
 }

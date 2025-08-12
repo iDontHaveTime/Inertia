@@ -2,30 +2,11 @@
 #define INERTIA_TARGETBASE_HPP
 
 #include "Inertia/Mem/Archmem.hpp"
-#include <ostream>
+#include <array>
 #include <string_view>
 #include <unordered_map>
 
 namespace InertiaTarget{
-    struct inr_ostream_it{
-        std::ostream& os;
-        inr_ostream_it(std::ostream& _os) noexcept : os(_os){};
-
-        inr_ostream_it& operator=(char c){
-            os.put(c);
-            return *this;
-        }
-
-        inr_ostream_it& operator*() noexcept{
-            return *this; 
-        }
-        inr_ostream_it& operator++() noexcept{
-            return *this; 
-        }
-        inr_ostream_it operator++(int) noexcept{
-            return *this; 
-        }
-    };
     struct RegisterBase{
         std::string_view name;
         int classid;
@@ -57,6 +38,11 @@ namespace InertiaTarget{
 
         virtual void init();
         virtual ~TargetBase();
+    };
+    struct TargetInstructionResult{
+        const RegisterBase* result;
+        std::array<const RegisterBase*, 6> clobbers;
+        size_t clobberSize;
     };
 };
 

@@ -3,6 +3,7 @@
 
 #include "Inertia/Mem/Archmem.hpp"
 #include "Inertia/Target/TargetFile.hpp"
+#include <array>
 #include <cstdint>
 #include <string_view>
 #include <vector>
@@ -57,6 +58,9 @@ namespace Inertia{
     struct InstructionEntry{
         std::string_view name;
         std::vector<InstructionOperand> ops;
+        std::string_view result;
+        std::array<std::string_view, 6> clobbers;
+        size_t clobberC = 0;
         InstructionFormat fmt;
 
         InstructionEntry() = default;
@@ -87,7 +91,7 @@ namespace Inertia{
     struct TargetOutput{
         const TargetFile file;
 
-        std::string target;
+        std::string_view target;
         Endian endian = Endian::IN_UNKNOWN_ENDIAN;
 
         std::vector<std::string_view> regclasses;

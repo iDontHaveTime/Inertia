@@ -26,4 +26,5 @@ instr mov8rr(GPR8 dest, GPR8 src){
 instr mul64r(rax, rdx, GPR64 src){
     format = "mulq %{}"(src.name)
     result = rax
+    clobber = [rdx]
 }

@@ -170,7 +170,7 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
         }
     }
 
-    return ctx.frame;
+    return std::move(ctx.frame);
 }
 
 

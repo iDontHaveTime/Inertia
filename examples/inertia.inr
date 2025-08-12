@@ -1,7 +1,7 @@
 /* This is a block comment */
 // This is a line comment
 
-func @main()
+func @main(int<32> argc, int<8>** argv)
     alloc int<32> x
     set x, 42
 
