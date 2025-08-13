@@ -44,6 +44,9 @@ namespace InertiaTarget{
         std::array<const RegisterBase*, 6> clobbers;
         size_t clobberSize;
     };
+    struct TargetInstruction{
+        TargetInstructionResult res;
+    };
 };
 
 #endif // INERTIA_TARGETBASE_HPP

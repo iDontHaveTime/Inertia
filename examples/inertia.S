@@ -37,7 +37,7 @@ ret_gp:
 	.balign 16
 	.type retnum, @function
 retnum:
-	                                        
+	movq $0xFFFFFFFFFFFFFFFF, %rax                     
 	movl $11, %ecx
 	addl $1, %ecx
 	movq %rcx, %rax
