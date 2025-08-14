@@ -11,15 +11,14 @@ namespace Inertia{
 
 struct TargetCodegenCTX{
     std::ofstream hpp;
-    std::ofstream cpp;
     const TargetOutput& inp;
     std::string structName;
     std::string regcName;
 
     TargetCodegenCTX() = delete;
 
-    TargetCodegenCTX(const TargetOutput& out, const std::filesystem::path& hpppath, const std::filesystem::path& cpppath) :
-        hpp(hpppath), cpp(cpppath), inp(out){
+    TargetCodegenCTX(const TargetOutput& out, const std::filesystem::path& hpppath) :
+        hpp(hpppath), inp(out){
         // names
         structName = "TargetBase";
         structName += out.target;
@@ -46,18 +45,13 @@ inline void GenerateHeaderGuardsBottom(TargetCodegenCTX& ctx){
 
 inline void StartFileGen(TargetCodegenCTX& ctx){
     ctx.hpp<<"namespace InertiaTarget"<<'{'<<std::endl;
-    ctx.cpp<<"namespace InertiaTarget"<<'{'<<std::endl;
 
     ctx.hpp<<"namespace Inertia"<<ctx.inp.target<<'{'<<std::endl;
-    ctx.cpp<<"namespace Inertia"<<ctx.inp.target<<'{'<<std::endl;
 }
 
 inline void FinalizeFileGen(TargetCodegenCTX& ctx){
     ctx.hpp<<'}'<<std::endl;
     ctx.hpp<<'}'<<std::endl;
-
-    ctx.cpp<<'}'<<std::endl;
-    ctx.cpp<<'}'<<std::endl;
 }
 
 inline void WriteTabs(std::ofstream& stream, int n){
@@ -295,92 +289,132 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
     return false;
 }
 
-constexpr const char* func_type = "TargetInstructionResult";
-
-std::ofstream& WriteFunction(const InstructionEntry& ins, std::ofstream& stream){
-    stream<<func_type<<' '<<ins.name<<'(';
-
-    stream<<"std::ostream& osout";
-    if(!ins.ops.empty()){
-        stream<<", ";
-    }
-
-    for(const InstructionOperand& op : ins.ops){
-        if(op.type == TargetParserType::REGISTER){
-            stream<<"const Register_"<<op.name<<'*'<<' '<<op.name;
-        }
-        else if(op.type == TargetParserType::REGCLASS){
-            stream<<"const RegisterBase*"<<' '<<op.extra_name;
-        }
-        else{
-            continue;
-        }
-        if(&op != &ins.ops.back()){
-            stream<<", ";
-        }
-    }
-    // args
-
-    stream<<')';
-    return stream;
-}
-
-std::ofstream& WriteFormat(const InstructionEntry& ins, std::ofstream& stream){
-    stream<<mac_str(constexpr)<<" std::string_view "<<ins.name<<"_fmt"<<" = \""<<ins.fmt.fmt<<'"';
-    return stream;
-}
-
-bool DeclareFunctions(TargetCodegenCTX& ctx){
+bool DeclareClasses(TargetCodegenCTX& ctx){
     if(ctx.inp.instructions.empty()) return false;
+    
+    ctx.hpp<<"enum class InstrID"<<ctx.inp.target<<" : uint32_t"<<'{'<<std::endl;
 
     for(const InstructionEntry& ins : ctx.inp.instructions){
-        // header
-        WriteFunction(ins, ctx.hpp)<<';'<<std::endl;
+        ctx.hpp<<'\t'<<ins.name;
+        if(&ins != &ctx.inp.instructions.back()){
+            ctx.hpp<<',';
+        }
+        ctx.hpp<<std::endl;
+    }
 
-        // cpp
-        WriteFunction(ins, ctx.cpp)<<'{'<<std::endl;
-        
-        ctx.cpp<<'\t';
-        WriteFormat(ins, ctx.cpp)<<';'<<std::endl;
+    ctx.hpp<<'}'<<';'<<std::endl;
 
-        ctx.cpp<<'\t'<<"std::format_to(std::ostreambuf_iterator<char>(osout), "<<ins.name<<"_fmt";
+    for(const InstructionEntry& ins : ctx.inp.instructions){
+        ctx.hpp<<"struct Instr"<<ins.name<<" : public TargetInstruction"<<'{'<<std::endl;
+
+        // vars
+        for(const InstructionOperand& op : ins.ops){
+            switch(op.type){
+                case TargetParserType::REGCLASS:
+                    ctx.hpp<<'\t'<<"RegisterBase* "<<op.extra_name<<';'<<std::endl;
+                    break;
+                case TargetParserType::REGISTER:
+                    ctx.hpp<<'\t'<<"Register_"<<op.name<<"* "<<op.name<<';'<<std::endl;
+                    break;
+                default:
+                    return true;
+            }
+        }
+
+        // constructor
+        ctx.hpp<<"\tInstr"<<ins.name<<'(';
+
+        for(const InstructionOperand& op : ins.ops){
+            switch(op.type){
+                case TargetParserType::REGCLASS:
+                    ctx.hpp<<"RegisterBase* _"<<op.extra_name<<'_';
+                    break;
+                case TargetParserType::REGISTER:
+                    ctx.hpp<<"Register_"<<op.name<<"* _"<<op.name<<'_';
+                    break;
+                default:
+                    return true;
+            }
+            if(&op != &ins.ops.back()){
+                ctx.hpp<<", ";
+            }
+        }
+
+        ctx.hpp<<')'<<" : ";
+
+        ctx.hpp<<"TargetInstruction(";
+
+        CastTo(ctx.hpp, "uint32_t");
+        ctx.hpp<<"InstrID"<<ctx.inp.target<<"::"<<ins.name<<", ";
+
+        ctx.hpp<<'{';
+
+        ctx.hpp<<".result = _"<<ins.result<<"_, ";
+
+        ctx.hpp<<".clobbers = {";
+
+        for(size_t i = 0; i < ins.clobberC; i++){
+            ctx.hpp<<'_'<<ins.clobbers[i]<<'_';
+
+            if(i + 1 < ins.clobberC){
+                ctx.hpp<<", ";
+            }
+        }
+
+        ctx.hpp<<"}, .clobberSize = "<<std::to_string(ins.clobberC);
+
+        ctx.hpp<<'}';
+
+        ctx.hpp<<')';
+
+        for(const InstructionOperand& op : ins.ops){
+            ctx.hpp<<", ";
+            switch(op.type){
+                case TargetParserType::REGCLASS:
+                    ctx.hpp<<op.extra_name<<"(_"<<op.extra_name<<"_)";
+                    break;
+                case TargetParserType::REGISTER:
+                    ctx.hpp<<op.name<<"(_"<<op.name<<"_)";
+                    break;
+                default:
+                    return true;
+            }
+        }
+
+        ctx.hpp<<"{};"<<std::endl;
+
+        // end of constructor
+
+        // emit
+        ctx.hpp<<"\tvoid emit(std::ostream& os)"<<'{'<<std::endl;
+
+        ctx.hpp<<"\t\tstd::format_to(std::ostreambuf_iterator<char>(os), \""<<ins.fmt.fmt<<'"';
 
         if(!ins.fmt.formatees.empty()){
-            ctx.cpp<<", ";
+            ctx.hpp<<", ";
             for(const InstructionFormatee& fmtee : ins.fmt.formatees){
-                ctx.cpp<<fmtee.name;
+                ctx.hpp<<fmtee.name;
+
                 switch(fmtee.field){
                     case InstructionFormatee::FormatField::NONE:
                         break;
                     case InstructionFormatee::FormatField::NAME:
-                        ctx.cpp<<"->name";
+                        ctx.hpp<<"->name";
                         break;
                 }
+
                 if(&fmtee != &ins.fmt.formatees.back()){
-                    ctx.cpp<<", ";
+                    ctx.hpp<<", ";
                 }
             }
         }
 
-        ctx.cpp<<')'<<';'<<std::endl;
+        ctx.hpp<<')'<<';'<<std::endl;;
 
-        ctx.cpp<<'\t'<<"return {"<<std::endl;
+        ctx.hpp<<'\t'<<'}'<<std::endl;
 
-        ctx.cpp<<"\t\t.result = "<<ins.result<<','<<std::endl;
-        ctx.cpp<<"\t\t.clobbers = {";
-        for(size_t i = 0; i < ins.clobberC; i++){
-            ctx.cpp<<ins.clobbers[i];
-            if(i + 1 != ins.clobberC){
-                ctx.cpp<<", ";
-            }
-        }
-        ctx.cpp<<'}'<<','<<std::endl;
-
-        ctx.cpp<<"\t\t.clobberSize = "<<std::to_string(ins.clobberC)<<std::endl;
-
-        ctx.cpp<<'\t'<<'}'<<';'<<std::endl;;
-
-        ctx.cpp<<'}'<<std::endl;
+        // end
+        ctx.hpp<<'}'<<';'<<std::endl;
     }
 
     return false;
@@ -399,10 +433,7 @@ bool TargetCodegen::output(){
     std::filesystem::path headerpath = fullpath;
     headerpath += ".hpp";
 
-    std::filesystem::path cpppath = fullpath;
-    cpppath += ".cpp";
-
-    TargetCodegenCTX ctx(input, headerpath, cpppath);
+    TargetCodegenCTX ctx(input, headerpath);
 
     if(!ctx.hpp){
         return true;
@@ -411,18 +442,14 @@ bool TargetCodegen::output(){
     GenerateHeaderGuardsTop(ctx);
 
     WriteLineComment(ctx.hpp, "This file is auto generated by Inertia");
-    
-    // writes cppinc
-    WriteInclude(ctx.cpp, headerpath, true);
-
-    if(!ctx.inp.instructions.empty()){
-        ctx.cpp<<"#include <format>"<<std::endl;
-    }
-    WriteLineComment(ctx.cpp, "This file is auto generated by Inertia");
 
     WriteIncludes(ctx);
     // writes internal includes
     ctx.hpp<<'\n';
+
+    if(!ctx.inp.instructions.empty()){
+        ctx.hpp<<"#include <format>"<<std::endl;
+    }
     
     WriteInclude(ctx.hpp, "Inertia/Target/TargetBase.hpp");
     
@@ -434,7 +461,7 @@ bool TargetCodegen::output(){
 
     // body
 
-    DeclareFunctions(ctx);
+    DeclareClasses(ctx);
 
     FinalizeFileGen(ctx);
 

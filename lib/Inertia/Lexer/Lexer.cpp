@@ -44,8 +44,8 @@ struct alignas(16) LexerContext{
     TokenType look = TokenType::Special;
     TokenType type = TokenType::Special;
     TokenType multiline_start, multiline_end, linecom;
-    const Lexer* lex;
     short utf = 0;
+    const Lexer* lex;
     
     LexerContext(const char* s, const char* e) noexcept : cur(s), end(e){
         tokStart = tokEnd = s;

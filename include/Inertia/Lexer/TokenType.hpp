@@ -4,7 +4,7 @@
 #include <cstdint>
 
 namespace Inertia{
-    enum class TokenType : uint32_t{
+    enum class TokenType : uint16_t{
         Special, // base
         Alpha, // base
         Number, // base

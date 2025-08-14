@@ -10,3 +10,4 @@ CMakePresets.json
 *.inb
 examples/*.txt
 syntax/
+*.py

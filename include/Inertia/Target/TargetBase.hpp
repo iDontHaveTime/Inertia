@@ -3,6 +3,7 @@
 
 #include "Inertia/Mem/Archmem.hpp"
 #include <array>
+#include <cstdint>
 #include <string_view>
 #include <unordered_map>
 
@@ -46,6 +47,9 @@ namespace InertiaTarget{
     };
     struct TargetInstruction{
         TargetInstructionResult res;
+        uint32_t id;
+
+        TargetInstruction(uint32_t _id, TargetInstructionResult _res) noexcept : res(_res), id(_id){};
     };
 };
 

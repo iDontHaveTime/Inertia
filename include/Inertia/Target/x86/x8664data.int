@@ -7,7 +7,7 @@ data REX{
 }
 
 data MODRM{
-    bit<2> mod // 00 - register 
+    bit<2> mod
     bit<3> reg // register
     bit<3> rm
 }
