@@ -2,6 +2,19 @@
 target = x86_64 // sets the target's name
 endian = little // sets the target's endian
 
+callc sysv{
+    args_i = [rdi rsi rdx rcx r8 r9]
+
+    callee = [rbx rbp r12 r13 r14 r15]
+    caller = [rax rcx rdx rsi rdi r8 r9 r10 r11]
+
+    func_align = 16
+    stack_align = 16
+
+    shadow_space = 0
+    red_zone = 128
+}
+
 // instructions design
 instr mov64rr(GPR64 dest, GPR64 src){
     format = "movq %{}, %{}"(src.name, dest.name)
@@ -27,4 +40,21 @@ instr mul64r(rax, rdx, GPR64 src){
     format = "mulq %{}"(src.name)
     result = rax
     clobber = [rdx]
+}
+
+instr mul32r(eax, edx, GPR32 src){
+    format = "mull %{}"(src.name)
+    result = eax
+    clobber = [edx]
+}
+
+instr mul16r(ax, dx, GPR16 src){
+    format = "mulw %{}"(src.name)
+    result = ax
+    clobber = [dx]
+}
+
+instr mul8r(al, GPR8 src){
+    format = "mulb %{}"(src.name)
+    result = al
 }

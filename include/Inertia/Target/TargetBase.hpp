@@ -8,12 +8,16 @@
 #include <unordered_map>
 
 namespace InertiaTarget{
+    enum class RegisterFlags : uint32_t{
+        OCCUPIED
+    };
     struct RegisterBase{
+        RegisterBase* child = nullptr;
+        RegisterBase* parent = nullptr;
         std::string_view name;
         int classid;
         int width;
-        RegisterBase* child = nullptr;
-        RegisterBase* parent = nullptr;
+        uint32_t flags;
 
         RegisterBase() = delete;
 
@@ -26,8 +30,20 @@ namespace InertiaTarget{
             child = other;
             other->parent = this;
         }
+
+        inline void set_flag(RegisterFlags flag) noexcept{
+            flags |= (uint32_t)flag;
+        }
+
+        inline bool check_flag(RegisterFlags flag) const noexcept{
+            return flags & (uint32_t)flag;
+        }
+
+        inline void clear_flag(RegisterFlags flag) noexcept{
+            flags &= (uint32_t)flag;
+        }
         
-        RegisterBase(const std::string_view& _name, int id, int w) noexcept : name(_name), classid(id), width(w){};
+        RegisterBase(const std::string_view& _name, int id, int w) noexcept : name(_name), classid(id), width(w), flags(0){};
     };
     struct TargetBase{
         std::unordered_map<std::string_view, RegisterBase*> reg_database;

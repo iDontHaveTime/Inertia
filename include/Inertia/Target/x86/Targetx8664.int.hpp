@@ -783,7 +783,10 @@ enum class InstrIDx86_64 : uint32_t{
 	mov32rr,
 	mov16rr,
 	mov8rr,
-	mul64r
+	mul64r,
+	mul32r,
+	mul16r,
+	mul8r
 };
 struct Instrmov64rr : public TargetInstruction{
 	RegisterBase* dest;
@@ -824,6 +827,32 @@ struct Instrmul64r : public TargetInstruction{
 	Instrmul64r(Register_rax* _rax_, Register_rdx* _rdx_, RegisterBase* _src_) : TargetInstruction((uint32_t)InstrIDx86_64::mul64r, {.result = _rax_, .clobbers = {_rdx_}, .clobberSize = 1}), rax(_rax_), rdx(_rdx_), src(_src_){};
 	void emit(std::ostream& os){
 		std::format_to(std::ostreambuf_iterator<char>(os), "mulq %{}", src->name);
+	}
+};
+struct Instrmul32r : public TargetInstruction{
+	Register_eax* eax;
+	Register_edx* edx;
+	RegisterBase* src;
+	Instrmul32r(Register_eax* _eax_, Register_edx* _edx_, RegisterBase* _src_) : TargetInstruction((uint32_t)InstrIDx86_64::mul32r, {.result = _eax_, .clobbers = {_edx_}, .clobberSize = 1}), eax(_eax_), edx(_edx_), src(_src_){};
+	void emit(std::ostream& os){
+		std::format_to(std::ostreambuf_iterator<char>(os), "mull %{}", src->name);
+	}
+};
+struct Instrmul16r : public TargetInstruction{
+	Register_ax* ax;
+	Register_dx* dx;
+	RegisterBase* src;
+	Instrmul16r(Register_ax* _ax_, Register_dx* _dx_, RegisterBase* _src_) : TargetInstruction((uint32_t)InstrIDx86_64::mul16r, {.result = _ax_, .clobbers = {_dx_}, .clobberSize = 1}), ax(_ax_), dx(_dx_), src(_src_){};
+	void emit(std::ostream& os){
+		std::format_to(std::ostreambuf_iterator<char>(os), "mulw %{}", src->name);
+	}
+};
+struct Instrmul8r : public TargetInstruction{
+	Register_al* al;
+	RegisterBase* src;
+	Instrmul8r(Register_al* _al_, RegisterBase* _src_) : TargetInstruction((uint32_t)InstrIDx86_64::mul8r, {.result = _al_, .clobbers = {}, .clobberSize = 0}), al(_al_), src(_src_){};
+	void emit(std::ostream& os){
+		std::format_to(std::ostreambuf_iterator<char>(os), "mulb %{}", src->name);
 	}
 };
 }

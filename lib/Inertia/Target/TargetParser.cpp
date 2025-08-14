@@ -666,6 +666,37 @@ bool ParseInstruction(TargetParserCTX& ctx){
     return false;
 }
 
+bool ParseCallC(TargetParserCTX& ctx){
+    consume(ctx);
+    
+    if(!SaveableString(ctx.ss.current().type)){
+        return true;
+    }
+
+    ctx.tout.callc.emplace_back(ctx.ss.current().view());
+    consume(ctx);
+
+    if(expect(TokenType::LeftBrace, ctx.ss) == expecterr::SUCCESS){
+        consume(ctx);
+    }
+    else{
+        return true;
+    }
+
+    while(1){
+        if(ctx.ss.eof()) return true;
+        if(expect(TokenType::RightBrace, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            break;
+        }
+        else{
+            consume(ctx);
+        }
+    }
+
+    return false;
+}
+
 TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
     if(files.empty()) return {file};
     TargetParserCTX ctx(file);
@@ -678,6 +709,12 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
     
             if(tt == TokenType::Keyword){
                 switch((TargetKeyword)ctx.ss.current().getKeyword()){
+                    case TargetKeyword::CALLCONV:
+                        if(ParseCallC(ctx)){
+                            std::cout<<"Error in parsing calling convention"<<std::endl;
+                            return ctx.tout;
+                        }
+                        break;
                     case TargetKeyword::EXTENSION:
                         if(ParseExtension(ctx)){
                             std::cout<<"Error in parsing extension"<<std::endl;
