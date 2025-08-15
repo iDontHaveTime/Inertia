@@ -34,6 +34,14 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_link_options(InertiaLib PUBLIC -stdlib=libc++ -fuse-ld=lld)
 endif()
 
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/Inertia/Version.hpp.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/Inertia/Version.hpp
+    @ONLY
+)
+
+target_include_directories(InertiaLib PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
+
 set(COMPILE_TEST_EXECUTABLE ON)
 
 if(COMPILE_TEST_EXECUTABLE)
