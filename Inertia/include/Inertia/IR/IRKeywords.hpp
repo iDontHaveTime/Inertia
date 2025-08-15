@@ -6,7 +6,7 @@
 #include <unordered_map>
 
 namespace Inertia{
-    enum class IRKeyword{
+    enum class IRKeyword : uint16_t{
         NONE,
         #define ADD_KEYWORD(str, name) name,
         #include "Inertia/IR/IRKeywords.def"

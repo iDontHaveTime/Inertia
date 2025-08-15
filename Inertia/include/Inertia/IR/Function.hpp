@@ -14,6 +14,9 @@ namespace Inertia{
         };
         int32_t flags = 0;
         Pow2Int align = 1;
+
+        Function() = default;
+        Function(const std::string_view& _name, int32_t _flags, uint32_t alignment = 1) noexcept : name(_name), flags(_flags), align(alignment){};
     };
 }
 

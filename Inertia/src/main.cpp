@@ -1,10 +1,15 @@
+#include "Inertia/IR/Frame.hpp"
+#include "Inertia/IR/IRBuilder.hpp"
+#include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/Lexer.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/Lexer/LexerOutput.hpp"
 #include "Inertia/Lexer/TokenType.hpp"
+#include "Inertia/Lowering/LoweredOut.hpp"
 #include "Inertia/Target/TargetCodegen.hpp"
 #include "Inertia/Target/TargetKeywords.hpp"
+#include "Inertia/Target/TargetManager.hpp"
 #include "Inertia/Target/TargetParser.hpp"
 #include <cstddef>
 #include <cstdio>
@@ -64,7 +69,7 @@ int compile_aarch64t(){
     return 0;
 }
 
-int compile_x8664t(){
+int compile_x86t(){
     Lexer lexr;
     lexr.line_comment = TokenType::SlashSlash;
     lexr.multiline_end = TokenType::StarSlash;
@@ -73,8 +78,13 @@ int compile_x8664t(){
 
     lexr.SetKeywords(CreateTargetKeywordMap());
 
-    LexerFile lfile("Inertia/include/Inertia/Target/x86/Targetx8664.int");
-    LexerFile regfile("Inertia/include/Inertia/Target/x86/Targetx8664reg.int");
+    LexerFile lfile("Inertia/include/Inertia/Target/x86/Targetx86.int");
+    LexerFile regfile("Inertia/include/Inertia/Target/x86/Targetx86reg.int");
+
+    if(!lfile || !regfile){
+        std::cerr<<"Error in target x86 codegen, file not found"<<std::endl;
+        return true;
+    }
 
     TargetParser tp(&lfile);
     //tp.cpp_injections = true;
@@ -86,15 +96,26 @@ int compile_x8664t(){
     TargetCodegen cg(out);
 
     if(cg.output()){
-        std::cerr<<"Error in target x8664 codegen"<<std::endl;
+        std::cerr<<"Error in target x86 codegen"<<std::endl;
         return 1;
     }
     return 0;
 }
 
 int main(){
-    compile_x8664t();
+    compile_x86t();
     compile_aarch64t();
+
+    TargetManager tm;
+    tm.load_target(Inertia::TargetType::x86);
+
+    TypeAllocator talloc;
+    Frame newFrame;
+    IRBuilder builder(&talloc, &newFrame);
+
+    builder.buildFunction("main");
+
+    LoweredOutput cdg;
 
     return 0;
 }

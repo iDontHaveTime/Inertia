@@ -88,12 +88,6 @@ namespace Inertia{
         CPPInclude() = default;
         CPPInclude(const std::string_view& str, CPPIncludeType t) : name(str), type(t){};
     };
-    struct TargetCallingConv{
-        std::string_view name;
-
-        TargetCallingConv() = default;
-        TargetCallingConv(const std::string_view& sw) noexcept : name(sw){};
-    };
     struct TargetOutput{
         const TargetFile file;
 
@@ -106,7 +100,6 @@ namespace Inertia{
         std::vector<CPPInclude> cppinc;
         std::vector<InstructionEntry> instructions;
         std::vector<ExtensionEntry> extensions;
-        std::vector<TargetCallingConv> callc;
 
         TargetOutput(const TargetFile& lfile) noexcept : file(lfile){};
     };

@@ -1,4 +1,4 @@
-regclass [GPR64 GPR32 GPR16 GPR8]
+regclass [GPR64 GPR32 GPR16 GPR8 FLOAT128]
 
 extension [avx] // should be used/checked when defining calling conventions
 
@@ -406,5 +406,103 @@ register r15b{
     class = GPR8
     width = 8
     parent r15w
+    reg_encode(7)
+}
+
+// xmm0 family
+register xmm0{
+    class = FLOAT128
+    width = 128
+    reg_encode(0)
+}
+
+// xmm1 family
+register xmm1{
+    class = FLOAT128
+    width = 128
+    reg_encode(1)
+}
+
+// xmm2 family
+register xmm2{
+    class = FLOAT128
+    width = 128
+    reg_encode(2)
+}
+
+// xmm3 family
+register xmm3{
+    class = FLOAT128
+    width = 128
+    reg_encode(3)
+}
+
+// xmm4 family
+register xmm4{
+    class = FLOAT128
+    width = 128
+    reg_encode(4)
+}
+
+// xmm5 family
+register xmm5{
+    class = FLOAT128
+    width = 128
+    reg_encode(5)
+}
+
+// xmm6 family
+register xmm6{
+    class = FLOAT128
+    width = 128
+    reg_encode(6)
+}
+
+// xmm7 family
+register xmm7{
+    class = FLOAT128
+    width = 128
+    reg_encode(7)
+}
+
+// xmm8–xmm15
+register xmm8{
+    class = FLOAT128
+    width = 128
+    reg_encode(0)
+}
+register xmm9{
+    class = FLOAT128
+    width = 128
+    reg_encode(1)
+}
+register xmm10{
+    class = FLOAT128
+    width = 128
+    reg_encode(2)
+}
+register xmm11{
+    class = FLOAT128
+    width = 128
+    reg_encode(3)
+}
+register xmm12{
+    class = FLOAT128
+    width = 128
+    reg_encode(4)
+}
+register xmm13{
+    class = FLOAT128
+    width = 128
+    reg_encode(5)
+}
+register xmm14{
+    class = FLOAT128
+    width = 128
+    reg_encode(6)
+}
+register xmm15{
+    class = FLOAT128
+    width = 128
     reg_encode(7)
 }

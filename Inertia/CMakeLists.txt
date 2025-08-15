@@ -6,13 +6,6 @@ file(GLOB_RECURSE LIB_SOURCES "lib/Inertia/*.cpp")
 
 set(SANITIZE_LIBRARY ON)
 
-set(ADD_TARGETS OFF)
-
-set(TARGET_SRCS "")
-if(ADD_TARGETS)
-    file(GLOB_RECURSE TARGET_SRCS "include/Inertia/Target/*.cpp")
-endif()
-
 add_library(InertiaLib SHARED ${LIB_SOURCES} ${TARGET_SRCS})
 
 set(LTO_LIBRARY OFF)

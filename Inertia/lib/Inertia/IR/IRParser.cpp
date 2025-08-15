@@ -1,5 +1,5 @@
 #include "Inertia/IR/IRParser.hpp"
-#include "Inertia/IR/Frame.hpp"
+#include "Inertia/IR/IRBuilder.hpp"
 #include "Inertia/IR/IRKeywords.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
@@ -14,9 +14,8 @@
 namespace Inertia{
 
 struct ParserContext{
-    Frame frame;
     const LexerFile* file;
-    ArenaAlloc* allocator;
+    IRBuilder& builder;
     expectgroup<IRKeyword, 5> IRTypes = {
         IRKeyword::INT, IRKeyword::FLOAT, IRKeyword::DOUBLE, 
         IRKeyword::PTR, IRKeyword::VOID
@@ -28,13 +27,11 @@ struct ParserContext{
     IRKeyword kwd = IRKeyword::NONE;
     TokenType tok_type;
 
-    ParserContext() = default;
-    ParserContext(IRParser* parser) noexcept{
+    ParserContext(IRParser* parser, IRBuilder& _builder) noexcept : builder(_builder){
         file = parser->get_file();
-        allocator = &parser->get_allocator();
     }
 
-    ~ParserContext() = default;
+    ~ParserContext() noexcept = default;
 };
 
 inline void consume(TokenStream& ss) noexcept{
@@ -48,7 +45,7 @@ uint8_t hexchar_to_val(char c) noexcept{
     return (uint8_t)-1;
 }
 
-uintmax_t GetTokenValue(TokenStream& ss){
+uintmax_t GetTokenValue(TokenStream& ss) noexcept{
     uintmax_t val = 0;
     std::string_view str = ss.current().view();
     if(str.empty()) return 0;
@@ -90,7 +87,7 @@ uintmax_t GetTokenValue(TokenStream& ss){
     return val;
 }
 
-ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocator& talloc){
+ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx){
     ArenaReference<Type> ref;
     if(ctx.IRTypes.expect((IRKeyword)ss.current().getKeyword()) == expecterr::SUCCESS){
         switch((IRKeyword)ss.current().getKeyword()){
@@ -103,7 +100,7 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
                     return {};
                 }
                 if(ctx.IRLiterals.expect(ss.current().type) == expecterr::SUCCESS){
-                    ref = talloc.getInteger(GetTokenValue(ss));
+                    ref = ctx.builder.getAllocator()->getInteger(GetTokenValue(ss));
                     consume(ss);
                 }
                 else{
@@ -117,15 +114,15 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
                 }
                 break;
             case IRKeyword::FLOAT:
-                ref = talloc.getFloat(FloatType::FLOAT_ACC);
+                ref = ctx.builder.getAllocator()->getFloat(FloatType::FLOAT_ACC);
                 consume(ss);
                 break;
             case IRKeyword::DOUBLE:
-                ref = talloc.getFloat(FloatType::DOUBLE_ACC);
+                ref = ctx.builder.getAllocator()->getFloat(FloatType::DOUBLE_ACC);
                 consume(ss);
                 break;
             case IRKeyword::VOID:
-                ref = talloc.getVoid();
+                ref = ctx.builder.getAllocator()->getVoid();
                 consume(ss);
                 break;
             default:
@@ -137,7 +134,7 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
     }
 
     while(ss.current().type == TokenType::Star){
-        ref = talloc.getPointer(ref.get());
+        ref = ctx.builder.getAllocator()->getPointer(ref.get());
         consume(ss);
     }
 
@@ -145,10 +142,10 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx, TypeAllocato
     return ref;
 }
 
-Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
-    if(!file) return {};
+bool IRParser::parse_tokens(const LexerOutput& tokens, IRBuilder& builder){
+    if(!file) return false;
     TokenStream ss(tokens);
-    ParserContext ctx(this);
+    ParserContext ctx(this, builder);
 
     while(!ss.eof()){
         ctx.tok_type = ss.current().type;
@@ -170,7 +167,7 @@ Frame IRParser::parse_tokens(const LexerOutput& tokens, TypeAllocator& talloc){
         }
     }
 
-    return std::move(ctx.frame);
+    return false;
 }
 
 

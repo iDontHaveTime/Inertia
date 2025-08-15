@@ -6,6 +6,7 @@
 #include <cstdint>
 #include <string_view>
 #include <unordered_map>
+#include <ostream>
 
 namespace InertiaTarget{
     enum class RegisterFlags : uint32_t{
@@ -47,6 +48,7 @@ namespace InertiaTarget{
     };
     struct TargetBase{
         std::unordered_map<std::string_view, RegisterBase*> reg_database;
+        std::unordered_map<std::string_view, bool> extensions;
         Inertia::Endian endian;
         
         TargetBase() = delete;
@@ -54,7 +56,7 @@ namespace InertiaTarget{
         TargetBase(Inertia::Endian end) noexcept : endian(end){};
 
         virtual void init();
-        virtual ~TargetBase();
+        virtual ~TargetBase() noexcept;
     };
     struct TargetInstructionResult{
         const RegisterBase* result;
@@ -65,6 +67,7 @@ namespace InertiaTarget{
         TargetInstructionResult res;
         uint32_t id;
 
+        virtual void emit(std::ostream& os);
         TargetInstruction(uint32_t _id, TargetInstructionResult _res) noexcept : res(_res), id(_id){};
     };
 };

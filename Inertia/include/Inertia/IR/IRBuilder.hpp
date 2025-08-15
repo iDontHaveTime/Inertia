@@ -4,7 +4,9 @@
 #include "Inertia/IR/Frame.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/Type.hpp"
+#include "Inertia/Mem/Arenalloc.hpp"
 #include <cstddef>
+#include <cstdint>
 
 #ifdef private
 #undef private
@@ -52,26 +54,57 @@ namespace Inertia{
 
         IRBuilder(TypeAllocator* tpalloc, Frame* frm) noexcept : talloc(tpalloc), frame(frm){};
 
-        const Frame* getFrame() const noexcept{
+        inline const Frame* getFrame() const noexcept{
             return frame;
         }
-        const TypeAllocator* getAllocator() const noexcept{
+        inline const TypeAllocator* getAllocator() const noexcept{
             return talloc;
         }
+        inline const ArenaAlloc* getArena() const noexcept{
+            if(!talloc) return nullptr;
+            return &talloc->get_arena();
+        }
+        inline Frame* getFrame() noexcept{
+            return frame;
+        }
+        inline TypeAllocator* getAllocator() noexcept{
+            return talloc;
+        }
+        inline ArenaAlloc* getArena() noexcept{
+            if(!talloc) return nullptr;
+            return &talloc->get_arena();
+        }
 
-        IRPack buildFunction(){
+        IRPack buildFunction(const std::string_view& name, int32_t flags = 0, uint32_t alignment = 1){
             if(!frame) return IRPack();
             size_t _func_index_ = frame->funcs.size();
 
+            // Function& new_func = 
+            frame->funcs.emplace_back(name, flags, alignment);
+            
             size_t _pack_index_ = packs.size();
             packs.push_back({__InternalIRPack__::IRPackType::FUNCTION, _func_index_});
             return IRPack(_pack_index_);
         }
 
-        Function* getFunction(const IRPack& pack) const noexcept{
+        inline Function* getFunction(const IRPack& pack) const noexcept{
             if(!frame || packs[pack.i].type != __InternalIRPack__::IRPackType::FUNCTION) return nullptr;
             return &frame->funcs[packs[pack.i].index];
         }
+
+        Function* findFunction(const std::string_view& name){
+            if(!frame) return nullptr;
+            for(const __InternalIRPack__& pack : packs){
+                if(pack.type == __InternalIRPack__::IRPackType::FUNCTION){
+                    if(frame->funcs[pack.index].name == name){
+                        return &frame->funcs[pack.index];
+                    }
+                }
+            }
+            return nullptr;
+        }
+
+        ~IRBuilder() noexcept = default;
     };
 }
 
