@@ -1,52 +1,9 @@
-cmake_minimum_required(VERSION 3.10.0)
+cmake_minimum_required(VERSION 3.10)
+project(Inertia LANGUAGES C CXX)
 
-project(Inertia VERSION 0.1.0 LANGUAGES C CXX)
-
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-file(GLOB_RECURSE LIB_SOURCES "lib/Inertia/*.cpp")
-
-file(GLOB_RECURSE FRONTEND_SOURCES "src/*.cpp")
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=libc++")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -stdlib=libc++ -fuse-ld=lld")
-    set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -stdlib=libc++ -fuse-ld=lld")
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the build type" FORCE)
 endif()
 
-set(SANITIZE_LIBRARY ON)
-set(SANITIZE_EXECUTABLE ON)
-set(LTO_LIBRARY OFF)
-
-set(ADD_TARGETS OFF)
-
-if(ADD_TARGETS)
-    file(GLOB_RECURSE TARGET_SRCS "include/Inertia/Target/*.cpp")
-else()
-    
-endif()
-
-add_library(InertiaLib SHARED ${LIB_SOURCES} ${TARGET_SRCS})
-
-target_compile_options(InertiaLib PUBLIC -Wall -Wextra)
-target_include_directories(InertiaLib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-if(LTO_LIBRARY)
-    set_target_properties(InertiaLib PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
-endif()
-
-if(SANITIZE_LIBRARY)
-    target_compile_options(InertiaLib PRIVATE -fsanitize=address)
-    target_link_options(InertiaLib PRIVATE -fsanitize=address)
-endif()
-
-add_executable(Inertia ${FRONTEND_SOURCES})
-
-target_link_libraries(Inertia PRIVATE InertiaLib)
-
-target_include_directories(Inertia PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-if(SANITIZE_EXECUTABLE)
-    target_compile_options(Inertia PRIVATE -fsanitize=address)
-    target_link_options(Inertia PRIVATE -fsanitize=address)
-endif()
+add_subdirectory(Inertia)
+add_subdirectory(inrcc)

@@ -47,7 +47,7 @@ int compile_aarch64t(){
 
     lexr.SetKeywords(CreateTargetKeywordMap());
 
-    LexerFile lfile("include/Inertia/Target/AArch64/TargetAArch64.int");
+    LexerFile lfile("Inertia/include/Inertia/Target/AArch64/TargetAArch64.int");
 
     TargetParser tp(&lfile);
 
@@ -73,8 +73,8 @@ int compile_x8664t(){
 
     lexr.SetKeywords(CreateTargetKeywordMap());
 
-    LexerFile lfile("include/Inertia/Target/x86/Targetx8664.int");
-    LexerFile regfile("include/Inertia/Target/x86/Targetx8664reg.int");
+    LexerFile lfile("Inertia/include/Inertia/Target/x86/Targetx8664.int");
+    LexerFile regfile("Inertia/include/Inertia/Target/x86/Targetx8664reg.int");
 
     TargetParser tp(&lfile);
     //tp.cpp_injections = true;

@@ -1,10 +1,20 @@
-# Inertia
+# Inertia Project
 
-## What is Inertia?
-Inertia is an experimental and modular backend compiler inspired by LLVM. It takes the IR and compiles it to various target architectures. Currently, no architectures are implemented yet, but I am working on it.
+## Overview
+Inertia is a modular compiler framework inspired by LLVM.
+It currently has:
+- **Inertia**: The backend itself, which is a library, it handles the IR, Targets, Codegen, etc...
+- **inrcc**: This is the planned frontend for C and C++ that uses Inertia as its backend.
 
-## How are architectures defined?
-Architectures are defined using the Inertia Target format. This is a custom-made format that gets translated into C++ and then gets used for code generation. It defines things like registers, target name, endianness, and instructions. You can find it under `include/Inertia/Target`.
+The project is designed to be **modular**, so frontends can be added or customized independently of the backend.
+
+---
+
+## Directories
+- `Inertia/` - The backend library, which includes the public headers and the implementation
+- `inrcc/` - The planned C/C++ frontend that uses the Inertia backend
+
+---
 
 ## Status
-The project is currently focused on developing the Inertia Target DSL.
+This is still very early in development. Right now the focus is on getting x86-64 target codegen working.
