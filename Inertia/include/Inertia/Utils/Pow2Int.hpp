@@ -44,6 +44,10 @@ namespace Inertia{
             return val;
         }
 
+        CONSTEXPRCPP uint32_t getValue() const noexcept{
+            return val;
+        }
+
         ~Pow2Int() noexcept = default;
     };
 }

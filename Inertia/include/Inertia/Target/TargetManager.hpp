@@ -26,6 +26,10 @@ namespace Inertia{
         TargetType getLoadedType() const noexcept{
             return loaded;
         }
+
+        InertiaTarget::TargetBase* getRaw() noexcept{
+            return currentTarget;
+        }
     };
 }
 

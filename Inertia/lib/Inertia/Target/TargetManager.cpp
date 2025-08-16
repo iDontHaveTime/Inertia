@@ -25,6 +25,7 @@ void TargetManager::close_target() noexcept{
     if(!currentTarget) return;
     delete currentTarget;
     currentTarget = nullptr;
+    loaded = TargetType::None;
 }
 
 }
