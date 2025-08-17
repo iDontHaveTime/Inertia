@@ -1,4 +1,6 @@
 #include "Inertia/Assembly/ASMPrinter.hpp"
+#include "Inertia/Assembly/Generic/ASMPrinterGen.hpp"
+#include "Inertia/Debug/DebugInfo.hpp"
 #include "Inertia/IR/Frame.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/IRBuilder.hpp"
@@ -6,18 +8,17 @@
 #include "Inertia/Lexer/LexerConfig.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
 #include "Inertia/Lexer/Lexer.hpp"
-#include "Inertia/IR/IRKeywords.hpp"
-#include "Inertia/Lexer/LexerOutput.hpp"
-#include "Inertia/Lexer/TokenType.hpp"
+#include "Inertia/Lowering/InstrSelMan.hpp"
 #include "Inertia/Lowering/LoweredOut.hpp"
 #include "Inertia/Target/TargetCodegen.hpp"
 #include "Inertia/Target/TargetManager.hpp"
 #include "Inertia/Target/TargetParser.hpp"
+#include "Inertia/Target/Triple.hpp"
 #include <cstddef>
-#include <cstdio>
 
 using namespace Inertia;
 
+/*
 LexerOutput GetLexedFile(const LexerFile& file){
     Lexer lexr;
     lexr.line_comment = TokenType::SlashSlash;
@@ -34,17 +35,17 @@ LexerOutput GetLexedFile(const LexerFile& file){
 }
 
 void temp(){
-    //LexerFile file("examples/inertia.inr");
+    LexerFile file("examples/inertia.inr");
 
-    //LexerOutput out = GetLexedFile(file);
+    LexerOutput out = GetLexedFile(file);
 
-    //TypeAllocator talloc;
+    TypeAllocator talloc;
 
-    //IRParser parser(&file);
+    IRParser parser(&file);
 
-    //auto frame = parser.parse_tokens(out, talloc);
+    auto frame = parser.parse_tokens(out, talloc);
 }
-
+*/
 int compile_aarch64t(){
     Lexer lexr;
     LexerConfig cfg;
@@ -97,14 +98,24 @@ int compile_x86t(){
 }
 
 int main(){
+    /* "Compiling" the DSL */
     compile_x86t();
     compile_aarch64t();
+    // lines above have nothing to do with the actual IR compiling
+
+    /* Lowering the IR to assembly */
+
+    TargetTriple ttrip("x86_64-linux-gnu");
+
     ASMPrinter printer;
 
-    printer.load_target(TargetType::x86);
+    printer.load_target(ttrip);
 
     TargetManager tm;
-    tm.load_target(TargetType::x86);
+    tm.load_target(ttrip);
+
+    InstructionSelectorManager ism;
+    ism.load_target(ttrip);
 
     TypeAllocator talloc;
     Frame newFrame;
@@ -114,7 +125,13 @@ int main(){
     builder.buildFunction("aligned", Function::MANUAL_ALIGN, 32);
     builder.buildFunction("local", Function::LOCAL);
 
+    DebugInfo dbi;
+
     LoweredOutput cdg;
+    cdg.debug = &dbi;
+    cdg.ttriple = &ttrip;
+    
+    ism.lower(newFrame, cdg);
 
     printer.set_path("examples/output.S");
 

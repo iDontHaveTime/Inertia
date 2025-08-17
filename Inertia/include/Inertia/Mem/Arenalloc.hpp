@@ -16,11 +16,12 @@ namespace Inertia{
 
     template<typename T>
     class ArenaPointer{
-        T* ptr;
-        std::vector<ArenaPointer<void>>* parent;
-        size_t index : ((sizeof(size_t) * 8)-1);
-        bool stack_alloc : 1;
-        void (*destructor)(T*);
+        T* ptr; // 8/4
+        std::vector<ArenaPointer<void>>* parent; // 8/4
+        size_t index : ((sizeof(size_t) * 8)-1); // 8/4
+        bool stack_alloc : 1; // 0 (because subtracts 1 bit from size_t and uses it)
+        void (*destructor)(T*); // 8/4
+        // final size 32/16
 
     public:
         

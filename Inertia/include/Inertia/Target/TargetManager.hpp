@@ -2,11 +2,9 @@
 #define INERTIA_TARGETMANAGER_HPP
 
 #include "Inertia/Target/TargetBase.hpp"
+#include "Inertia/Target/Triple.hpp"
 
 namespace Inertia{
-    enum class TargetType{
-        None, x86, AArch64
-    };
     class TargetManager{    
         TargetType loaded = TargetType::None;
         InertiaTarget::TargetBase* currentTarget = nullptr;
@@ -15,8 +13,16 @@ namespace Inertia{
         TargetManager(TargetType tt){
             load_target(tt);
         }
+        TargetManager(const TargetTriple& tt){
+            load_target(tt.getLoadedType());
+        }
 
         void load_target(TargetType target);
+
+        inline void load_target(const TargetTriple& tt){
+            load_target(tt.getLoadedType());
+        }
+
         void close_target() noexcept;
 
         ~TargetManager() noexcept{

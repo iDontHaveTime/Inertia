@@ -15,7 +15,7 @@ namespace Inertia{
         ArenaReference<ArenaNode<T>> head;
         ArenaReference<ArenaNode<T>> tail;
         ArenaAlloc* allocator = nullptr;
-
+        size_t currentSize = 0;
     public:
         ArenaLList() noexcept = default;
         ArenaLList(ArenaAlloc* alloc) noexcept : allocator(alloc){};
@@ -23,11 +23,13 @@ namespace Inertia{
         void set_arena(ArenaAlloc* alloc) noexcept{
             head.unreference();
             tail.unreference();
+            currentSize = 0;
             allocator = alloc;
         }
 
         void push_back(ArenaReference<T> ref){
             if(!allocator) return;
+            currentSize++;
             ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
             node->val = ref;
             node->next = {};
@@ -45,6 +47,7 @@ namespace Inertia{
         template<typename Y>
         void push_back_as(const Y& value){
             if(!allocator) return;
+            currentSize++;
             ArenaReference<Y> item = allocator->alloc<Y>(value);
             ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
             node->val = item.__unsafe_cast__();
@@ -62,6 +65,7 @@ namespace Inertia{
 
         void push_back(const T& value){
             if(!allocator) return;
+            currentSize++;
             auto item = allocator->alloc<T>(value);
             ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
             node->val = item;
@@ -141,6 +145,10 @@ namespace Inertia{
 
         const_iterator end() const noexcept{
             return {ArenaReference<ArenaNode<T>>{}};
+        }
+
+        size_t size() const noexcept{
+            return currentSize;
         }
 
         ~ArenaLList() noexcept = default;

@@ -5,10 +5,10 @@
 
 namespace Inertia{
     struct LoweredFunction{
-        Function* original;
+        const Function* original;
         
         LoweredFunction() noexcept = default;
-        LoweredFunction(Function* func) noexcept : original(func){};
+        LoweredFunction(const Function* func) noexcept : original(func){};
     };
 }
 

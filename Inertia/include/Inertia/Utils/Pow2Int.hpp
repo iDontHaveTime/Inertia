@@ -5,6 +5,9 @@
 #include "Inertia/Mem/Archmem.hpp"
 
 namespace Inertia{
+    constexpr uint32_t GetPowerOfTwo(uint32_t val) noexcept{
+        return __builtin_ctz(val);
+    }
     class Pow2Int{
         uint32_t val;
         CONSTEXPRCPP void convert(uint32_t v) noexcept{
@@ -46,6 +49,10 @@ namespace Inertia{
 
         CONSTEXPRCPP uint32_t getValue() const noexcept{
             return val;
+        }
+
+        CONSTEXPRCPP uint32_t getPower() const noexcept{
+            return GetPowerOfTwo(val);
         }
 
         ~Pow2Int() noexcept = default;

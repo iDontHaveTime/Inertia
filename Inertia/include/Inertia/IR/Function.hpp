@@ -15,6 +15,10 @@ namespace Inertia{
         int32_t flags = 0;
         Pow2Int align = 1;
 
+        bool check_flag(FunctionFlags flag) const noexcept{
+            return flags & flag;
+        }
+
         Function() = default;
         Function(const std::string_view& _name, int32_t _flags, uint32_t alignment = 1) noexcept : name(_name), flags(_flags), align(alignment){};
     };

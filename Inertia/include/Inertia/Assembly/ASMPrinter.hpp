@@ -3,7 +3,7 @@
 
 #include "Inertia/Assembly/Generic/ASMPrinterGen.hpp"
 #include "Inertia/Lowering/LoweredOut.hpp"
-#include "Inertia/Target/TargetManager.hpp"
+#include "Inertia/Target/Triple.hpp"
 #include <filesystem>
 
 namespace Inertia{
@@ -18,7 +18,15 @@ namespace Inertia{
             load_target(_tt);
         }
 
+        ASMPrinter(const TargetTriple& _tt) noexcept : tt(_tt.getLoadedType()){
+            load_target(_tt.getLoadedType());
+        }
+
         void load_target(TargetType _tt);
+
+        inline void load_target(const TargetTriple& _tt){
+            load_target(_tt.getLoadedType());
+        }
 
         inline void close_target() noexcept{
             if(internal){
