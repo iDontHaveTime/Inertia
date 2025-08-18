@@ -15,7 +15,9 @@ namespace Inertia{
         DATAENT,
         DATAFIELD,
         INSTRUCTION,
-        EXTENSION
+        EXTENSION,
+        STRING,
+        IMMEDIATE,
     };
     enum class DataType{
         BIT,
@@ -39,6 +41,7 @@ namespace Inertia{
     struct InstructionOperand{
         std::string_view name; // register/class name
         std::string_view extra_name; // operand name
+        uint32_t extras;
         TargetParserType type;
     };
     struct InstructionFormatee{

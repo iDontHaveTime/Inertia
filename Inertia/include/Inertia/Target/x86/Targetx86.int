@@ -45,3 +45,17 @@ instr mul8r(al, GPR8 src){
     format = "mulb %{}"(src.name)
     result = al
 }
+
+instr mov64ir(GPR64 dest, imm<32> val){
+    format = "movq ${}, %{}"(val, dest.name)
+    result = dest
+}
+
+instr lea64mlrr(string label, GPR64 offset, GPR64 dest){
+    format = "leaq {}(%{}), %{}"(label, offset.name, dest.name)
+    result = dest
+}
+
+instr ret(){
+    format = "ret"()
+}

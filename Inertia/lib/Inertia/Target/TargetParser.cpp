@@ -468,6 +468,63 @@ bool ParseInstruction(TargetParserCTX& ctx){
             consume(ctx);
             break;
         }
+        else if(expect((int)TargetKeyword::IMMEDIATE, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            if(expect(TokenType::Left, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+
+            uint32_t width = std::stol(ctx.ss.current().view_str()); // SSO
+            consume(ctx);
+
+            if(expect(TokenType::Right, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+            }
+            else{
+                return true;
+            }
+
+            entry.ops.push_back({
+                .name = ctx.ss.current().view(),
+                .extra_name = {},
+                .extras = width,
+                .type = TargetParserType::IMMEDIATE
+            });
+            consume(ctx);
+            if(expect(TokenType::Comma, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+                continue;
+            }
+            else if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                continue;
+            }
+            else{
+                return true;
+            }
+        }
+        else if(expect((int)TargetKeyword::STRING, ctx.ss) == expecterr::SUCCESS){
+            consume(ctx);
+            entry.ops.push_back({
+                .name = ctx.ss.current().view(),
+                .extra_name = {},
+                .extras = 0,
+                .type = TargetParserType::STRING
+            });
+            consume(ctx);
+            if(expect(TokenType::Comma, ctx.ss) == expecterr::SUCCESS){
+                consume(ctx);
+                continue;
+            }
+            else if(expect(TokenType::RightParen, ctx.ss) == expecterr::SUCCESS){
+                continue;
+            }
+            else{
+                return true;
+            }
+        }
         else{
             name = ctx.ss.current().view();
             auto it = ctx.lookup.find(name);
@@ -478,6 +535,7 @@ bool ParseInstruction(TargetParserCTX& ctx){
                     entry.ops.push_back({
                         .name = name,
                         .extra_name = ctx.ss.current().view(),
+                        .extras = 0,
                         .type = it->second
                     });
                     consume(ctx);
@@ -486,10 +544,15 @@ bool ParseInstruction(TargetParserCTX& ctx){
                     entry.ops.push_back({
                         .name = name,
                         .extra_name = {},
+                        .extras = 0,
                         .type = it->second
                     });
                     consume(ctx);
                     break;
+                case TargetParserType::IMMEDIATE:
+                    [[fallthrough]];
+                case TargetParserType::STRING:
+                    [[fallthrough]];
                 case TargetParserType::DATAENT: // these are left for future
                     [[fallthrough]];
                 case TargetParserType::DATAFIELD:
@@ -547,9 +610,6 @@ bool ParseInstruction(TargetParserCTX& ctx){
                         found = true;
                         break;
                     }
-                }
-                else{
-                    return true;
                 }
             }
             if(!found) return true;
@@ -680,49 +740,49 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
                 switch((TargetKeyword)ctx.ss.current().getKeyword()){
                     case TargetKeyword::EXTENSION:
                         if(ParseExtension(ctx)){
-                            std::cout<<"Error in parsing extension"<<std::endl;
+                            std::cout<<"Error in parsing extension on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::INSTRUCTION:
                         if(ParseInstruction(ctx)){
-                            std::cout<<"Error in parsing instruction"<<std::endl;
+                            std::cout<<"Error in parsing instruction on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::DATA:
                         if(ParseData(ctx)){
-                            std::cout<<"Error in parsing data"<<std::endl;
+                            std::cout<<"Error in parsing data on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::TARGET:
                         if(ParseTarget(ctx)){
-                            std::cout<<"Error in parsing target"<<std::endl;
+                            std::cout<<"Error in parsing target on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::ENDIAN:
                         if(ParseEndian(ctx)){
-                            std::cout<<"Error in parsing endian"<<std::endl;
+                            std::cout<<"Error in parsing endian on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::REGCLASS:
                         if(ParseRegclass(ctx)){
-                            std::cout<<"Error in parsing regclass"<<std::endl;
+                            std::cout<<"Error in parsing regclass on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::REGISTER:
                         if(ParseRegister(ctx)){
-                            std::cout<<"Error in parsing register"<<std::endl;
+                            std::cout<<"Error in parsing register on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;
                     case TargetKeyword::CPPINC:
                         if(ParseCPPINC(ctx)){
-                            std::cout<<"Error in parsing cppinc"<<std::endl;
+                            std::cout<<"Error in parsing cppinc on line "<<ctx.ss.current().line<<std::endl;
                             return ctx.tout;
                         }
                         break;

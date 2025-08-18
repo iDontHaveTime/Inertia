@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
+#include <ostream>
 #include <string>
 #include <string_view>
 
@@ -289,6 +290,24 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
     return false;
 }
 
+void TypeBasedOnWidth(uint32_t w, std::ostream& os){
+    if(w <= 8){
+        os<<"uint8_t";
+    }
+    else if(w <= 16){
+        os<<"uint16_t";
+    }
+    else if(w <= 32){
+        os<<"uint32_t";
+    }
+    else if(w <= 64){
+        os<<"uint64_t";
+    }
+    else{
+        os<<"__uint128_t";
+    }
+}
+
 bool DeclareClasses(TargetCodegenCTX& ctx){
     if(ctx.inp.instructions.empty()) return false;
     
@@ -316,6 +335,14 @@ bool DeclareClasses(TargetCodegenCTX& ctx){
                 case TargetParserType::REGISTER:
                     ctx.hpp<<'\t'<<"Register_"<<op.name<<"* "<<op.name<<';'<<std::endl;
                     break;
+                case TargetParserType::STRING:
+                    ctx.hpp<<'\t'<<"std::string_view "<<op.name<<';'<<std::endl;
+                    break;
+                case TargetParserType::IMMEDIATE:
+                    ctx.hpp<<'\t';
+                    TypeBasedOnWidth(op.extras, ctx.hpp);
+                    ctx.hpp<<' '<<op.name<<';'<<std::endl;
+                    break;
                 default:
                     return true;
             }
@@ -331,6 +358,13 @@ bool DeclareClasses(TargetCodegenCTX& ctx){
                     break;
                 case TargetParserType::REGISTER:
                     ctx.hpp<<"Register_"<<op.name<<"* _"<<op.name<<'_';
+                    break;
+                case TargetParserType::STRING:
+                    ctx.hpp<<"const std::string_view& _"<<op.name<<'_';
+                    break;
+                case TargetParserType::IMMEDIATE:
+                    TypeBasedOnWidth(op.extras, ctx.hpp);
+                    ctx.hpp<<" _"<<op.name<<'_';
                     break;
                 default:
                     return true;
@@ -349,7 +383,12 @@ bool DeclareClasses(TargetCodegenCTX& ctx){
 
         ctx.hpp<<'{';
 
-        ctx.hpp<<".result = _"<<ins.result<<"_, ";
+        if(ins.result.empty()){
+            ctx.hpp<<".result = nullptr, ";
+        }
+        else{
+            ctx.hpp<<".result = _"<<ins.result<<"_, ";
+        }
 
         ctx.hpp<<".clobbers = {";
 
@@ -373,7 +412,11 @@ bool DeclareClasses(TargetCodegenCTX& ctx){
                 case TargetParserType::REGCLASS:
                     ctx.hpp<<op.extra_name<<"(_"<<op.extra_name<<"_)";
                     break;
+                case TargetParserType::IMMEDIATE:
+                    [[fallthrough]];
                 case TargetParserType::REGISTER:
+                    [[fallthrough]];
+                case TargetParserType::STRING:
                     ctx.hpp<<op.name<<"(_"<<op.name<<"_)";
                     break;
                 default:

@@ -15,14 +15,15 @@ namespace Inertia{
 
         ASMPrinterGeneric() noexcept = default;
 
-        void set_path(const std::filesystem::path& output){
-            out = output;
-        }
-
+        
         ASMPrinterGeneric(const std::filesystem::path& output){
             set_path(output);
         }
-
+        
+        void set_path(const std::filesystem::path& output){
+            out = output;
+        }
+        
         virtual ~ASMPrinterGeneric() noexcept = default;
 
         virtual bool output(const LoweredOutput& lowout, PrintingType pt);

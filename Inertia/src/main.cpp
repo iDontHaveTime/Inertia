@@ -1,9 +1,11 @@
 #include "Inertia/Assembly/ASMPrinter.hpp"
 #include "Inertia/Assembly/Generic/ASMPrinterGen.hpp"
+#include "Inertia/Compiler/Flags.hpp"
 #include "Inertia/Debug/DebugInfo.hpp"
 #include "Inertia/IR/Frame.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/IR/IRBuilder.hpp"
+#include "Inertia/IR/IRPrinter.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Lexer/LexerConfig.hpp"
 #include "Inertia/Lexer/LexerFile.hpp"
@@ -117,23 +119,35 @@ int main(){
     InstructionSelectorManager ism;
     ism.load_target(ttrip);
 
-    TypeAllocator talloc;
-    Frame newFrame;
+    TypeAllocator talloc(0x4000);
+    Frame newFrame(&ttrip);
     IRBuilder builder(&talloc, &newFrame);
 
-    builder.buildFunction("main");
+    auto funcmain = builder.buildFunction("main");
+
+    builder.buildBlock("entry", funcmain);
+
     builder.buildFunction("aligned", Function::MANUAL_ALIGN, 32);
     builder.buildFunction("local", Function::LOCAL);
 
+    IRPrinter irprint("examples/represent.inr");
+
+    irprint.output(newFrame);
+
     DebugInfo dbi;
+    CompilerFlags flags;
+    flags.PIC = true;
 
     LoweredOutput cdg;
     cdg.debug = &dbi;
     cdg.ttriple = &ttrip;
+    cdg.cflags = &flags;
     
     ism.lower(newFrame, cdg);
 
     printer.set_path("examples/output.S");
+    flags.PIC = false;
+    printer.set_path("examples/outputnoPIC.S");
 
     printer.output(cdg);
 

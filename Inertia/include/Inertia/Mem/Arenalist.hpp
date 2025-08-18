@@ -29,9 +29,9 @@ namespace Inertia{
 
         void push_back(ArenaReference<T> ref){
             if(!allocator) return;
-            currentSize++;
             ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
             node->val = ref;
+            currentSize++;
             node->next = {};
 
             if(!head){
@@ -44,12 +44,12 @@ namespace Inertia{
             }
         }
 
-        template<typename Y>
-        void push_back_as(const Y& value){
+        template<typename Y, typename... Args>
+        void emplace_back_as(Args&&... args){
             if(!allocator) return;
-            currentSize++;
-            ArenaReference<Y> item = allocator->alloc<Y>(value);
+            ArenaReference<Y> item = allocator->alloc<Y>(std::forward<Args>(args)...);
             ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
+            currentSize++;
             node->val = item.__unsafe_cast__();
             node->next = {};
 
@@ -63,22 +63,18 @@ namespace Inertia{
             }
         }
 
-        void push_back(const T& value){
-            if(!allocator) return;
-            currentSize++;
-            auto item = allocator->alloc<T>(value);
-            ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
-            node->val = item;
-            node->next = {};
+        template<typename... Args>
+        void emplace_back(Args&&... args){
+            emplace_back_as<T>(std::forward<Args>(args)...);
+        }
 
-            if(!head){
-                head = node;
-                tail = node;
-            }
-            else{
-                tail->next = node;
-                tail = node;
-            }
+        template<typename Y>
+        void push_back_as(const Y& value){
+            emplace_back_as<Y>(value);
+        }
+
+        void push_back(const T& value){
+            push_back_as<T>(value);
         }
 
         struct const_iterator{
@@ -122,6 +118,10 @@ namespace Inertia{
                 return current->val;
             }
         };
+
+        ArenaAlloc* get_arena() noexcept{
+            return allocator;
+        }
 
         const ArenaReference<ArenaNode<T>>& get_head() const noexcept{
             return head;

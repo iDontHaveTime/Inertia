@@ -1,13 +1,20 @@
 #include "Inertia/Lowering/x86/InstrSelx86.hpp"
+#include "Inertia/IR/Block.hpp"
 #include "Inertia/IR/Function.hpp"
+#include "Inertia/Lowering/Lowered.hpp"
+#include "Inertia/Mem/Arenalloc.hpp"
 
 namespace Inertia{
 
-bool InstructionSelectorx86::lower(const Frame& frame, LoweredOutput& to){
+bool InstructionSelectorx86::lower(Frame& frame, LoweredOutput& to){
+    if(!to) return true;
     reserve_lower(frame, to);
 
-    for(const Function& func : frame.funcs){
-        to.funcs.emplace_back(&func);
+    for(Function& func : frame.funcs){
+        LoweredFunction& newFunc = to.funcs.emplace_back(&func, func.blocks.get_arena());
+        for(const ArenaReference<Block>& block : func.blocks){
+            newFunc.blocks.push_back(block.get());
+        }
     }
 
     return false;

@@ -97,7 +97,7 @@ bool PrintFunctionx86(const LoweredOutput& lowout, const LoweredFunction& func, 
 // MEMORIO is faster since it uses an in memory buffer then dumps it, but FILEIO is less ram consuming
 bool x86ASMPrinter::output(const LoweredOutput& lowout, PrintingType pt){
     if(out.empty()) return true;
-    if(!lowout.debug || !lowout.ttriple) return true;
+    if(!lowout) return true;
     if(lowout.ttriple->getLoadedType() != TargetType::x86){
         return true;
     }

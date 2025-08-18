@@ -1,0 +1,12 @@
+triple = "x86_64-linux-gnu"
+
+func @main()
+entry:
+end
+
+func align<32> @aligned()
+end
+
+func local @local()
+end
+

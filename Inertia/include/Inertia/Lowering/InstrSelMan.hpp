@@ -38,7 +38,7 @@ namespace Inertia{
             return tt;
         }
 
-        inline bool lower(const Frame& frame, LoweredOutput& to){
+        inline bool lower(Frame& frame, LoweredOutput& to){
             if(!internal) return true;
             return internal->lower(frame, to);
         }

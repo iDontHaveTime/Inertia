@@ -17,6 +17,7 @@ namespace Inertia{
     class __InternalIRPack__{
         enum class IRPackType{
             FUNCTION,
+            BLOCK
         } type;
         size_t index;
         
@@ -80,10 +81,24 @@ namespace Inertia{
             size_t _func_index_ = frame->funcs.size();
 
             // Function& new_func = 
-            frame->funcs.emplace_back(name, flags, alignment);
+            frame->funcs.emplace_back(name, &talloc->get_arena(), flags, alignment);
             
             size_t _pack_index_ = packs.size();
             packs.push_back({__InternalIRPack__::IRPackType::FUNCTION, _func_index_});
+            return IRPack(_pack_index_);
+        }
+
+        IRPack buildBlock(const std::string_view& name, const IRPack& function){
+            if(!frame) return IRPack();
+
+            Function* func = getFunction(function);
+            if(!func) return IRPack();
+
+            size_t _block_index_ = func->blocks.size();
+            func->blocks.emplace_back(name, &talloc->get_arena());
+
+            size_t _pack_index_ = packs.size();
+            packs.push_back({__InternalIRPack__::IRPackType::BLOCK, _block_index_});
             return IRPack(_pack_index_);
         }
 

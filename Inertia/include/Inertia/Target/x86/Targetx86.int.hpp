@@ -13,6 +13,12 @@ enum class RegisterClassx86{
 	GPR8,
 	FLOAT128,
 };
+struct Register_rip : public RegisterBase{
+	uint64_t regid : 3;
+	Register_rip() : RegisterBase("rip", (int)RegisterClassx86::GPR64, 64){
+		regid = 0;
+	}
+};
 struct Register_rax : public RegisterBase{
 	uint64_t regid : 3;
 	Register_rax() : RegisterBase("rax", (int)RegisterClassx86::GPR64, 64){
@@ -495,6 +501,7 @@ struct Register_xmm15 : public RegisterBase{
 };
 struct TargetBasex86 : public TargetBase{
 	char* buff = nullptr;
+	Register_rip* rip;
 	Register_rax* rax;
 	Register_eax* eax;
 	Register_ax* ax;
@@ -580,8 +587,11 @@ struct TargetBasex86 : public TargetBase{
 		init();
 	}
 	void init() override{
-		buff = new char[(sizeof(Register_rax)+sizeof(Register_eax)+sizeof(Register_ax)+sizeof(Register_al)+sizeof(Register_rcx)+sizeof(Register_ecx)+sizeof(Register_cx)+sizeof(Register_cl)+sizeof(Register_rdx)+sizeof(Register_edx)+sizeof(Register_dx)+sizeof(Register_dl)+sizeof(Register_rbx)+sizeof(Register_ebx)+sizeof(Register_bx)+sizeof(Register_bl)+sizeof(Register_rsp)+sizeof(Register_esp)+sizeof(Register_sp)+sizeof(Register_spl)+sizeof(Register_rbp)+sizeof(Register_ebp)+sizeof(Register_bp)+sizeof(Register_bpl)+sizeof(Register_rsi)+sizeof(Register_esi)+sizeof(Register_si)+sizeof(Register_sil)+sizeof(Register_rdi)+sizeof(Register_edi)+sizeof(Register_di)+sizeof(Register_dil)+sizeof(Register_r8)+sizeof(Register_r8d)+sizeof(Register_r8w)+sizeof(Register_r8b)+sizeof(Register_r9)+sizeof(Register_r9d)+sizeof(Register_r9w)+sizeof(Register_r9b)+sizeof(Register_r10)+sizeof(Register_r10d)+sizeof(Register_r10w)+sizeof(Register_r10b)+sizeof(Register_r11)+sizeof(Register_r11d)+sizeof(Register_r11w)+sizeof(Register_r11b)+sizeof(Register_r12)+sizeof(Register_r12d)+sizeof(Register_r12w)+sizeof(Register_r12b)+sizeof(Register_r13)+sizeof(Register_r13d)+sizeof(Register_r13w)+sizeof(Register_r13b)+sizeof(Register_r14)+sizeof(Register_r14d)+sizeof(Register_r14w)+sizeof(Register_r14b)+sizeof(Register_r15)+sizeof(Register_r15d)+sizeof(Register_r15w)+sizeof(Register_r15b)+sizeof(Register_xmm0)+sizeof(Register_xmm1)+sizeof(Register_xmm2)+sizeof(Register_xmm3)+sizeof(Register_xmm4)+sizeof(Register_xmm5)+sizeof(Register_xmm6)+sizeof(Register_xmm7)+sizeof(Register_xmm8)+sizeof(Register_xmm9)+sizeof(Register_xmm10)+sizeof(Register_xmm11)+sizeof(Register_xmm12)+sizeof(Register_xmm13)+sizeof(Register_xmm14)+sizeof(Register_xmm15))];
+		buff = new char[(sizeof(Register_rip)+sizeof(Register_rax)+sizeof(Register_eax)+sizeof(Register_ax)+sizeof(Register_al)+sizeof(Register_rcx)+sizeof(Register_ecx)+sizeof(Register_cx)+sizeof(Register_cl)+sizeof(Register_rdx)+sizeof(Register_edx)+sizeof(Register_dx)+sizeof(Register_dl)+sizeof(Register_rbx)+sizeof(Register_ebx)+sizeof(Register_bx)+sizeof(Register_bl)+sizeof(Register_rsp)+sizeof(Register_esp)+sizeof(Register_sp)+sizeof(Register_spl)+sizeof(Register_rbp)+sizeof(Register_ebp)+sizeof(Register_bp)+sizeof(Register_bpl)+sizeof(Register_rsi)+sizeof(Register_esi)+sizeof(Register_si)+sizeof(Register_sil)+sizeof(Register_rdi)+sizeof(Register_edi)+sizeof(Register_di)+sizeof(Register_dil)+sizeof(Register_r8)+sizeof(Register_r8d)+sizeof(Register_r8w)+sizeof(Register_r8b)+sizeof(Register_r9)+sizeof(Register_r9d)+sizeof(Register_r9w)+sizeof(Register_r9b)+sizeof(Register_r10)+sizeof(Register_r10d)+sizeof(Register_r10w)+sizeof(Register_r10b)+sizeof(Register_r11)+sizeof(Register_r11d)+sizeof(Register_r11w)+sizeof(Register_r11b)+sizeof(Register_r12)+sizeof(Register_r12d)+sizeof(Register_r12w)+sizeof(Register_r12b)+sizeof(Register_r13)+sizeof(Register_r13d)+sizeof(Register_r13w)+sizeof(Register_r13b)+sizeof(Register_r14)+sizeof(Register_r14d)+sizeof(Register_r14w)+sizeof(Register_r14b)+sizeof(Register_r15)+sizeof(Register_r15d)+sizeof(Register_r15w)+sizeof(Register_r15b)+sizeof(Register_xmm0)+sizeof(Register_xmm1)+sizeof(Register_xmm2)+sizeof(Register_xmm3)+sizeof(Register_xmm4)+sizeof(Register_xmm5)+sizeof(Register_xmm6)+sizeof(Register_xmm7)+sizeof(Register_xmm8)+sizeof(Register_xmm9)+sizeof(Register_xmm10)+sizeof(Register_xmm11)+sizeof(Register_xmm12)+sizeof(Register_xmm13)+sizeof(Register_xmm14)+sizeof(Register_xmm15))];
 		char* buff_ptr = buff;
+		rip = new(buff_ptr) Register_rip();
+		buff_ptr += sizeof(Register_rip);
+		reg_database["rip"] = rip;
 		rax = new(buff_ptr) Register_rax();
 		buff_ptr += sizeof(Register_rax);
 		reg_database["rax"] = rax;
@@ -952,6 +962,7 @@ struct TargetBasex86 : public TargetBase{
 		ax->~Register_ax();
 		eax->~Register_eax();
 		rax->~Register_rax();
+		rip->~Register_rip();
 		delete[] buff;
 	}
 };
@@ -963,7 +974,10 @@ enum class InstrIDx86 : uint32_t{
 	mul64r,
 	mul32r,
 	mul16r,
-	mul8r
+	mul8r,
+	mov64ir,
+	lea64mlrr,
+	ret
 };
 struct Instrmov64rr : public TargetInstruction{
 	RegisterBase* dest;
@@ -1030,6 +1044,29 @@ struct Instrmul8r : public TargetInstruction{
 	Instrmul8r(Register_al* _al_, RegisterBase* _src_) : TargetInstruction((uint32_t)InstrIDx86::mul8r, {.result = _al_, .clobbers = {}, .clobberSize = 0}), al(_al_), src(_src_){};
 	void emit(std::ostream& os) override{
 		std::format_to(std::ostreambuf_iterator<char>(os), "mulb %{}", src->name);
+	}
+};
+struct Instrmov64ir : public TargetInstruction{
+	RegisterBase* dest;
+	uint32_t val;
+	Instrmov64ir(RegisterBase* _dest_, uint32_t _val_) : TargetInstruction((uint32_t)InstrIDx86::mov64ir, {.result = _dest_, .clobbers = {}, .clobberSize = 0}), dest(_dest_), val(_val_){};
+	void emit(std::ostream& os) override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "movq ${}, %{}", val, dest->name);
+	}
+};
+struct Instrlea64mlrr : public TargetInstruction{
+	std::string_view label;
+	RegisterBase* offset;
+	RegisterBase* dest;
+	Instrlea64mlrr(const std::string_view& _label_, RegisterBase* _offset_, RegisterBase* _dest_) : TargetInstruction((uint32_t)InstrIDx86::lea64mlrr, {.result = _dest_, .clobbers = {}, .clobberSize = 0}), label(_label_), offset(_offset_), dest(_dest_){};
+	void emit(std::ostream& os) override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "leaq {}(%{}), %{}", label, offset->name, dest->name);
+	}
+};
+struct Instrret : public TargetInstruction{
+	Instrret() : TargetInstruction((uint32_t)InstrIDx86::ret, {.result = nullptr, .clobbers = {}, .clobberSize = 0}){};
+	void emit(std::ostream& os) override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "ret");
 	}
 };
 }

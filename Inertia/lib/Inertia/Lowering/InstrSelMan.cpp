@@ -2,11 +2,10 @@
 #include "Inertia/Lowering/AArch64/InstrSelAArch64.hpp"
 #include "Inertia/Lowering/Generic/InstrSelGen.hpp"
 #include "Inertia/Lowering/x86/InstrSelx86.hpp"
-#include "Inertia/Target/TargetManager.hpp"
 
 namespace Inertia{
 
-bool InstructionSelectorGeneric::lower(const Frame& frame, LoweredOutput& to){
+bool InstructionSelectorGeneric::lower(Frame& frame, LoweredOutput& to){
     if(frame.funcs.empty()) return false; // silence the warnings
     if(to.funcs.empty()) return false;
     return false;

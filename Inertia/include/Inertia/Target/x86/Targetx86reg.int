@@ -9,6 +9,13 @@ data reg_encode{
     bit<3> regid
 }
 
+// special
+register rip{
+    class = GPR64
+    width = 64
+    reg_encode(0)
+}
+
 // rax family
 register rax{
     class = GPR64

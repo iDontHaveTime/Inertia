@@ -18,6 +18,7 @@ namespace Inertia{
         None, ELF, MachO, COFF
     };
     class TargetTriple{
+        std::string_view str;
         TargetType targetType;
         OSType osType;
         EnvironmentType envType;
@@ -87,6 +88,10 @@ namespace Inertia{
             }
         }
 
+        inline const std::string_view& getLoadedString() const noexcept{
+            return str;
+        }
+
         void load_target(const std::string_view& sw){
             size_t first_dash = sw.find('-');
             size_t second_dash = sw.find('-', first_dash + 1);
@@ -95,6 +100,7 @@ namespace Inertia{
             std::string_view os = (first_dash == std::string_view::npos || second_dash == std::string_view::npos) ? std::string_view{} : sw.substr(first_dash + 1, second_dash - first_dash - 1);
             std::string_view env = (second_dash == std::string_view::npos) ? std::string_view{} : sw.substr(second_dash + 1);
 
+            str = sw;
             targetType = str_to_target(target);
             osType = str_to_os(os);
             envType = str_to_env(env);
