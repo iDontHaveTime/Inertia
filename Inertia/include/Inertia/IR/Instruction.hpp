@@ -27,7 +27,8 @@ namespace Inertia{
         Mov,
         Load,
         Store,
-        Ret
+        Ret,
+        Alloc
     };
 
     struct SSAValue{
@@ -44,6 +45,20 @@ namespace Inertia{
         IROpType op;
 
         IRInstruction(Block* _parent, ArenaAlloc* _arena, IROpType _op = IROpType::Unknown) noexcept : arena(_arena), parent(_parent), op(_op){};
+    };
+
+    struct IRAlloc : public IRInstruction{
+        SSAValue dest;
+        size_t amount;
+
+        IRAlloc(SSAValue& _dest, size_t _amount, Block* _parent, ArenaAlloc* _arena) noexcept : IRInstruction(_parent, _arena, IROpType::Alloc), dest(_dest), amount(_amount){};
+    };
+
+    struct IRBinaryOP : public IRInstruction{
+        SSAValue dest;
+        SSAValue lhs, rhs;
+
+        IRBinaryOP(SSAValue& _dest, SSAValue& _lhs, SSAValue& _rhs, Block* _parent, ArenaAlloc* _arena, IROpType binoptype) noexcept : IRInstruction(_parent, _arena, binoptype), dest(_dest), lhs(_lhs), rhs(_rhs){};
     };
 }
 

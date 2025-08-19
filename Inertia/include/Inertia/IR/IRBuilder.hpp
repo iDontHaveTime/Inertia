@@ -13,14 +13,13 @@
 #endif
 
 namespace Inertia{
-    /* The builder returns this so that you wont access raw references */
     class __InternalIRPack__{
         enum class IRPackType{
             FUNCTION,
             BLOCK
         } type;
         size_t index;
-        
+
         __InternalIRPack__() noexcept = default;
         __InternalIRPack__(IRPackType t, size_t i) noexcept : type(t), index(i){};
 
@@ -34,6 +33,7 @@ namespace Inertia{
         friend class IRBuilder;
         friend class IRPack;
     };
+    /* The builder returns this so that you wont access raw references */
     class IRPack{
         size_t i;
 
@@ -80,9 +80,9 @@ namespace Inertia{
             if(!frame) return IRPack();
             size_t _func_index_ = frame->funcs.size();
 
-            // Function& new_func = 
+            // Function& new_func =
             frame->funcs.emplace_back(name, &talloc->get_arena(), flags, alignment);
-            
+
             size_t _pack_index_ = packs.size();
             packs.push_back({__InternalIRPack__::IRPackType::FUNCTION, _func_index_});
             return IRPack(_pack_index_);

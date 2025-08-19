@@ -99,6 +99,24 @@ int compile_x86t(){
     return 0;
 }
 
+void makeMainFunc(IRBuilder& builder){
+    auto funcmain = builder.buildFunction("main");
+
+    builder.buildBlock("entry", funcmain);
+}
+
+void makeAlignedFunc(IRBuilder& builder){
+    auto funcaligned = builder.buildFunction("aligned", Function::MANUAL_ALIGN, 32);
+
+    builder.buildBlock("entry", funcaligned);
+}
+
+void makeLocalFunc(IRBuilder& builder){
+    auto funclocal = builder.buildFunction("local", Function::LOCAL);
+
+    builder.buildBlock("entry", funclocal);
+}
+
 int main(){
     /* "Compiling" the DSL */
     compile_x86t();
@@ -106,7 +124,6 @@ int main(){
     // lines above have nothing to do with the actual IR compiling
 
     /* Lowering the IR to assembly */
-
     TargetTriple ttrip("x86_64-linux-gnu");
 
     ASMPrinter printer;
@@ -123,17 +140,9 @@ int main(){
     Frame newFrame(&ttrip);
     IRBuilder builder(&talloc, &newFrame);
 
-    auto funcmain = builder.buildFunction("main");
-
-    builder.buildBlock("entry", funcmain);
-
-    auto funcaligned = builder.buildFunction("aligned", Function::MANUAL_ALIGN, 32);
-
-    builder.buildBlock("entry", funcaligned);
-
-    auto funclocal = builder.buildFunction("local", Function::LOCAL);
-
-    builder.buildBlock("entry", funclocal);
+    makeMainFunc(builder);
+    makeAlignedFunc(builder);
+    makeLocalFunc(builder);
 
     IRPrinter irprint("examples/represent.inr");
 
