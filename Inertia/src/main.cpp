@@ -30,7 +30,7 @@ LexerOutput GetLexedFile(const LexerFile& file){
     size_t assume = lexr.assume(file);
 
     KeywordMap kwd = CreateIRKeywordMap();
-    
+
     lexr.SetKeywords(kwd);
 
     return lexr.lex_perf(file, assume);
@@ -127,8 +127,13 @@ int main(){
 
     builder.buildBlock("entry", funcmain);
 
-    builder.buildFunction("aligned", Function::MANUAL_ALIGN, 32);
-    builder.buildFunction("local", Function::LOCAL);
+    auto funcaligned = builder.buildFunction("aligned", Function::MANUAL_ALIGN, 32);
+
+    builder.buildBlock("entry", funcaligned);
+
+    auto funclocal = builder.buildFunction("local", Function::LOCAL);
+
+    builder.buildBlock("entry", funclocal);
 
     IRPrinter irprint("examples/represent.inr");
 
@@ -142,7 +147,7 @@ int main(){
     cdg.debug = &dbi;
     cdg.ttriple = &ttrip;
     cdg.cflags = &flags;
-    
+
     ism.lower(newFrame, cdg);
 
     printer.set_path("examples/output.S");
@@ -150,6 +155,7 @@ int main(){
     printer.set_path("examples/outputnoPIC.S");
 
     printer.output(cdg);
+
 
     return 0;
 }

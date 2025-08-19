@@ -4,6 +4,7 @@
 #include "Inertia/IR/Instruction.hpp"
 #include "Inertia/Mem/Arenalist.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
+#include <string_view>
 
 namespace Inertia{
     struct Block{

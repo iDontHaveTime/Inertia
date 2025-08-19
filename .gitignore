@@ -11,3 +11,5 @@ CMakePresets.json
 examples/*.txt
 syntax/
 *.py
+Makefile
+.zed/
