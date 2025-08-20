@@ -12,8 +12,8 @@ bool InstructionSelectorx86::lower(Frame& frame, LoweredOutput& to){
 
     for(Function& func : frame.funcs){
         LoweredFunction& newFunc = to.funcs.emplace_back(&func, func.blocks.get_arena());
-        for(const ArenaReference<Block>& block : func.blocks){
-            newFunc.blocks.push_back(block.get());
+        for(ArenaReference<Block>& block : func.blocks){
+            newFunc.blocks.emplace_back(block.get(), block->instructions.get_arena());
         }
     }
 

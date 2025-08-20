@@ -1,15 +1,21 @@
-.clangd
+# Folders
 build/
 .vscode/
 .cache/
-CMakePresets.json
+.zed/
+.ropeproject/
+syntax/
+# Files extensions
 *.o
 *.s
 *.ll
 *.bin
 *.inb
-examples/*.txt
-syntax/
 *.py
+*~
+# Mix
+examples/*.txt
+# Files
+.clangd
 Makefile
-.zed/
+CMakePresets.json

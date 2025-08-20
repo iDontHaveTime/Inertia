@@ -3,13 +3,14 @@
 
 #include <cstdint>
 #include <string_view>
+#include <type_traits>
 
 namespace Inertia{
     enum class TargetType : uint16_t{
         None, x86, AArch64
     };
     enum class OSType : uint16_t{
-        None, Linux
+        None, Unknown, Linux
     };
     enum class EnvironmentType : uint16_t{
         None, GNU
@@ -17,30 +18,41 @@ namespace Inertia{
     enum class FileType : uint16_t{
         None, ELF, MachO, COFF
     };
+    enum class ABIType : uint16_t{
+        None, SystemV
+    };
     class TargetTriple{
         std::string_view str;
         TargetType targetType;
         OSType osType;
         EnvironmentType envType;
         FileType fileType;
+        ABIType abi;
     public:
 
-        TargetTriple() noexcept = default;
+        constexpr TargetTriple() noexcept = default;
 
-        TargetType getLoadedType(void) const noexcept{
+        constexpr TargetType getLoadedType(void) const noexcept{
             return targetType;
         }
 
-        OSType getLoadedOS(void) const noexcept{
+        constexpr OSType getLoadedOS(void) const noexcept{
             return osType;
         }
 
-        EnvironmentType getLoadedEnv(void) const noexcept{
+        constexpr EnvironmentType getLoadedEnv(void) const noexcept{
             return envType;
         }
 
-        FileType getFileType(void) const noexcept{
+        constexpr FileType getLoadedFileType(void) const noexcept{
+            return getFileType();
+        }
+        constexpr FileType getFileType(void) const noexcept{
             return fileType;
+        }
+
+        constexpr ABIType getLoadedABI(void) const noexcept{
+            return abi;
         }
 
         constexpr TargetType str_to_target(const std::string_view& str) noexcept{
@@ -57,7 +69,8 @@ namespace Inertia{
 
         constexpr OSType str_to_os(const std::string_view& str) noexcept{
             constexpr std::pair<std::string_view, OSType> table[] = {
-                {"linux", OSType::Linux}
+                {"linux", OSType::Linux},
+                {"unknown", OSType::Unknown}
             };
             for(const auto& tbe : table){
                 if(tbe.first == str){
@@ -79,20 +92,49 @@ namespace Inertia{
             return EnvironmentType::None;
         }
 
-        constexpr FileType os_to_filetype(OSType ost) noexcept{
+        constexpr FileType os_to_filetype(OSType ost) const noexcept{
             switch(ost){
                 case OSType::None:
+                    return FileType::None;
+                case OSType::Unknown:
                     [[fallthrough]];
                 case OSType::Linux:
                     return FileType::ELF;
             }
         }
 
-        inline const std::string_view& getLoadedString() const noexcept{
+        constexpr ABIType target_to_abi() const noexcept{
+            switch(targetType){
+                case TargetType::None:
+                    return ABIType::None;
+                case TargetType::x86:
+                    switch(osType){
+                        case OSType::None:
+                            return ABIType::None;
+                        case OSType::Unknown:
+                            [[fallthrough]];
+                        case OSType::Linux:
+                            return ABIType::SystemV;
+                    }
+                    return ABIType::None;
+                case TargetType::AArch64:
+                    return ABIType::None;
+            }
+        }
+
+        constexpr const std::string_view& getLoadedString() const noexcept{
             return str;
         }
 
-        void load_target(const std::string_view& sw){
+        constexpr explicit operator bool() const noexcept{
+            return (abi != ABIType::None && targetType != TargetType::None && osType != OSType::None);
+        }
+
+        constexpr bool isValid() const noexcept{
+            return (bool)(*this);
+        }
+
+        constexpr void load_target(const std::string_view& sw){
             size_t first_dash = sw.find('-');
             size_t second_dash = sw.find('-', first_dash + 1);
 
@@ -105,10 +147,17 @@ namespace Inertia{
             osType = str_to_os(os);
             envType = str_to_env(env);
             fileType = os_to_filetype(osType);
+            abi = target_to_abi();
+
+            if(std::is_constant_evaluated()){
+                if(!isValid()){
+                    throw "Invalid target triple string.";
+                }
+            }
         }
 
         // format is similar to llvm's, basically <arch>-<os>-<env>
-        TargetTriple(const std::string_view& sw){
+        constexpr TargetTriple(const std::string_view& sw){
             load_target(sw);
         }
     };

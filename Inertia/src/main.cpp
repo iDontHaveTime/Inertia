@@ -16,7 +16,6 @@
 #include "Inertia/Target/TargetManager.hpp"
 #include "Inertia/Target/TargetParser.hpp"
 #include "Inertia/Target/Triple.hpp"
-#include <cstddef>
 
 using namespace Inertia;
 
@@ -159,11 +158,19 @@ int main(){
 
     ism.lower(newFrame, cdg);
 
-    printer.set_path("examples/output.S");
+    LoweredOutput cdgNoPIC;
+    cdgNoPIC.debug = &dbi;
+    cdgNoPIC.ttriple = &ttrip;
     flags.PIC = false;
-    printer.set_path("examples/outputnoPIC.S");
+    cdgNoPIC.cflags = &flags;
 
+    ism.lower(newFrame, cdgNoPIC);
+
+    printer.set_path("examples/output.S");
     printer.output(cdg);
+
+    printer.set_path("examples/outputnoPIC.S");
+    printer.output(cdgNoPIC);
 
 
     return 0;

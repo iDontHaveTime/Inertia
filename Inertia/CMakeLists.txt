@@ -23,8 +23,7 @@ if(SANITIZE_LIBRARY)
 endif()
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(InertiaLib PUBLIC -stdlib=libc++)
-    target_link_options(InertiaLib PUBLIC -stdlib=libc++ -fuse-ld=lld)
+    target_link_options(InertiaLib PUBLIC -fuse-ld=lld)
 endif()
 
 configure_file(

@@ -43,14 +43,18 @@ namespace InertiaTarget{
         inline void clear_flag(RegisterFlags flag) noexcept{
             flags &= (uint32_t)flag;
         }
-        
+
+        inline const std::string_view& getName(void) const noexcept{
+            return name;
+        }
+
         RegisterBase(const std::string_view& _name, int id, int w) noexcept : name(_name), classid(id), width(w), flags(0){};
     };
     struct TargetBase{
         std::unordered_map<std::string_view, RegisterBase*> reg_database;
         std::unordered_map<std::string_view, bool> extensions;
         Inertia::Endian endian;
-        
+
         TargetBase() = delete;
 
         TargetBase(Inertia::Endian end) noexcept : endian(end){};

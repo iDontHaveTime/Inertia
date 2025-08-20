@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.13)
 project(Inertia VERSION 0.0.15 LANGUAGES C CXX)
 
 if(NOT CMAKE_BUILD_TYPE)

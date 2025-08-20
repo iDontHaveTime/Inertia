@@ -38,7 +38,7 @@ Thank you for being interested in contributing to Inertia! Your contributions he
     - Correct: `if(cond){ /* ... */ }`
     - Incorrect: `if (cond) { /* ... */ }`
 - **Loops**: Same rules apply to `for` and `while` loops.
-    - Correct: `for(int i = 0; i < n; i++)` 
+    - Correct: `for(int i = 0; i < n; i++)`
     - Prefer `i++` over `++i` for incrementing unless there's a solid reason to do otherwise.
 - **Functions**: No space between parentheses and opening brace.
     - Correct: `int foo(){ /* ... */ }`
@@ -52,7 +52,7 @@ int abcdef = 2;
 ```
 
 ## Constructors
-- **Semicolon**: This is a weird rule, but for one line constructor please instert a semicolon after the brace.
+- **Semicolon**: This is a weird rule, but for one line constructor please insert a semicolon after the brace.
     - Example: `Class() : field(0){};`
 - **Multi-line**: They are as usual, just follow previous rules.
 
