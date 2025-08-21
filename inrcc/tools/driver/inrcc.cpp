@@ -22,4 +22,5 @@ int inrcc_main(int argc, char** argv){
 
 void preset_default_flags(InrCLI& cli){
     cli.add_exec("--default-linker", inrcc::presets::print_default_linker);
+    cli.add_exec("--default-triple", inrcc::presets::print_default_triple);
 }

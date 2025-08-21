@@ -32,13 +32,13 @@ namespace Inertia{
         enum FloatAccuracy {FLOAT_ACC = 1, DOUBLE_ACC = 2} accuracy;
 
         FloatType(FloatAccuracy _acc) noexcept : Type(FLOAT), accuracy(_acc){};
-    };  
+    };
 
     class PointerType : public Type{
     public:
         Type* pointee;
 
-        PointerType(Type* other) noexcept : Type(POINTER), pointee(other){}; 
+        PointerType(Type* other) noexcept : Type(POINTER), pointee(other){};
     };
 
     class TypeKey{
@@ -75,7 +75,7 @@ namespace Inertia{
                 default: return true;
             }
         }
-        
+
     };
 
 }

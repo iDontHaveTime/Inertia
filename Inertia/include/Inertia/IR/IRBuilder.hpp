@@ -76,12 +76,12 @@ namespace Inertia{
             return &talloc->get_arena();
         }
 
-        IRPack buildFunction(const std::string_view& name, int32_t flags = 0, uint32_t alignment = 1){
+        IRPack buildFunction(const std::string_view& name, ArenaReference<Type> type, int32_t flags = 0, uint32_t alignment = 1){
             if(!frame) return IRPack();
             size_t _func_index_ = frame->funcs.size();
 
             // Function& new_func =
-            frame->funcs.emplace_back(name, &talloc->get_arena(), flags, alignment);
+            frame->funcs.emplace_back(name, type, &talloc->get_arena(), flags, alignment);
 
             size_t _pack_index_ = packs.size();
             packs.push_back({__InternalIRPack__::IRPackType::FUNCTION, _func_index_});

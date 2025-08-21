@@ -4,6 +4,7 @@
 namespace inrcc{
 namespace presets{
 void print_default_linker(void);
+void print_default_triple(void);
 }
 }
 

@@ -2,6 +2,7 @@
 #include "Inertia/IR/Block.hpp"
 #include "Inertia/IR/Frame.hpp"
 #include "Inertia/IR/Function.hpp"
+#include "Inertia/IR/Type.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
 #include <fstream>
 #include <ostream>
@@ -12,6 +13,39 @@ namespace Inertia{
 
 bool PrintTriple(const Frame& frame, std::ostream& os){
     os<<"triple = \""<<frame.ttriple->getLoadedString()<<"\"\n";
+    return false;
+}
+
+bool PrintType(const Type* type, std::ostream& os){
+    switch(type->getKind()){
+        case Type::INTEGER:
+            os<<"int<";
+            os<<std::to_string(((IntegerType*)type)->width);
+            os<<'>';
+            break;
+        case Type::FLOAT:
+            switch(((FloatType*)type)->accuracy){
+                case FloatType::DOUBLE_ACC:
+                    os<<"double";
+                    break;
+                case FloatType::FLOAT_ACC:
+                    [[fallthrough]];
+                default:
+                    os<<"float";
+                    break;
+            }
+            break;
+        case Type::POINTER:
+            PrintType(((PointerType*)type)->pointee, os);
+            os<<'*';
+            break;
+        case Type::VOID:
+            [[fallthrough]];
+        default:
+            os<<"void";
+            break;
+    }
+
     return false;
 }
 
@@ -36,6 +70,9 @@ bool PrintBlock(const Block& block, std::ostream& os){
 
 bool PrintFunction(const Function& func, std::ostream& os){
     os<<"func ";
+
+    PrintType(func.type, os);
+    os<<' ';
     PrintFunctionFlags(func, os);
 
     os<<'@'<<func.name<<'(';
@@ -47,13 +84,13 @@ bool PrintFunction(const Function& func, std::ostream& os){
     }
 
     os<<"end\n";
-    
+
     return false;
 }
 
 bool IRPrinter::output(const Frame& frame, PrintingType pt){
     if(!frame.ttriple) return true;
-    
+
     std::stringstream _ss_;
     std::ofstream _of_(out);
     if(!_of_) return true;

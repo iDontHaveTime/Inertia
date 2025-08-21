@@ -1,14 +1,14 @@
 triple = "x86_64-linux-gnu"
 
-func @main()
+func int<32> @main()
 entry:
 end
 
-func align<32> @aligned()
+func void* align<32> @aligned()
 entry:
 end
 
-func local @local()
+func void local @local()
 entry:
 end
 
