@@ -4,6 +4,7 @@
 #include "Inertia/Mem/Arenalloc.hpp"
 #include <cstdint>
 #include <unordered_map>
+#include <variant>
 
 namespace Inertia{
     class Type{
@@ -36,45 +37,37 @@ namespace Inertia{
 
     class PointerType : public Type{
     public:
-        Type* pointee;
+        ArenaReference<Type> pointee;
 
-        PointerType(Type* other) noexcept : Type(POINTER), pointee(other){};
+        PointerType(const ArenaReference<Type>& other) noexcept : Type(POINTER), pointee(other){};
     };
 
     class TypeKey{
     public:
         Type::TypeKind kind;
-        union{
-            int int_width;
-            FloatType::FloatAccuracy f_type;
-            Type* pointee;
-        };
+        std::variant<int, FloatType::FloatAccuracy, ArenaReference<Type>> value;
         TypeKey(Type* t) noexcept : kind(t->getKind()){
             switch(t->getKind()){
                 case Type::INTEGER:
-                    int_width = ((IntegerType*)t)->width;
+                    value = ((IntegerType*)t)->width;
                     break;
                 case Type::FLOAT:
-                    f_type = ((FloatType*)t)->accuracy;
+                    value = ((FloatType*)t)->accuracy;
                     break;
                 case Type::POINTER:
-                    pointee = ((PointerType*)t)->pointee;
+                    value = ((PointerType*)t)->pointee;
                     break;
                 default: return;
             }
         }
 
-        TypeKey(Type::TypeKind type) noexcept : kind(type){};
+        TypeKey(Type::TypeKind type) noexcept : kind(type), value(0){};
 
         bool operator==(const TypeKey& other) const noexcept{
-            if(kind != other.kind) return false;
-            switch(kind){
-                case Type::INTEGER: return int_width == other.int_width;
-                case Type::FLOAT:   return f_type == other.f_type;
-                case Type::POINTER: return pointee == other.pointee;
-                default: return true;
-            }
+            return kind == other.kind && value == other.value;
         }
+
+        ~TypeKey() noexcept = default;
 
     };
 
@@ -85,16 +78,16 @@ namespace std{
     struct hash<Inertia::TypeKey>{
         size_t operator()(const Inertia::TypeKey& key) const noexcept{
             using TK = Inertia::Type;
-            size_t h = std::hash<uint8_t>()(key.kind);
+            size_t h = hash<uint8_t>()(key.kind);
             switch(key.kind){
                 case TK::INTEGER:
-                    h ^= std::hash<int>()(key.int_width) + 0x9e3779b9 + (h << 6) + (h >> 2);
+                    h ^= hash<int>()(get<int>(key.value)) + 0x9e3779b9 + (h << 6) + (h >> 2);
                     break;
                 case TK::FLOAT:
-                    h ^= std::hash<int>()(key.f_type) + 0x9e3779b9 + (h << 6) + (h >> 2);
+                    h ^= hash<int>()((int)(get<Inertia::FloatType::FloatAccuracy>(key.value))) + 0x9e3779b9 + (h << 6) + (h >> 2);
                     break;
                 case TK::POINTER:
-                    h ^= std::hash<Inertia::Type*>()(key.pointee) + 0x9e3779b9 + (h << 6) + (h >> 2);
+                    h ^= hash<size_t>()(get<Inertia::ArenaReference<Inertia::Type>>(key.value).get_i()) + 0x9e3779b9 + (h << 6) + (h >> 2);
                     break;
                 default:
                     break;
@@ -128,7 +121,7 @@ namespace Inertia{
 
         ArenaPointer<IntegerType> getInteger(int width){
             TypeKey key(Type::INTEGER);
-            key.int_width = width;
+            key.value = width;
 
             auto it = cache.find(key);
             if(it != cache.end())
@@ -142,7 +135,7 @@ namespace Inertia{
 
         ArenaPointer<FloatType> getFloat(FloatType::FloatAccuracy accuracy){
             TypeKey key(Type::FLOAT);
-            key.f_type = accuracy;
+            key.value = accuracy;
 
             auto it = cache.find(key);
             if(it != cache.end())
@@ -154,9 +147,9 @@ namespace Inertia{
             return t;
         }
 
-        ArenaPointer<PointerType> getPointer(Type* type){
+        ArenaPointer<PointerType> getPointer(const ArenaReference<Type>& type){
             TypeKey key(Type::POINTER);
-            key.pointee = type;
+            key.value = type;
 
             auto it = cache.find(key);
             if(it != cache.end())

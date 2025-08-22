@@ -89,6 +89,8 @@ namespace inrcc{
                 command = enum_str(_flavor, _style);
             }
         };
+
+        friend class LinkerBuilder;
     };
     namespace linkers{
         constexpr const Linker ld_linker = {LinkerFlavor::LD, LinkerStyle::GNU};

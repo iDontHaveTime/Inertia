@@ -17,7 +17,7 @@ struct ParserContext{
     const LexerFile* file;
     IRBuilder& builder;
     expectgroup<IRKeyword, 5> IRTypes = {
-        IRKeyword::INT, IRKeyword::FLOAT, IRKeyword::DOUBLE, 
+        IRKeyword::INT, IRKeyword::FLOAT, IRKeyword::DOUBLE,
         IRKeyword::PTR, IRKeyword::VOID
     };
     expectgroup<TokenType, 5> IRLiterals = {
@@ -128,13 +128,13 @@ ArenaReference<Type> ParseType(TokenStream& ss, ParserContext& ctx){
             default:
                 return {};
         }
-    } 
+    }
     else{
         return {};
     }
 
     while(ss.current().type == TokenType::Star){
-        ref = ctx.builder.getAllocator()->getPointer(ref.get());
+        ref = ctx.builder.getAllocator()->getPointer(ref);
         consume(ss);
     }
 
@@ -149,7 +149,7 @@ bool IRParser::parse_tokens(const LexerOutput& tokens, IRBuilder& builder){
 
     while(!ss.eof()){
         ctx.tok_type = ss.current().type;
-        
+
         if(ctx.tok_type == TokenType::Keyword){
             ctx.kwd = (IRKeyword)ss.current().getKeyword();
             switch(ctx.kwd){

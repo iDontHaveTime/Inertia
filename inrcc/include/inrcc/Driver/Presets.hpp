@@ -5,6 +5,7 @@ namespace inrcc{
 namespace presets{
 void print_default_linker(void);
 void print_default_triple(void);
+void print_version(void);
 }
 }
 

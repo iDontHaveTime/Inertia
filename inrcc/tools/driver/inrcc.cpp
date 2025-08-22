@@ -5,6 +5,7 @@
 /* ==================================================== */
 #include "Inertia/CLI/InrCLI.hpp"
 #include "inrcc/Driver/Presets.hpp"
+#include <cstdlib>
 
 using Inertia::InrCLI;
 
@@ -21,6 +22,18 @@ int inrcc_main(int argc, char** argv){
 }
 
 void preset_default_flags(InrCLI& cli){
-    cli.add_exec("--default-linker", inrcc::presets::print_default_linker);
-    cli.add_exec("--default-triple", inrcc::presets::print_default_triple);
+    cli.add_exec("--default-linker", []{
+        inrcc::presets::print_default_linker();
+        exit(0);
+    });
+    cli.add_exec("--default-triple", []{
+        inrcc::presets::print_default_triple();
+        exit(0);
+    });
+    cli.add_exec("--version", []{
+        inrcc::presets::print_version();
+        inrcc::presets::print_default_triple();
+        inrcc::presets::print_default_linker();
+        exit(0);
+    });
 }

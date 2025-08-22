@@ -3,12 +3,8 @@
 
 #include <cstddef>
 #include <cstdlib>
+#include <mutex>
 #include <vector>
-
-/** Heads up
-  *  This is not thread safe, this should not be used in global context.
-  *  If used in global/shared context, this should be thread local.
-**/
 
 namespace Inertia{
     template<typename T>
@@ -24,7 +20,7 @@ namespace Inertia{
         // final size 32/16
 
     public:
-        
+
         ArenaPointer() noexcept : ptr(nullptr), parent(nullptr), index(0), stack_alloc(false), destructor(nullptr){};
         ArenaPointer(T* tptr, decltype(parent) _parent, void (*dstr)(T*), size_t idx) noexcept : ptr(tptr), parent(_parent), index(idx), stack_alloc(false), destructor(dstr){};
 
@@ -280,6 +276,7 @@ namespace Inertia{
         void* arena = nullptr;
         size_t current = 0, cursize = 0;
         std::vector<ArenaPointer<void>> ptrs;
+        std::mutex mtx;
 
         template<typename T>
         static void destroy(void* p) noexcept{
@@ -300,6 +297,7 @@ namespace Inertia{
 
         template<typename T, typename... Args>
         inline ArenaPointer<T> alloc(Args&&... args){
+            std::lock_guard<std::mutex> lock(mtx);
             T* tptr = (T*)_allocate(sizeof(T), alignof(T));
             new(tptr) T(std::forward<Args>(args)...);
             ptrs.emplace_back(tptr, &ptrs, std::is_trivially_destructible<T>::value ? nullptr : &destroy<T>, ptrs.size());
