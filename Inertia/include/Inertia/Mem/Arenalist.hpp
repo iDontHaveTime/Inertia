@@ -9,7 +9,7 @@ namespace Inertia{
         ArenaReference<T> val;
         ArenaReference<ArenaNode<T>> next;
     };
-    
+
     template<typename T>
     class ArenaLList{
         ArenaReference<ArenaNode<T>> head;
@@ -80,17 +80,17 @@ namespace Inertia{
         struct const_iterator{
             ArenaReference<ArenaNode<T>> current;
 
-            const_iterator& operator++() noexcept{ 
-                current = current->next; 
-                return *this; 
+            const_iterator& operator++() noexcept{
+                current = current->next;
+                return *this;
             }
 
             const ArenaReference<T>& operator*() const noexcept{
                 return current->val;
             }
 
-            bool operator!=(const const_iterator& other) const noexcept{ 
-                return current.get() != other.current.get(); 
+            bool operator!=(const const_iterator& other) const noexcept{
+                return current.get() != other.current.get();
             }
 
             const ArenaReference<T>& operator->() const noexcept{
@@ -101,17 +101,17 @@ namespace Inertia{
         struct iterator{
             ArenaReference<ArenaNode<T>> current;
 
-            iterator& operator++() noexcept{ 
-                current = current->next; 
-                return *this; 
+            iterator& operator++() noexcept{
+                current = current->next;
+                return *this;
             }
 
             ArenaReference<T>& operator*() noexcept{
                 return current->val;
             }
 
-            bool operator!=(const iterator& other) const noexcept{ 
-                return current.get() != other.current.get(); 
+            bool operator!=(const iterator& other) const noexcept{
+                return current.get() != other.current.get();
             }
 
             ArenaReference<T>& operator->() noexcept{
@@ -131,16 +131,16 @@ namespace Inertia{
             return tail;
         }
 
-        iterator begin() noexcept{ 
-            return {head}; 
+        iterator begin() noexcept{
+            return {head};
         }
 
         iterator end() noexcept{
             return {ArenaReference<ArenaNode<T>>{}};
         }
 
-        const_iterator begin() const noexcept{ 
-            return {head}; 
+        const_iterator begin() const noexcept{
+            return {head};
         }
 
         const_iterator end() const noexcept{
@@ -149,6 +149,24 @@ namespace Inertia{
 
         size_t size() const noexcept{
             return currentSize;
+        }
+
+        ArenaReference<T>& operator[](size_t index) noexcept{
+            ArenaReference<ArenaNode<T>> node = head;
+            while(index--){
+                if(!node) return head->val;
+                node = node->next;
+            }
+            return node->val;
+        }
+
+        const ArenaReference<T>& operator[](size_t index) const noexcept{
+            ArenaReference<ArenaNode<T>> node = head;
+            while(index--){
+                if(!node) return head;
+                node = node->next;
+            }
+            return node->val;
         }
 
         ~ArenaLList() noexcept = default;

@@ -2,6 +2,7 @@ triple = "x86_64-linux-gnu"
 
 func int<32> @main()
 entry:
+	ret int<32> 0
 end
 
 func void* align<32> @aligned()

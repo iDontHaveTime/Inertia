@@ -49,6 +49,8 @@ namespace InertiaTarget{
         }
 
         RegisterBase(const std::string_view& _name, int id, int w) noexcept : name(_name), classid(id), width(w), flags(0){};
+
+        virtual ~RegisterBase() noexcept = default;
     };
     struct TargetBase{
         std::unordered_map<std::string_view, RegisterBase*> reg_database;

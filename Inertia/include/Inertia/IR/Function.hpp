@@ -14,6 +14,7 @@ namespace Inertia{
     struct Function{
         std::string_view name;
         ArenaReference<Type> type;
+        ArenaLList<SSAValue> args;
         ArenaLList<Block> blocks;
         size_t ssaid = 0;
         enum FunctionFlags : int32_t{
@@ -25,10 +26,6 @@ namespace Inertia{
 
         bool check_flag(FunctionFlags flag) const noexcept{
             return flags & flag;
-        }
-
-        SSAValue newSSA(ArenaReference<Type> type) noexcept{
-            return SSAValue(ssaid++, type);
         }
 
         Function() = delete;

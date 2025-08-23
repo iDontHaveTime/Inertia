@@ -137,6 +137,7 @@ namespace Inertia{
             destructor = nullptr;
             ptr = nullptr;
             (*parent)[index].raw_field() = nullptr;
+            (*parent)[index].destructor = nullptr;
         }
 
         operator ArenaReference<T>() const noexcept;

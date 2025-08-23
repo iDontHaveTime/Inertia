@@ -115,7 +115,7 @@ bool x86ASMPrinter::output(const LoweredOutput& lowout, PrintingType pt){
     }
 
     if(pt == PrintingType::MEMORYIO){
-        _of_<<_ss_.str(); // dump the buffer to file
+        _of_<<_ss_.rdbuf(); // dump the buffer to file
     }
     return false;
 }

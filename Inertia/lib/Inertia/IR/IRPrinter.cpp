@@ -2,6 +2,7 @@
 #include "Inertia/IR/Block.hpp"
 #include "Inertia/IR/Frame.hpp"
 #include "Inertia/IR/Function.hpp"
+#include "Inertia/IR/Instruction.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
 #include <fstream>
@@ -20,7 +21,7 @@ bool PrintType(const Type* type, std::ostream& os){
     switch(type->getKind()){
         case Type::INTEGER:
             os<<"int<";
-            os<<std::to_string(((IntegerType*)type)->width);
+            os<<((IntegerType*)type)->width;
             os<<'>';
             break;
         case Type::FLOAT:
@@ -52,7 +53,7 @@ bool PrintType(const Type* type, std::ostream& os){
 bool PrintFunctionFlags(const Function& func, std::ostream& os){
 
     if(func.check_flag(Function::MANUAL_ALIGN)){
-        os<<"align<"<<std::to_string(func.align.getValue())<<"> ";
+        os<<"align<"<<func.align.getValue()<<"> ";
     }
 
     if(func.check_flag(Function::LOCAL)){
@@ -62,8 +63,42 @@ bool PrintFunctionFlags(const Function& func, std::ostream& os){
     return false;
 }
 
+bool PrintRetInstruction(const IRReturn* ins, std::ostream& os){
+    os<<"ret ";
+
+    PrintType(ins->src->type, os);
+    os<<' ';
+
+    switch(ins->src.get()->ssa_type){
+        case SSAType::NORMAL:
+            os<<'%'<<ins->src->id;
+            break;
+        case SSAType::CONSTANT:
+            os<<((SSAConst*)ins->src.get())->value;
+            break;
+    }
+
+    return false;
+}
+
+bool PrintInstruction(const ArenaReference<IRInstruction>& ins, std::ostream& os){
+    switch(ins->op){
+        case IROpType::Ret:
+            return PrintRetInstruction((const IRReturn*)ins.get(), os);
+        default:
+            return false;
+    }
+    return false;
+}
+
 bool PrintBlock(const Block& block, std::ostream& os){
     os<<block.name<<":\n";
+
+    for(const ArenaReference<IRInstruction>& ins : block.instructions){
+        os<<'\t';
+        PrintInstruction(ins, os);
+        os<<'\n';
+    }
 
     return false;
 }
@@ -106,7 +141,7 @@ bool IRPrinter::output(const Frame& frame, PrintingType pt){
     }
 
     if(pt == PrintingType::MEMORYIO){
-        _of_<<_ss_.str(); // dump the buffer to file
+        _of_<<_ss_.rdbuf(); // dump the buffer to file
     }
     return false;
 }
