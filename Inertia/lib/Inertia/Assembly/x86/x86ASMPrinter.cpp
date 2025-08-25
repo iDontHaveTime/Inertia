@@ -1,11 +1,8 @@
 #include "Inertia/Assembly/x86/x86ASMPrinter.hpp"
-#include "Inertia/Assembly/Generic/ASMPrinterGen.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/Lowering/Lowered.hpp"
 #include "Inertia/Target/Triple.hpp"
-#include <fstream>
 #include <ostream>
-#include <sstream>
 
 namespace Inertia{
 
@@ -95,27 +92,16 @@ bool PrintFunctionx86(const LoweredOutput& lowout, const LoweredFunction& func, 
 }
 
 // MEMORIO is faster since it uses an in memory buffer then dumps it, but FILEIO is less ram consuming
-bool x86ASMPrinter::output(const LoweredOutput& lowout, PrintingType pt){
-    if(out.empty()) return true;
+bool x86ASMPrinter::output(const LoweredOutput& lowout, std::ostream& os){
     if(!lowout) return true;
     if(lowout.ttriple->getLoadedType() != TargetType::x86){
         return true;
     }
 
-    std::stringstream _ss_;
-    std::ofstream _of_(out);
-    if(!_of_) return true;
-
-    std::ostream& os = pt == PrintingType::FILEIO ? (std::ostream&)_of_ : (std::ostream&)_ss_;
-
     for(const LoweredFunction& func : lowout.funcs){
         if(PrintFunctionx86(lowout, func, os)){
             return true;
         }
-    }
-
-    if(pt == PrintingType::MEMORYIO){
-        _of_<<_ss_.rdbuf(); // dump the buffer to file
     }
     return false;
 }

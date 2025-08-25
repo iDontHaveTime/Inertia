@@ -6,9 +6,9 @@
 
 namespace Inertia{
 
-bool ASMPrinterGeneric::output(const LoweredOutput& lowout, PrintingType pt){
+bool ASMPrinterGeneric::output(const LoweredOutput& lowout, std::ostream& os){
     if(lowout.funcs.empty()) return true;
-    if(pt == (PrintingType)-(int)pt) return false; // silence warnings
+    if(!os) return true;
     return false;
 }
 

@@ -5,10 +5,7 @@
 #include "Inertia/IR/Instruction.hpp"
 #include "Inertia/IR/Type.hpp"
 #include "Inertia/Mem/Arenalloc.hpp"
-#include <fstream>
 #include <ostream>
-#include <sstream>
-#include <string>
 
 namespace Inertia{
 
@@ -123,14 +120,8 @@ bool PrintFunction(const Function& func, std::ostream& os){
     return false;
 }
 
-bool IRPrinter::output(const Frame& frame, PrintingType pt){
+bool IRPrinter::output(const Frame& frame, std::ostream& os){
     if(!frame.ttriple) return true;
-
-    std::stringstream _ss_;
-    std::ofstream _of_(out);
-    if(!_of_) return true;
-
-    std::ostream& os = pt == PrintingType::FILEIO ? (std::ostream&)_of_ : (std::ostream&)_ss_;
 
     PrintTriple(frame, os);
     os<<'\n';
@@ -140,9 +131,6 @@ bool IRPrinter::output(const Frame& frame, PrintingType pt){
         os<<'\n';
     }
 
-    if(pt == PrintingType::MEMORYIO){
-        _of_<<_ss_.rdbuf(); // dump the buffer to file
-    }
     return false;
 }
 

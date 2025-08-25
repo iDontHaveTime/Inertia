@@ -2,31 +2,17 @@
 #define INERTIA_ASMPRINTERGEN_HPP
 
 #include "Inertia/Lowering/LoweredOut.hpp"
-#include <filesystem>
+#include <ostream>
 
 namespace Inertia{
-    enum class PrintingType{
-        FILEIO, MEMORYIO
-    };
     class ASMPrinterGeneric{
-    protected:
-        std::filesystem::path out;
     public:
 
         ASMPrinterGeneric() noexcept = default;
 
-        
-        ASMPrinterGeneric(const std::filesystem::path& output){
-            set_path(output);
-        }
-        
-        void set_path(const std::filesystem::path& output){
-            out = output;
-        }
-        
         virtual ~ASMPrinterGeneric() noexcept = default;
 
-        virtual bool output(const LoweredOutput& lowout, PrintingType pt);
+        virtual bool output(const LoweredOutput& lowout, std::ostream& os);
 
         friend class ASMPrinter;
     };

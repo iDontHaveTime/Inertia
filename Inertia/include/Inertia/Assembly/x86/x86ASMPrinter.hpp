@@ -8,7 +8,7 @@ namespace Inertia{
 
     public:
 
-        bool output(const LoweredOutput& lowout, PrintingType pt) override;
+        bool output(const LoweredOutput& lowout, std::ostream& os) override;
         x86ASMPrinter() noexcept = default;
     };
 }

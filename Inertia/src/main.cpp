@@ -16,6 +16,8 @@
 #include "Inertia/Target/TargetManager.hpp"
 #include "Inertia/Target/TargetParser.hpp"
 #include "Inertia/Target/Triple.hpp"
+#include "Inertia/Process/Process.hpp"
+#include <fstream>
 
 using namespace Inertia;
 
@@ -145,9 +147,10 @@ int main(){
     makeAlignedFunc(builder);
     makeLocalFunc(builder);
 
-    IRPrinter irprint("examples/represent.inr");
+    IRPrinter irprint;
 
-    irprint.output(newFrame);
+    std::ofstream outir("examples/represent.inr");
+    irprint.output(newFrame, outir);
 
     DebugInfo dbi;
     CompilerFlags flags;
@@ -168,11 +171,18 @@ int main(){
 
     ism.lower(newFrame, cdgNoPIC);
 
-    printer.set_path("examples/output.S");
-    printer.output(cdg);
+    std::ofstream outpic("examples/output.S");
+    printer.output(cdg, outpic);
 
-    printer.set_path("examples/outputnoPIC.S");
-    printer.output(cdgNoPIC);
+    std::ofstream outnopic("examples/outputnoPIC.S");
+    printer.output(cdgNoPIC, outnopic);
+
+    Process proc;
+
+    proc.set_cmd("/usr/bin/echo");
+    proc.add_arg("test");
+
+    proc.run();
 
 
     return 0;

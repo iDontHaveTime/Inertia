@@ -4,7 +4,7 @@
 #include "Inertia/Assembly/Generic/ASMPrinterGen.hpp"
 #include "Inertia/Lowering/LoweredOut.hpp"
 #include "Inertia/Target/Triple.hpp"
-#include <filesystem>
+#include <ostream>
 
 namespace Inertia{
     class ASMPrinter{
@@ -36,12 +36,6 @@ namespace Inertia{
             tt = TargetType::None;
         }
 
-        inline bool set_path(const std::filesystem::path& output){
-            if(!internal) return true;
-            internal->set_path(output);
-            return false;
-        }
-
         inline TargetType getLoadedType() const noexcept{
             return tt;
         }
@@ -50,9 +44,9 @@ namespace Inertia{
             return internal;
         }
 
-        inline bool output(const LoweredOutput& lowout, PrintingType pt = PrintingType::FILEIO){
+        inline bool output(const LoweredOutput& lowout, std::ostream& os){
             if(!internal) return true;
-            return internal->output(lowout, pt);
+            return internal->output(lowout, os);
         }
 
         ~ASMPrinter() noexcept{

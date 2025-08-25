@@ -7,20 +7,11 @@
 
 namespace Inertia{
     class IRPrinter{
-        std::filesystem::path out;
     public:
 
         IRPrinter() noexcept = default;
 
-        IRPrinter(const std::filesystem::path& output){
-            set_path(output);
-        }
-
-        void set_path(const std::filesystem::path& output){
-            out = output;
-        }
-
-        bool output(const Frame& frame, PrintingType pt = PrintingType::FILEIO);
+        bool output(const Frame& frame, std::ostream& os);
 
         ~IRPrinter() noexcept = default;
     };
