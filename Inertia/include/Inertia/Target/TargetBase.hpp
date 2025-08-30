@@ -73,7 +73,7 @@ namespace InertiaTarget{
         TargetInstructionResult res;
         uint32_t id;
 
-        virtual void emit(std::ostream& os);
+        virtual void emit(std::ostream& os) const;
         TargetInstruction(uint32_t _id, TargetInstructionResult _res) noexcept : res(_res), id(_id){};
 
         virtual ~TargetInstruction() noexcept = default;

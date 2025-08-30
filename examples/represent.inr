@@ -7,9 +7,11 @@ end
 
 func void* align<32> @aligned()
 entry:
+	ret void 0
 end
 
-func void local @local()
+func void* local @local()
 entry:
+	ret void* 18446744073709551615
 end
 

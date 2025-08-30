@@ -8,22 +8,19 @@
 #include "Inertia/Target/TargetBase.hpp"
 
 namespace Inertia{
-    struct LoweredInstruction{
-        InertiaTarget::TargetInstruction* instruction;
-    };
     struct LoweredBlock{
-        const Block* original;
-        ArenaLList<LoweredInstruction> instructions;
+        ArenaReference<Block> original;
+        ArenaLList<InertiaTarget::TargetInstruction> instructions;
 
         LoweredBlock() noexcept = default;
-        LoweredBlock(Block* block, ArenaAlloc* _arena) noexcept : original(block), instructions(_arena){};
+        LoweredBlock(const ArenaReference<Block>& block, ArenaAlloc* _arena) noexcept : original(block), instructions(_arena){};
     };
     struct LoweredFunction{
         const Function* original;
         ArenaLList<LoweredBlock> blocks;
 
         LoweredFunction() noexcept = default;
-        LoweredFunction(Function* func, ArenaAlloc* _arena) noexcept : original(func), blocks(_arena){};
+        LoweredFunction(const Function* func, ArenaAlloc* _arena) noexcept : original(func), blocks(_arena){};
     };
 }
 

@@ -1,9 +1,7 @@
 #ifndef INERTIA_IRPRINTER_HPP
 #define INERTIA_IRPRINTER_HPP
 
-#include "Inertia/Assembly/Generic/ASMPrinterGen.hpp"
 #include "Inertia/IR/Frame.hpp"
-#include <filesystem>
 
 namespace Inertia{
     class IRPrinter{

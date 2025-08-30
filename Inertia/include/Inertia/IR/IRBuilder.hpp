@@ -130,8 +130,10 @@ namespace Inertia{
             size_t _block_index_ = func->blocks.size();
             func->blocks.emplace_back(name, &talloc->get_arena());
 
+            size_t func_index = func - &frame->funcs[0];
+
             size_t _pack_index_ = packs.size();
-            packs.push_back({__InternalIRPack__::IRPackType::BLOCK, _block_index_, function.getIndex()});
+            packs.push_back({__InternalIRPack__::IRPackType::BLOCK, _block_index_, func_index});
             return IRPack(_pack_index_);
         }
 
@@ -141,6 +143,14 @@ namespace Inertia{
         }
         inline ArenaReference<Block> getBlock(const IRPack& pack) noexcept{
             if(!frame || packs[pack.i].type != __InternalIRPack__::IRPackType::BLOCK) return {};
+
+            size_t func_index = packs[pack.i].parent;
+            size_t block_index = packs[pack.i].index;
+
+            if(func_index >= frame->funcs.size()) return {};
+            Function& func = frame->funcs[func_index];
+
+            if(block_index >= func.blocks.size()) return {};
             return frame->funcs[packs[pack.i].parent].blocks[packs[pack.i].index];
         }
 

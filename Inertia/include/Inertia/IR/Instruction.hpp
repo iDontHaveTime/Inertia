@@ -7,29 +7,19 @@
 #include <cstddef>
 #include <cstdint>
 
-#define __makebitwiseflags(type, name) \
-    inline bool check_flag(type __flag__) const noexcept{ \
-        return name & __flag__; \
-    } \
-    inline void set_flag(type __flag__) noexcept{ \
-        name |= __flag__; \
-    } \
-    inline void remove_flag(type __flag__) noexcept{ \
-        name &= ~__flag__; \
-    }
+#define TERM 0x8000
 
 namespace Inertia{
     enum class IROpType : uint16_t{
-        Unknown,
-        Add,
-        Sub,
-        Mul,
-        Div,
-        Mov,
-        Load,
-        Store,
-        Ret,
-        Alloc
+        Unknown = 0,
+        Add = 1,
+        Sub = 2,
+        Mul = 3,
+        Div = 4,
+        Load = 5,
+        Store = 6,
+        Ret = 7 | TERM,
+        Alloc = 8
     };
     enum class SSAType : uint16_t{
         NORMAL, CONSTANT
@@ -81,8 +71,11 @@ namespace Inertia{
 
         IRBinaryOP(const ArenaReference<SSAValue>& _dest, const ArenaReference<SSAValue>& _lhs, const ArenaReference<SSAValue>& _rhs, const ArenaReference<Block>& _parent, ArenaAlloc* _arena, IROpType binoptype) noexcept : IRInstruction(_parent, _arena, binoptype), dest(_dest), lhs(_lhs), rhs(_rhs){};
     };
-}
 
-#undef __makebitwiseflags
+    struct SSACtx{
+        size_t ends;
+        bool force;
+    };
+}
 
 #endif // INERTIA_INSTRUCTION_HPP

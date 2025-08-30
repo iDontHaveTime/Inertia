@@ -102,10 +102,10 @@ void WriteBaseClass(TargetCodegenCTX& ctx){
     for(const RegisterEntry& regen : ctx.inp.registers){
         ctx.hpp<<'\t'<<"Register_"<<regen.name<<'*'<<' '<<regen.name<<';'<<std::endl;
     }
-    
+
     // constructor
     ctx.hpp<<'\t'<<ctx.structName<<'('<<')';
-    
+
     ctx.hpp<<" : "<<"TargetBase"<<'(';
 
     ctx.hpp<<"Inertia::Endian::";
@@ -129,9 +129,9 @@ void WriteBaseClass(TargetCodegenCTX& ctx){
     for(const ExtensionEntry& ext : ctx.inp.extensions){
         ctx.hpp<<"\t\textensions[\""<<ext.name<<"\"]"<<" = false;"<<std::endl;
     }
-    
+
     ctx.hpp<<"\t\tinit();"<<std::endl;
-    
+
     ctx.hpp<<'\t'<<'}'<<std::endl;
     // end constructor
 
@@ -164,19 +164,19 @@ void WriteBaseClass(TargetCodegenCTX& ctx){
 
     ctx.hpp<<'\t'<<'}'<<std::endl;
 
-    
+
     // destructor
-    
+
     ctx.hpp<<'\t'<<'~'<<ctx.structName<<"() noexcept override"<<'{'<<std::endl;
-    
+
     for(auto it = ctx.inp.registers.rbegin(); it != ctx.inp.registers.rend(); it++){
         ctx.hpp<<'\t'<<'\t'<<it->name<<"->~Register_"<<it->name<<"();"<<std::endl;
     }
 
     ctx.hpp<<"\t\tdelete[] buff;"<<std::endl;
-    
+
     ctx.hpp<<'\t'<<'}'<<std::endl;
-    
+
     // end destructor
 
     ctx.hpp<<"};"<<std::endl;
@@ -245,7 +245,7 @@ bool WriteRegisters(TargetCodegenCTX& ctx){
         ctx.hpp<<'\t'<<"Register_"<<regen.name<<'('<<')'<<" : "<<"RegisterBase"<<'(';
 
         ctx.hpp<<'"'<<regen.name<<'"'<<", ";
-        
+
         CastTo(ctx.hpp, "int");
         ctx.hpp<<ctx.regcName<<"::"<<regen.classname<<", ";
 
@@ -310,7 +310,7 @@ void TypeBasedOnWidth(uint32_t w, std::ostream& os){
 
 bool DeclareClasses(TargetCodegenCTX& ctx){
     if(ctx.inp.instructions.empty()) return false;
-    
+
     ctx.hpp<<"enum class InstrID"<<ctx.inp.target<<" : uint32_t"<<'{'<<std::endl;
 
     for(const InstructionEntry& ins : ctx.inp.instructions){
@@ -429,7 +429,7 @@ bool DeclareClasses(TargetCodegenCTX& ctx){
         // end of constructor
 
         // emit
-        ctx.hpp<<"\tvoid emit(std::ostream& os) override"<<'{'<<std::endl;
+        ctx.hpp<<"\tvoid emit(std::ostream& os) const override"<<'{'<<std::endl;
 
         ctx.hpp<<"\t\tstd::format_to(std::ostreambuf_iterator<char>(os), \""<<ins.fmt.fmt<<'"';
 
@@ -495,9 +495,9 @@ bool TargetCodegen::output(){
     if(!ctx.inp.instructions.empty()){
         ctx.hpp<<"#include <format>"<<std::endl;
     }
-    
+
     WriteInclude(ctx.hpp, "Inertia/Target/TargetBase.hpp");
-    
+
     StartFileGen(ctx);
 
     WriteRegisterClasses(ctx);

@@ -24,6 +24,8 @@ namespace Inertia{
         int32_t flags = 0;
         Pow2Int align = 1;
 
+        std::unordered_map<size_t, SSACtx> ssactx;
+
         bool check_flag(FunctionFlags flag) const noexcept{
             return flags & flag;
         }

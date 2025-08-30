@@ -2,11 +2,13 @@
 #define INERTIA_INSTRSELMAN_HPP
 
 #include "Inertia/Lowering/Generic/InstrSelGen.hpp"
+#include "Inertia/Target/TargetBase.hpp"
 #include "Inertia/Target/Triple.hpp"
 
 namespace Inertia{
     class InstructionSelectorManager{
         InstructionSelectorGeneric* internal = nullptr;
+        InertiaTarget::TargetBase* target_base = nullptr;
         TargetType tt = TargetType::None;
     public:
 
@@ -31,6 +33,10 @@ namespace Inertia{
                 delete internal;
                 internal = nullptr;
             }
+            if(target_base){
+                delete target_base;
+                target_base = nullptr;
+            }
             tt = TargetType::None;
         }
 
@@ -40,7 +46,7 @@ namespace Inertia{
 
         inline bool lower(Frame& frame, LoweredOutput& to){
             if(!internal) return true;
-            return internal->lower(frame, to);
+            return internal->lower(frame, to, target_base);
         }
 
         inline InstructionSelectorGeneric* getRaw() noexcept{

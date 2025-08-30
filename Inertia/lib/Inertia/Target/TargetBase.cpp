@@ -2,11 +2,11 @@
 
 namespace InertiaTarget{
 void TargetBase::init(){
-    
+
 }
 TargetBase::~TargetBase() noexcept = default;
 
-void TargetInstruction::emit(std::ostream& os){
+void TargetInstruction::emit(std::ostream& os) const{
     os<<"(null)";
 }
 }

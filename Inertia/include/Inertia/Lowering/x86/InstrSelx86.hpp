@@ -7,7 +7,7 @@ namespace Inertia{
     class InstructionSelectorx86 : public InstructionSelectorGeneric{
     public:
 
-        bool lower(Frame& frame, LoweredOutput& to) override;
+        bool lower(Frame& frame, LoweredOutput& to, InertiaTarget::TargetBase* tb) override;
     };
 }
 

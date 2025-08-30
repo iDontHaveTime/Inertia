@@ -1,6 +1,8 @@
 #include "Inertia/Assembly/x86/x86ASMPrinter.hpp"
 #include "Inertia/IR/Function.hpp"
 #include "Inertia/Lowering/Lowered.hpp"
+#include "Inertia/Mem/Arenalloc.hpp"
+#include "Inertia/Target/TargetBase.hpp"
 #include "Inertia/Target/Triple.hpp"
 #include <ostream>
 
@@ -9,6 +11,10 @@ namespace Inertia{
 enum class DebuggingPart{
     BEFORE, PROLOGUE, EPILOGUE, AFTER
 };
+
+void AddComment(const std::string_view& comment, std::ostream& os){
+    os<<"# "<<comment;
+}
 
 void EmitFunctionEndLabel(const LoweredFunction& func, std::ostream& os){
     os<<".L_func_"<<func.original->name<<"_end";
@@ -30,7 +36,8 @@ bool EmitELFDebuggingFunction(const LoweredFunction& func, std::ostream& os, Deb
             os<<"\t.size "<<func.original->name<<", ";
             EmitFunctionEndLabel(func, os);
             os<<'-'<<func.original->name<<'\n';
-            os<<"\t.cfi_endproc\n";
+            os<<"\t.cfi_endproc\n\n";
+
             break;
     }
 
@@ -64,6 +71,20 @@ bool EmitFunctionEssentialsx86(const LoweredFunction& func, std::ostream& os){
     return false;
 }
 
+bool PrintBlockx86(const ArenaReference<LoweredBlock>& blk, const LoweredFunction& func, std::ostream& os){
+    if(blk->original->flags & Block::GENERATE_LABEL){
+        os<<".L"<<blk->original->name<<func.original->name<<'\n';
+    }
+
+    for(const ArenaReference<InertiaTarget::TargetInstruction>& ins : blk->instructions){
+        os<<'\t';
+        ins->emit(os);
+        os<<'\n';
+    }
+
+    return false;
+}
+
 bool PrintFunctionx86(const LoweredOutput& lowout, const LoweredFunction& func, std::ostream& os){
     EmitFunctionEssentialsx86(func, os);
 
@@ -80,6 +101,12 @@ bool PrintFunctionx86(const LoweredOutput& lowout, const LoweredFunction& func, 
     }
 
     // BODY
+    for(const ArenaReference<LoweredBlock>& blk : func.blocks){
+        if(PrintBlockx86(blk, func, os)){
+            return true;
+        }
+    }
+
 
     // epilogue on return
 

@@ -16,7 +16,6 @@
 #include "Inertia/Target/TargetManager.hpp"
 #include "Inertia/Target/TargetParser.hpp"
 #include "Inertia/Target/Triple.hpp"
-#include "Inertia/Process/Process.hpp"
 #include <fstream>
 
 using namespace Inertia;
@@ -111,13 +110,17 @@ void makeMainFunc(IRBuilder& builder){
 void makeAlignedFunc(IRBuilder& builder){
     auto funcaligned = builder.buildFunction("aligned", builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), Function::MANUAL_ALIGN, 32);
 
-    builder.buildBlock("entry", funcaligned);
+    auto entry = builder.buildBlock("entry", funcaligned);
+
+    builder.buildReturn(entry, builder.newSSAConst(funcaligned, builder.getAllocator()->getVoid(), 0));
 }
 
 void makeLocalFunc(IRBuilder& builder){
-    auto funclocal = builder.buildFunction("local", builder.getAllocator()->getVoid(), Function::LOCAL);
+    auto funclocal = builder.buildFunction("local", builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), Function::LOCAL);
 
-    builder.buildBlock("entry", funclocal);
+    auto entry = builder.buildBlock("entry", funclocal);
+
+    builder.buildReturn(entry, builder.newSSAConst(funclocal, builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), -1));
 }
 
 int main(){
@@ -176,14 +179,6 @@ int main(){
 
     std::ofstream outnopic("examples/outputnoPIC.S");
     printer.output(cdgNoPIC, outnopic);
-
-    Process proc;
-
-    proc.set_cmd("/usr/bin/echo");
-    proc.add_arg("test");
-
-    proc.run();
-
 
     return 0;
 }

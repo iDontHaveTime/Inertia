@@ -45,8 +45,8 @@ namespace Inertia{
         }
 
         template<typename Y, typename... Args>
-        void emplace_back_as(Args&&... args){
-            if(!allocator) return;
+        ArenaReference<Y> emplace_back_as(Args&&... args){
+            if(!allocator) return {};
             ArenaReference<Y> item = allocator->alloc<Y>(std::forward<Args>(args)...);
             ArenaReference<ArenaNode<T>> node = allocator->alloc<ArenaNode<T>>();
             currentSize++;
@@ -61,11 +61,12 @@ namespace Inertia{
                 tail->next = node;
                 tail = node;
             }
+            return item;
         }
 
         template<typename... Args>
-        void emplace_back(Args&&... args){
-            emplace_back_as<T>(std::forward<Args>(args)...);
+        ArenaReference<T> emplace_back(Args&&... args){
+            return emplace_back_as<T>(std::forward<Args>(args)...);
         }
 
         template<typename Y>

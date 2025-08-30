@@ -14,8 +14,8 @@ namespace Inertia{
     public:
 
         InstructionSelectorGeneric() noexcept = default;
-        
-        virtual bool lower(Frame& frame, LoweredOutput& to);
+
+        virtual bool lower(Frame& frame, LoweredOutput& to, InertiaTarget::TargetBase* tb);
         virtual ~InstructionSelectorGeneric() noexcept = default;
     };
 }
