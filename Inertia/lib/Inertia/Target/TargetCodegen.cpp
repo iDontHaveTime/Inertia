@@ -121,6 +121,8 @@ void WriteBaseClass(TargetCodegenCTX& ctx){
             break;
     }
 
+    ctx.hpp<<", "<<ctx.inp.ptr_size;
+
     ctx.hpp<<')';
 
     ctx.hpp<<'{'<<std::endl;

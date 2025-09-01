@@ -129,6 +129,26 @@ uintmax_t get_token_value(TargetParserCTX& ctx){
     return std::stoull(ctx.ss.current().view_str(), nullptr, GetTypeBase(ctx.ss.current().type));
 }
 
+bool ParsePtrSize(TargetParserCTX& ctx) noexcept{
+    consume(ctx);
+
+    if(expect(TokenType::Equals, ctx.ss) == expecterr::SUCCESS){
+        consume(ctx);
+    }
+    else{
+        return true;
+    }
+
+    if(!NumberString(ctx.ss.current().type)){
+        return true;
+    }
+    ctx.tout.ptr_size = get_token_value(ctx);
+
+    consume(ctx);
+    
+    return false;
+}
+
 bool ParseRegclass(TargetParserCTX& ctx){
     consume(ctx);
 
@@ -741,49 +761,55 @@ TargetOutput TargetParser::parse(std::vector<LexerOutput*> files){
                     case TargetKeyword::EXTENSION:
                         if(ParseExtension(ctx)){
                             std::cout<<"Error in parsing extension on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::INSTRUCTION:
                         if(ParseInstruction(ctx)){
                             std::cout<<"Error in parsing instruction on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::DATA:
                         if(ParseData(ctx)){
                             std::cout<<"Error in parsing data on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::TARGET:
                         if(ParseTarget(ctx)){
                             std::cout<<"Error in parsing target on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::ENDIAN:
                         if(ParseEndian(ctx)){
                             std::cout<<"Error in parsing endian on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::REGCLASS:
                         if(ParseRegclass(ctx)){
                             std::cout<<"Error in parsing regclass on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::REGISTER:
                         if(ParseRegister(ctx)){
                             std::cout<<"Error in parsing register on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
                         }
                         break;
                     case TargetKeyword::CPPINC:
                         if(ParseCPPINC(ctx)){
                             std::cout<<"Error in parsing cppinc on line "<<ctx.ss.current().line<<std::endl;
-                            return ctx.tout;
+                            return std::move(ctx.tout);
+                        }
+                        break;
+                    case Inertia::TargetKeyword::POINTER_SIZE:
+                        if(ParsePtrSize(ctx)){
+                            std::cout<<"Error in parsing pointer size on line "<<ctx.ss.current().line<<std::endl;
+                            return std::move(ctx.tout);
                         }
                         break;
                     default:

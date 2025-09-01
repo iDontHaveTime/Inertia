@@ -109,6 +109,15 @@ namespace Inertia{
             return false;
         }
 
+        ArenaReference<SSAArg> addArg(const IRPack& func, const ArenaReference<Type>& type){
+            Function* fn = getFunction(func);
+            if(!fn){
+                return {};
+            }
+
+            return fn->args.emplace_back(fn->ssaid++, type);
+        }
+
         IRPack buildFunction(const std::string_view& name, ArenaReference<Type> type, int32_t flags = 0, uint32_t alignment = 1){
             if(!frame) return IRPack();
             size_t _func_index_ = frame->funcs.size();

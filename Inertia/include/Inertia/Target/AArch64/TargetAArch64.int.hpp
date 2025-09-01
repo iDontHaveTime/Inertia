@@ -19,7 +19,7 @@ struct TargetBaseAArch64 : public TargetBase{
 	char* buff = nullptr;
 	Register_x0* x0;
 	Register_w0* w0;
-	TargetBaseAArch64() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN){
+	TargetBaseAArch64() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN, 64){
 		init();
 	}
 	void init() override{

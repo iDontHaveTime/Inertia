@@ -67,11 +67,13 @@ bool PrintRetInstruction(const IRReturn* ins, std::ostream& os){
     os<<' ';
 
     switch(ins->src.get()->ssa_type){
+        case SSAType::ARGUMENT:
+            [[fallthrough]];
         case SSAType::NORMAL:
             os<<'%'<<ins->src->id;
             break;
         case SSAType::CONSTANT:
-            os<<((SSAConst*)ins->src.get())->value;
+            os<<(intmax_t)((SSAConst*)ins->src.get())->value;
             break;
     }
 
@@ -108,6 +110,17 @@ bool PrintFunction(const Function& func, std::ostream& os){
     PrintFunctionFlags(func, os);
 
     os<<'@'<<func.name<<'(';
+
+    for(auto it = func.args.begin(); it != func.args.end(); ++it){
+        const ArenaReference<SSAArg>& ssa = *it;
+
+        PrintType(ssa->type.get(), os);
+        os<<' '<<'%'<<ssa->id;
+
+        if(it != func.args.last()){
+            os<<", ";
+        }
+    }
 
     os<<")\n";
 

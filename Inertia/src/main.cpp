@@ -102,6 +102,11 @@ int compile_x86t(){
 void makeMainFunc(IRBuilder& builder){
     auto funcmain = builder.buildFunction("main", builder.getAllocator()->getInteger(32));
 
+    builder.addArg(funcmain, builder.getAllocator()->getInteger(32));
+    builder.addArg(funcmain, builder.getAllocator()->getPointer(
+        builder.getAllocator()->getPointer(builder.getAllocator()->getInteger(8))
+    ));
+
     auto entry = builder.buildBlock("entry", funcmain);
 
     builder.buildReturn(entry, builder.newSSAConst(funcmain, builder.getAllocator()->getInteger(32), 0));

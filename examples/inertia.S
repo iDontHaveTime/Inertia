@@ -17,7 +17,7 @@ main:
 	
 	addq $8, %rsp
 	xorl %eax, %eax
-	ret
+	retq
 .Lfunc_main_end1:
 	.size	main, .Lfunc_end1-main
 	.cfi_endproc

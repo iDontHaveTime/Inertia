@@ -96,6 +96,7 @@ namespace Inertia{
 
         std::string_view target;
         Endian endian = Endian::IN_UNKNOWN_ENDIAN;
+        uint32_t ptr_size;
 
         std::vector<std::string_view> regclasses;
         std::vector<RegisterEntry> registers;

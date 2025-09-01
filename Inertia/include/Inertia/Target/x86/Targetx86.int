@@ -1,6 +1,7 @@
 // this file implicitly includes x86/Targetx8664reg.int
 target = x86 // sets the target's name
 endian = little // sets the target's endian
+pointer = 64
 
 // instructions design
 instr mov64rr(GPR64 dest, GPR64 src){
@@ -46,6 +47,21 @@ instr mul8r(al, GPR8 src){
     result = al
 }
 
+instr mov8i8r(GPR8 dest, imm<8> val){
+    format = "movb ${}, %{}"(val, dest.name)
+    result = dest
+}
+
+instr mov16i16r(GPR16 dest, imm<16> val){
+    format = "movw ${}, %{}"(val, dest.name)
+    result = dest
+}
+
+instr mov32i32r(GPR32 dest, imm<32> val){
+    format = "movl ${}, %{}"(val, dest.name)
+    result = dest
+}
+
 instr mov64i32r(GPR64 dest, imm<32> val){
     format = "movq ${}, %{}"(val, dest.name)
     result = dest
@@ -56,9 +72,20 @@ instr mov64i64r(GPR64 dest, imm<64> val){
     result = dest
 }
 
+instr xor8rr(GPR8 gpr1, GPR8 gpr2){
+    format = "xorb %{}, %{}"(gpr1.name, gpr2.name)
+}
+
+instr xor16rr(GPR16 gpr1, GPR16 gpr2){
+    format = "xorw %{}, %{}"(gpr1.name, gpr2.name)
+}
+
 instr xor32rr(GPR32 gpr1, GPR32 gpr2){
     format = "xorl %{}, %{}"(gpr1.name, gpr2.name)
+}
 
+instr xor64rr(GPR64 gpr1, GPR64 gpr2){
+    format = "xorq %{}, %{}"(gpr1.name, gpr2.name)
 }
 
 instr lea64mlrr(string label, GPR64 offset, GPR64 dest){
@@ -67,5 +94,5 @@ instr lea64mlrr(string label, GPR64 offset, GPR64 dest){
 }
 
 instr ret(){
-    format = "ret"()
+    format = "retq"()
 }

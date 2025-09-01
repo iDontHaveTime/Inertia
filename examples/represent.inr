@@ -1,6 +1,6 @@
 triple = "x86_64-linux-gnu"
 
-func int<32> @main()
+func int<32> @main(int<32> %0, int<8>** %1)
 entry:
 	ret int<32> 0
 end
@@ -12,6 +12,6 @@ end
 
 func void* local @local()
 entry:
-	ret void* 18446744073709551615
+	ret void* -1
 end
 

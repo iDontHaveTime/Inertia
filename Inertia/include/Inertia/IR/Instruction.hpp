@@ -22,7 +22,7 @@ namespace Inertia{
         Alloc = 8
     };
     enum class SSAType : uint16_t{
-        NORMAL, CONSTANT
+        NORMAL, CONSTANT, ARGUMENT
     };
 
     struct SSAValue{
@@ -33,6 +33,12 @@ namespace Inertia{
         SSAValue() noexcept = default;
         SSAValue(SSAType _ssa_type) noexcept : ssa_type(_ssa_type){};
         SSAValue(size_t _id, const ArenaReference<Type>& _type, SSAType _ssa_type) noexcept : id(_id), type(_type), ssa_type(_ssa_type){};
+    };
+
+    struct SSAArg : public SSAValue{
+
+        SSAArg() noexcept : SSAValue(SSAType::ARGUMENT){};
+        SSAArg(size_t _id, const ArenaReference<Type>& _type) noexcept : SSAValue(_id, _type, SSAType::ARGUMENT){};
     };
 
     struct SSAConst : public SSAValue{

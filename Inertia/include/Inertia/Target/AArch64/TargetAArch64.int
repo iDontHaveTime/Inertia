@@ -1,6 +1,7 @@
 
 target = AArch64
 endian = little
+pointer = 64
 
 regclass [GPR64 GPR32]
 

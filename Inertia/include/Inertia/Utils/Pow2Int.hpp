@@ -55,7 +55,25 @@ namespace Inertia{
             return GetPowerOfTwo(val);
         }
 
-        ~Pow2Int() noexcept = default;
+        CONSTEXPRCPP uint32_t nextPower() const noexcept{
+            return val << 1;
+        }
+
+        CONSTEXPRCPP uint32_t prevPower() const noexcept{
+            if(val == 1) return 1;
+            return val >> 1;
+        }
+
+        CONSTEXPRCPP void addPower() noexcept{
+            val <<= 1;
+        }
+
+        CONSTEXPRCPP void subPower() noexcept{
+            if(val == 1) return;
+            val >>= 1;
+        }
+
+        CONSTEXPRCPP ~Pow2Int() noexcept = default;
     };
 }
 

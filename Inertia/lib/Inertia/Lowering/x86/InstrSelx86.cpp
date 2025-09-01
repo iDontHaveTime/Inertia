@@ -16,7 +16,30 @@ namespace Inertia{
 InertiaTarget::Inertiax86::CallingConv callc;
 
 struct funcx86ctx{
+    uint32_t alignment;
+    uint32_t allocated;
 
+    funcx86ctx() noexcept{
+        allocated = 0;
+        get_align();
+    }
+
+    uint32_t allocate(uint32_t size, uint32_t align) noexcept{
+        uint32_t cpy = allocated;
+        allocated += size;
+        uint32_t misalignment = (allocated + 8) & (align - 1);
+        if(misalignment != 0){
+            uint32_t padding = align - misalignment;
+            allocated += padding;
+        }
+        get_align();
+        return cpy;
+    }
+
+    void get_align() noexcept{
+        uint32_t ctz = __builtin_ctzl(allocated + 8);
+        alignment = 1UL << ctz;
+    }
 };
 
 struct Insx86ctx{
@@ -43,53 +66,119 @@ bool LowerAllocOPx86(Insx86ctx&, ArenaReference<IRInstruction>&, ArenaReference<
     return false;
 }
 
-bool LowerReturnInteger(SSAConst* ssac, ArenaReference<LoweredBlock>& newBlock){
-    IntegerType* it = (IntegerType*)ssac->type.get();
-    int width = it->width;
-    uintmax_t mask = 0;
-
-    for(int i = 0; i < width; i++){
-        mask <<= 1;
-        mask |= 1;
+bool XorRegRegx86(InertiaTarget::RegisterBase* rbase, ArenaReference<LoweredBlock>& newBlock){
+    if(rbase->width == 64 || rbase->width == 32){
+        if(rbase->width == 64){
+            if(!rbase->child){
+                newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrxor64rr>(rbase, rbase);
+                return false;
+            }
+            else{
+                rbase = rbase->child;
+            }
+            newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrxor32rr>(rbase, rbase);
+        }
+        else if(rbase->width == 16){
+            newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrxor16rr>(rbase, rbase);
+        }
+        else if(rbase->width == 8){
+            newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrxor8rr>(rbase, rbase);
+        }
+        else{
+            return true;
+        }
     }
+    return false;
+}
 
-    uintmax_t value = ssac->value & mask;
-
+bool MoveImmediateToGPR(InertiaTarget::RegisterBase* reg, inrint value, ArenaReference<LoweredBlock>& newBlock, bool full, int width){
     if(!value){
-        newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrxor32rr>(callc.returnReg->child, callc.returnReg->child);
+        if(!full){
+            InertiaTarget::RegisterBase* rbase = reg;
+            while(width < rbase->width){
+                if(!rbase->child){
+                    break;
+                }
+                rbase = rbase->child;
+            }
+            XorRegRegx86(rbase, newBlock);
+        }
+        else{
+            XorRegRegx86(reg, newBlock);
+        }
         return false;
     }
 
+    InertiaTarget::RegisterBase* rbase = reg;
+    if(!full){
+        while(width < rbase->width){
+            if(!rbase->child){
+                break;
+            }
+            rbase = rbase->child;
+        }
+    }
+
+    switch(rbase->width){
+        case 64:{
+                intmax_t sval = (intmax_t)value;
+                if(sval >= INT32_MIN && sval <= INT32_MAX){
+                    newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrmov64i32r>(rbase, sval);
+                }
+                else{
+                    newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrmov64i64r>(rbase, value);
+                }
+            }
+            break;
+        case 32:
+            newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrmov32i32r>(rbase, (uint32_t)value);
+            break;
+        case 16:
+            newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrmov16i16r>(rbase, (uint16_t)value);
+            break;
+        case 8:
+            newBlock->instructions.emplace_back_as<InertiaTarget::Inertiax86::Instrmov8i8r>(rbase, (uint8_t)value);
+            break;
+        default:
+            return true;
+    }
+
     return false;
+}
+
+bool LowerReturnInteger(SSAConst* ssac, ArenaReference<LoweredBlock>& newBlock, int width){
+    uintmax_t mask = (width >= (int)(sizeof(uintmax_t) * 8)) ? ~0ull : (1ull << width) - 1;
+    uintmax_t truncated = ssac->value & mask;
+
+    return MoveImmediateToGPR(callc.returnReg, truncated, newBlock, true, width);
 }
 
 bool LowerReturnFloat(SSAConst*, ArenaReference<LoweredBlock>&){
     return false;
 }
 
-bool LowerReturnPointer(SSAConst*, ArenaReference<LoweredBlock>&){
-    return false;
+bool LowerReturnPointer(Insx86ctx& ctx, SSAConst* ssac, ArenaReference<LoweredBlock>& newBlock){
+    return LowerReturnInteger(ssac, newBlock, ctx.tb->ptr_size);
 }
 
-
-bool LowerReturnConst(SSAConst* ssac, ArenaReference<LoweredBlock>& newBlock){
+bool LowerReturnConst(Insx86ctx& ctx, SSAConst* ssac, ArenaReference<LoweredBlock>& newBlock){
     switch(ssac->type->getKind()){
         case Type::INTEGER:
-            return LowerReturnInteger(ssac, newBlock);
+            return LowerReturnInteger(ssac, newBlock, ((IntegerType*)ssac->type.get())->width);
         case Type::FLOAT:
             return LowerReturnFloat(ssac, newBlock);
         case Type::POINTER:
-            return LowerReturnPointer(ssac, newBlock);
+            return LowerReturnPointer(ctx, ssac, newBlock);
         case Type::VOID:
             break;
     }
     return false;
 }
 
-bool LowerReturnOPx86(Insx86ctx&, ArenaReference<IRInstruction>& ins, ArenaReference<LoweredBlock>& newBlock){
+bool LowerReturnOPx86(Insx86ctx& ctx, ArenaReference<IRInstruction>& ins, ArenaReference<LoweredBlock>& newBlock){
     IRReturn* irret = (IRReturn*)ins.get();
     if(irret->src->ssa_type == SSAType::CONSTANT){
-        if(LowerReturnConst((SSAConst*)irret->src.get(), newBlock)){
+        if(LowerReturnConst(ctx, (SSAConst*)irret->src.get(), newBlock)){
             return true;
         }
     }

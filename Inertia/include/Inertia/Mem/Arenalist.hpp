@@ -140,12 +140,20 @@ namespace Inertia{
             return {ArenaReference<ArenaNode<T>>{}};
         }
 
+        iterator last() noexcept{
+            return {get_tail()};
+        }
+
         const_iterator begin() const noexcept{
             return {head};
         }
 
         const_iterator end() const noexcept{
             return {ArenaReference<ArenaNode<T>>{}};
+        }
+
+        const_iterator last() const noexcept{
+            return {get_tail()};
         }
 
         size_t size() const noexcept{

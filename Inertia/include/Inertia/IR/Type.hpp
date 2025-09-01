@@ -25,6 +25,21 @@ namespace Inertia{
     public:
         int width; // bits
 
+        uintmax_t max_value() const noexcept{
+            uintmax_t val = (uintmax_t)-1;
+            uintmax_t mask = (width >= (int)(sizeof(uintmax_t) * 8)) ? ~0ull : (1ull << width) - 1;
+
+            return val & mask;
+        }
+
+        uintmax_t signed_max_value() const noexcept{
+            return (width == 0) ? 0 : ((1ull << (width - 1)) - 1);
+        }
+
+        intmax_t signed_min_value() const noexcept{
+            return (width == 0) ? 0 : -(1ll << (width - 1));
+        }
+
         IntegerType(int w) noexcept : Type(INTEGER), width(w){};
     };
 

@@ -582,7 +582,7 @@ struct TargetBasex86 : public TargetBase{
 	Register_xmm13* xmm13;
 	Register_xmm14* xmm14;
 	Register_xmm15* xmm15;
-	TargetBasex86() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN){
+	TargetBasex86() : TargetBase(Inertia::Endian::IN_LITTLE_ENDIAN, 64){
 		extensions["avx"] = false;
 		init();
 	}
@@ -975,9 +975,15 @@ enum class InstrIDx86 : uint32_t{
 	mul32r,
 	mul16r,
 	mul8r,
+	mov8i8r,
+	mov16i16r,
+	mov32i32r,
 	mov64i32r,
 	mov64i64r,
+	xor8rr,
+	xor16rr,
 	xor32rr,
+	xor64rr,
 	lea64mlrr,
 	ret
 };
@@ -1048,6 +1054,30 @@ struct Instrmul8r : public TargetInstruction{
 		std::format_to(std::ostreambuf_iterator<char>(os), "mulb %{}", src->name);
 	}
 };
+struct Instrmov8i8r : public TargetInstruction{
+	RegisterBase* dest;
+	uint8_t val;
+	Instrmov8i8r(RegisterBase* _dest_, uint8_t _val_) : TargetInstruction((uint32_t)InstrIDx86::mov8i8r, {.result = _dest_, .clobbers = {}, .clobberSize = 0}), dest(_dest_), val(_val_){};
+	void emit(std::ostream& os) const override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "movb ${}, %{}", val, dest->name);
+	}
+};
+struct Instrmov16i16r : public TargetInstruction{
+	RegisterBase* dest;
+	uint16_t val;
+	Instrmov16i16r(RegisterBase* _dest_, uint16_t _val_) : TargetInstruction((uint32_t)InstrIDx86::mov16i16r, {.result = _dest_, .clobbers = {}, .clobberSize = 0}), dest(_dest_), val(_val_){};
+	void emit(std::ostream& os) const override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "movw ${}, %{}", val, dest->name);
+	}
+};
+struct Instrmov32i32r : public TargetInstruction{
+	RegisterBase* dest;
+	uint32_t val;
+	Instrmov32i32r(RegisterBase* _dest_, uint32_t _val_) : TargetInstruction((uint32_t)InstrIDx86::mov32i32r, {.result = _dest_, .clobbers = {}, .clobberSize = 0}), dest(_dest_), val(_val_){};
+	void emit(std::ostream& os) const override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "movl ${}, %{}", val, dest->name);
+	}
+};
 struct Instrmov64i32r : public TargetInstruction{
 	RegisterBase* dest;
 	uint32_t val;
@@ -1064,12 +1094,36 @@ struct Instrmov64i64r : public TargetInstruction{
 		std::format_to(std::ostreambuf_iterator<char>(os), "movabsq ${}, %{}", val, dest->name);
 	}
 };
+struct Instrxor8rr : public TargetInstruction{
+	RegisterBase* gpr1;
+	RegisterBase* gpr2;
+	Instrxor8rr(RegisterBase* _gpr1_, RegisterBase* _gpr2_) : TargetInstruction((uint32_t)InstrIDx86::xor8rr, {.result = nullptr, .clobbers = {}, .clobberSize = 0}), gpr1(_gpr1_), gpr2(_gpr2_){};
+	void emit(std::ostream& os) const override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "xorb %{}, %{}", gpr1->name, gpr2->name);
+	}
+};
+struct Instrxor16rr : public TargetInstruction{
+	RegisterBase* gpr1;
+	RegisterBase* gpr2;
+	Instrxor16rr(RegisterBase* _gpr1_, RegisterBase* _gpr2_) : TargetInstruction((uint32_t)InstrIDx86::xor16rr, {.result = nullptr, .clobbers = {}, .clobberSize = 0}), gpr1(_gpr1_), gpr2(_gpr2_){};
+	void emit(std::ostream& os) const override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "xorw %{}, %{}", gpr1->name, gpr2->name);
+	}
+};
 struct Instrxor32rr : public TargetInstruction{
 	RegisterBase* gpr1;
 	RegisterBase* gpr2;
 	Instrxor32rr(RegisterBase* _gpr1_, RegisterBase* _gpr2_) : TargetInstruction((uint32_t)InstrIDx86::xor32rr, {.result = nullptr, .clobbers = {}, .clobberSize = 0}), gpr1(_gpr1_), gpr2(_gpr2_){};
 	void emit(std::ostream& os) const override{
 		std::format_to(std::ostreambuf_iterator<char>(os), "xorl %{}, %{}", gpr1->name, gpr2->name);
+	}
+};
+struct Instrxor64rr : public TargetInstruction{
+	RegisterBase* gpr1;
+	RegisterBase* gpr2;
+	Instrxor64rr(RegisterBase* _gpr1_, RegisterBase* _gpr2_) : TargetInstruction((uint32_t)InstrIDx86::xor64rr, {.result = nullptr, .clobbers = {}, .clobberSize = 0}), gpr1(_gpr1_), gpr2(_gpr2_){};
+	void emit(std::ostream& os) const override{
+		std::format_to(std::ostreambuf_iterator<char>(os), "xorq %{}, %{}", gpr1->name, gpr2->name);
 	}
 };
 struct Instrlea64mlrr : public TargetInstruction{
@@ -1084,7 +1138,7 @@ struct Instrlea64mlrr : public TargetInstruction{
 struct Instrret : public TargetInstruction{
 	Instrret() : TargetInstruction((uint32_t)InstrIDx86::ret, {.result = nullptr, .clobbers = {}, .clobberSize = 0}){};
 	void emit(std::ostream& os) const override{
-		std::format_to(std::ostreambuf_iterator<char>(os), "ret");
+		std::format_to(std::ostreambuf_iterator<char>(os), "retq");
 	}
 };
 }

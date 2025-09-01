@@ -17,7 +17,7 @@ void AddComment(const std::string_view& comment, std::ostream& os){
 }
 
 void EmitFunctionEndLabel(const LoweredFunction& func, std::ostream& os){
-    os<<".L_func_"<<func.original->name<<"_end";
+    os<<".Lfunc_"<<func.original->name<<"_end";
 }
 
 bool EmitELFDebuggingFunction(const LoweredFunction& func, std::ostream& os, DebuggingPart dp){
@@ -125,6 +125,7 @@ bool x86ASMPrinter::output(const LoweredOutput& lowout, std::ostream& os){
         return true;
     }
 
+    os<<"\t.text\n";
     for(const LoweredFunction& func : lowout.funcs){
         if(PrintFunctionx86(lowout, func, os)){
             return true;

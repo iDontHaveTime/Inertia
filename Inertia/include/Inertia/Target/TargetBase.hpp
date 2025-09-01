@@ -56,10 +56,11 @@ namespace InertiaTarget{
         std::unordered_map<std::string_view, RegisterBase*> reg_database;
         std::unordered_map<std::string_view, bool> extensions;
         Inertia::Endian endian;
+        uint32_t ptr_size;
 
         TargetBase() = delete;
 
-        TargetBase(Inertia::Endian end) noexcept : endian(end){};
+        TargetBase(Inertia::Endian end, uint32_t _ptr_size) noexcept : endian(end), ptr_size(_ptr_size){};
 
         virtual void init();
         virtual ~TargetBase() noexcept;
