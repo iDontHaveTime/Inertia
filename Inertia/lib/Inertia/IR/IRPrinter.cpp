@@ -53,8 +53,16 @@ bool PrintFunctionFlags(const Function& func, std::ostream& os){
         os<<"align<"<<func.align.getValue()<<"> ";
     }
 
-    if(func.check_flag(Function::LOCAL)){
-        os<<"local ";
+    switch(func.linkage){
+        case Function::LinkageType::INTERNAL:
+            os<<"internal ";
+            break;
+        case Function::LinkageType::EXTERNAL:
+            os<<"external ";
+            break;
+        case Function::LinkageType::WEAK:
+            os<<"weak ";
+            break;
     }
 
     return false;

@@ -58,10 +58,21 @@ bool EmitFunctionDebug(const LoweredOutput& lowout, const LoweredFunction& func,
     return true;
 }
 
-bool EmitFunctionEssentialsx86(const LoweredFunction& func, std::ostream& os){
-    if(!func.original->check_flag(Function::LOCAL)){
-        os<<"\t.globl "<<func.original->name<<'\n';
+void EmitFunctionLinkageTypex86(const LoweredFunction& func, std::ostream& os){
+    switch(func.original->linkage){
+        case Function::LinkageType::INTERNAL:
+            break;
+        case Function::LinkageType::EXTERNAL:
+            os<<"\t.globl "<<func.original->name<<'\n';
+            break;
+        case Function::LinkageType::WEAK:
+            os<<"\t.weak "<<func.original->name<<'\n';
+            break;
     }
+}
+
+bool EmitFunctionEssentialsx86(const LoweredFunction& func, std::ostream& os){
+    EmitFunctionLinkageTypex86(func, os);
     if(func.original->check_flag(Function::MANUAL_ALIGN)){
         os<<"\t.p2align "<<func.original->align.getPower()<<'\n';
     }

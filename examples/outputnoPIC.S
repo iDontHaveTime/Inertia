@@ -1,5 +1,5 @@
 	.text
-	.globl main
+.globl main
 	.p2align 4
 	.type main,@function
 main:
@@ -10,7 +10,7 @@ main:
 	.size main, .Lfunc_main_end-main
 	.cfi_endproc
 
-	.globl aligned
+.globl aligned
 	.p2align 5
 	.type aligned,@function
 aligned:

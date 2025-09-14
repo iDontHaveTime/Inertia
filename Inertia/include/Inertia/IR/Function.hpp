@@ -18,9 +18,11 @@ namespace Inertia{
         ArenaLList<Block> blocks;
         size_t ssaid = 0;
         enum FunctionFlags : int32_t{
-            LOCAL = 0x1,
-            MANUAL_ALIGN = 0x2
+            MANUAL_ALIGN = 0x1
         };
+        enum class LinkageType{
+            INTERNAL, EXTERNAL, WEAK
+        } linkage;
         int32_t flags = 0;
         Pow2Int align = 1;
 
@@ -31,7 +33,7 @@ namespace Inertia{
         }
 
         Function() = delete;
-        Function(const std::string_view& _name, ArenaReference<Type> _type, ArenaAlloc* _arena, int32_t _flags, uint32_t alignment = 1) noexcept : name(_name), type(_type), args(_arena), blocks(_arena), flags(_flags), align(alignment){};
+        Function(const std::string_view& _name, ArenaReference<Type> _type, ArenaAlloc* _arena, LinkageType _linkage, int32_t _flags, uint32_t alignment = 1) noexcept : name(_name), type(_type), args(_arena), blocks(_arena), linkage(_linkage), flags(_flags), align(alignment){};
     };
 }
 

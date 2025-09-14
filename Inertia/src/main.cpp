@@ -100,7 +100,7 @@ int compile_x86t(){
 }
 
 void makeMainFunc(IRBuilder& builder){
-    auto funcmain = builder.buildFunction("main", builder.getAllocator()->getInteger(32));
+    auto funcmain = builder.buildFunction("main", builder.getAllocator()->getInteger(32), Function::LinkageType::EXTERNAL);
 
     builder.addArg(funcmain, builder.getAllocator()->getInteger(32));
     builder.addArg(funcmain, builder.getAllocator()->getPointer(
@@ -113,7 +113,7 @@ void makeMainFunc(IRBuilder& builder){
 }
 
 void makeAlignedFunc(IRBuilder& builder){
-    auto funcaligned = builder.buildFunction("aligned", builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), Function::MANUAL_ALIGN, 32);
+    auto funcaligned = builder.buildFunction("aligned", builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), Function::LinkageType::EXTERNAL, Function::MANUAL_ALIGN, 32);
 
     auto entry = builder.buildBlock("entry", funcaligned);
 
@@ -121,7 +121,7 @@ void makeAlignedFunc(IRBuilder& builder){
 }
 
 void makeLocalFunc(IRBuilder& builder){
-    auto funclocal = builder.buildFunction("local", builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), Function::LOCAL);
+    auto funclocal = builder.buildFunction("local", builder.getAllocator()->getPointer(builder.getAllocator()->getVoid()), Function::LinkageType::INTERNAL);
 
     auto entry = builder.buildBlock("entry", funclocal);
 
