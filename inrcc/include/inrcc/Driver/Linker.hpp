@@ -13,6 +13,8 @@ namespace inrcc{
                 return "gnu";
             case LinkerStyle::MSVC:
                 return "msvc";
+            case LinkerStyle::MACOS:
+                return "macos";
             default:
                 return "";
         }

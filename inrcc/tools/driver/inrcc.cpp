@@ -4,14 +4,19 @@
 // It takes C/C++ source files, parses them, and then translates them to Inertia's IR.
 /* ==================================================== */
 #include "Inertia/CLI/InrCLI.hpp"
+#include "inrcc/Driver/Defaults.hpp"
+#include "inrcc/Driver/Linker.hpp"
 #include "inrcc/Driver/Presets.hpp"
 #include <cstdlib>
 
 using Inertia::InrCLI;
 
+const inrcc::Linker* linker = nullptr;
+
 void preset_default_flags(InrCLI& cli);
 
 int inrcc_main(int argc, char** argv){
+    linker = &inrcc::defaults::default_linker;
     InrCLI cli;
 
     preset_default_flags(cli);
