@@ -119,6 +119,11 @@ public:
     void sub_extint(const extint64&) noexcept;
 
     void shift_left() noexcept;
+    void shift_left(unsigned int n) noexcept{
+        while(n--){
+            shift_left();
+        }
+    }
     void bitwise_not() noexcept{
         for(size_t i = 0; i < allocated; i++){
             array[i] = ~array[i];
@@ -130,14 +135,20 @@ public:
         add_u64(1);
     }
 
-    void operator<<(unsigned int n) noexcept{
+    void operator<<=(unsigned int n) noexcept{
         if(n >= bits){
             zero_out();
             return;
         }
-        while(n--){
-            shift_left();
-        }
+        shift_left(n);
+    }
+
+    extint64 operator<<(unsigned int n) const{
+        extint64 temp(*this);
+
+        temp.shift_left(n);
+
+        return temp;
     }
 
     extint64 operator+(const extint64& other) const{

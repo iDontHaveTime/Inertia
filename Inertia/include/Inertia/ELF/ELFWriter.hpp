@@ -1,6 +1,8 @@
 #ifndef INERTIA_ELFWRITER_HPP
 #define INERTIA_ELFWRITER_HPP
 
+/* Development of this header was halted until further notice. */
+
 #include "../Mem/Memstream.hpp"
 #include "Inertia/Mem/Archmem.hpp"
 #include <cstdint>

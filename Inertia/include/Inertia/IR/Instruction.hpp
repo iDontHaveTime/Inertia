@@ -7,47 +7,69 @@
 #include <cstddef>
 #include <cstdint>
 
+/* This header contains everything related to the IR instructions. */
+
+// This macro sets the TERMINATE flag of the IR instruction type. 
+// This means this is the last instruction that the block can take.
 #define TERM 0x8000
 
 namespace Inertia{
+    /* All the instructions that the IR has. */
     enum class IROpType : uint16_t{
-        Unknown = 0,
-        Add = 1,
-        Sub = 2,
-        Mul = 3,
-        Div = 4,
-        Load = 5,
-        Store = 6,
-        Ret = 7 | TERM,
-        Alloc = 8
+        Unknown = 0, // Unknown Instruction.
+        Add = 1, // Addition.
+        Sub = 2, // Subtraction.
+        Mul = 3, // Multiplication.
+        Div = 4, // Unsigned Division.
+        SDiv = 5, // Signed Division.
+        Load = 6, // Load Mem.
+        Store = 7, // Store mem.
+        Ret = 8 | TERM, // Return instruction, which terminates the block too.
+        Alloc = 9 // Allocate stack space.
     };
+    /* The type of the SSA value provided. */
     enum class SSAType : uint16_t{
-        NORMAL, CONSTANT, ARGUMENT
+        NORMAL, // This is the default SSA.
+        CONSTANT, // Constant SSA, like just a number.
+        ARGUMENT // Function argument SSA.
     };
 
+    /* The base class for all SSA types. */
     struct SSAValue{
+        /* The ID of the SSA Value. */
         size_t id;
+        /* Type of the SSA Value. */
         ArenaReference<Type> type;
+        /* The type of SSA that the SSA Value is. */
         SSAType ssa_type;
 
+        /* The default constructor. */
         SSAValue() noexcept = default;
+        /* Constructor with the type parameter. */
         SSAValue(SSAType _ssa_type) noexcept : ssa_type(_ssa_type){};
+        /* The correct constructor for a valid SSA Value. */
         SSAValue(size_t _id, const ArenaReference<Type>& _type, SSAType _ssa_type) noexcept : id(_id), type(_type), ssa_type(_ssa_type){};
     };
 
+    /* The Function Argument SSA. */
     struct SSAArg : public SSAValue{
 
+        /* Default constructor. */
         SSAArg() noexcept : SSAValue(SSAType::ARGUMENT){};
+        /* The correct constructor for a valid SSA arg. */
         SSAArg(size_t _id, const ArenaReference<Type>& _type) noexcept : SSAValue(_id, _type, SSAType::ARGUMENT){};
     };
 
+    /* The Constant Value SSA. */
     struct SSAConst : public SSAValue{
-        inrint value;
+        inrint value; // TODO: Change the inrint to a pointer, so it can either hold extint or other values.
 
         SSAConst() noexcept : SSAValue(SSAType::CONSTANT){};
+        /* The correct constructor for a valid SSA const. */
         SSAConst(size_t _id, const ArenaReference<Type>& _type, inrint _value) noexcept : SSAValue(_id, _type, SSAType::CONSTANT), value(_value){};
     };
 
+    // Forward declare the Block class.
     struct Block;
 
     struct IRInstruction{

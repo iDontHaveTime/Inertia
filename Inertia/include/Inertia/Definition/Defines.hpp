@@ -3,6 +3,8 @@
 
 #include <cstdint>
 
+/* To be replaced with extint. */
+
 using inrint = uintmax_t;
 
 #endif // INERTIA_DEFINES_HPP

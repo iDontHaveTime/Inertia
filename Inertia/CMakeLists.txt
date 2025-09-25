@@ -32,8 +32,6 @@ configure_file(
     @ONLY
 )
 
-target_include_directories(InertiaLib PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include)
-
 # This executable is for testing
 set(COMPILE_TEST_EXECUTABLE ON)
 
