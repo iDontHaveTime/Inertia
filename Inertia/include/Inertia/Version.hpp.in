@@ -1,8 +1,0 @@
-#ifndef INERTIA_VERSION_HPP
-#define INERTIA_VERSION_HPP
-
-namespace Inertia {
-    constexpr const char* InertiaVersion = "@PROJECT_VERSION@";
-}
-
-#endif // INERTIA_VERSION_HPP

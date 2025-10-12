@@ -28,6 +28,9 @@ Thank you for being interested in contributing to Inertia! Your contributions he
 - Please open an issue first for significant contributions.
 - The C/C++ frontend (inrcc) is not open for contributions yet, as development of it has not started yet.
 
+## Comments
+- Please try to use Doxygen-style comments when possible in headers.
+
 ---
 
 # Coding Style Description
@@ -44,9 +47,12 @@ Thank you for being interested in contributing to Inertia! Your contributions he
     - Correct: `int foo(){ /* ... */ }`
 
 ## Alignment
-- **Comments**: Just allow the comments to flow naturally, alignment isn't required.
+- **Comments**: Comments should be doxygen Javadoc style. 
 - **Equals**: The equals sign should not be aligned with other variables. Like shown below:
 ```cpp
+/**
+ * @brief This variable is X Y Z.
+ */
 int a = 1;
 int abcdef = 2;
 ```

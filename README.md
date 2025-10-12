@@ -1,20 +1,26 @@
 # Inertia Project
 
 ## Overview
-Inertia is a modular compiler framework inspired by LLVM.
-It currently has:
-- **Inertia**: The backend itself, which is a library, it handles the IR, Targets, Codegen, etc...
-- **inrcc**: This is the planned frontend for C and C++ that uses Inertia as its backend.
 
-The project is designed to be **modular**, so frontends can be added or customized independently of the backend.
+Inertia is a modular compiler framework inspired by LLVM. Currently it offers:
+
+ - **InertiaSupport**: The support library containing support headers implementations.
+
+While its not much currently, it is getting expanded quickly.
 
 ---
 
 ## Directories
-- `Inertia/` - The backend library, which includes the public headers and the implementation
-- `inrcc/` - The planned C/C++ frontend that uses the Inertia backend
 
----
+ - `inr/` - The backend compiler library.
+    - `inr/include` - Headers of the backend library.
+    - `inr/lib` - Implementations for headers.
+    - `inr/test` - Test files to test various features.
 
 ## Status
-This is still very early in development. Right now the focus is on getting x86-64 target codegen working.
+
+This is still super early in development, don't expect much.
+
+## License
+
+The Boost Software License 1.0, can be found in the [LICENSE](LICENSE) file.

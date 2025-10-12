@@ -4,18 +4,10 @@ build/
 .cache/
 .zed/
 .ropeproject/
-syntax/
 # Files extensions
-*.o
 *.s
 *.ll
 *.bin
-*.inb
-*.py
 *~
-# Mix
-examples/*.txt
-# Files
-.clangd
-Makefile
-CMakePresets.json
+# Local scripts
+loc.py
