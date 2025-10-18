@@ -4,7 +4,10 @@
 #include "inr/Defines/inrapis.hpp"
 #include "inr/Defines/inrfiledef.hpp"
 #include "inr/Support/inrbuf.hpp"
+#include "inr/Support/inriterator.hpp"
 
+#include <cstddef>
+#include <cstdint>
 #include <cstdio>
 
 /**
@@ -19,6 +22,145 @@
 namespace inr{
 
     /**
+     * @brief Inertia's in-memory file.
+     *
+     * 
+     */
+    class inr_mem_file{
+        void* file;
+        using mem_file_close = void (*)(inr_mem_file&);
+        size_t _size;
+        mem_file_close closer;
+        enum{
+            ERROR_ALLOC, ERROR_SEEK, ERROR_FILE_OPENED_WRONG
+        };
+        uint32_t errc;
+
+        inr_mem_file(void* _file, mem_file_close fptr, size_t sz) noexcept : file(_file), _size(sz), closer(fptr), errc(0){};
+        inr_mem_file(uint32_t errs = 0) noexcept : file(nullptr), _size(0), closer(nullptr), errc(errs){};
+    public:
+
+        /**
+         * @brief Gets the underlying memory file handle, const version.
+         *
+         * @return Const pointer to the file.
+         */
+        const void* get_file() const noexcept{
+            return file;
+        }
+
+        /**
+         * @brief Gets the underlying memory file handle.
+         *
+         * @return Pointer to the file.
+         */
+        void* get_file() noexcept{
+            return file;
+        }
+
+        /**
+         * @brief Size in bytes of the file.
+         *
+         * @return Size of the file.
+         */
+        size_t size() const noexcept{
+            return _size;
+        }
+
+        /**
+         * @brief Error code, defined in 'inr_mem_file' with the prefix ERROR_*.
+         *
+         * @return Error code.
+         */
+        uint32_t get_errc() const noexcept{
+            return errc;
+        }
+
+        inr_mem_file(const inr_mem_file&) = delete;
+        inr_mem_file& operator=(const inr_mem_file&) = delete;
+
+        inr_mem_file(inr_mem_file&& other) noexcept{
+            file = other.file;
+            other.file = nullptr;
+            _size = other._size;
+            other._size = 0;
+            closer = other.closer;
+            other.closer = nullptr;
+        }
+
+        inr_mem_file& operator=(inr_mem_file&& other) noexcept{
+            if(this != &other){
+                file = other.file;
+                other.file = nullptr;
+                _size = other._size;
+                other._size = 0;
+                closer = other.closer;
+                other.closer = nullptr;
+            }
+            return *this;
+        }
+
+        /**
+         * @brief Frees the memory of the mem file.
+         */
+        void close() noexcept{
+            if(!file) return;
+            if(closer){
+                closer(*this);
+            }
+        }
+
+        /**
+         * @brief Returns the validity of the pointer.
+         *
+         * @return True if everything is correct, false if something is not.
+         */
+        bool valid() const noexcept{
+            return file && closer;
+        }
+
+        operator bool() const noexcept{
+            return valid();
+        }
+
+        ~inr_mem_file() noexcept{
+            close();
+        }
+
+        friend class inrfile;
+
+        friend class inr_posix_handle;
+        friend class inr_windows_handle;
+
+        friend struct inr_file_handle;
+
+        array_iterator<uint8_t> begin() noexcept{
+            return array_iterator{(uint8_t*)file};
+        }
+        array_iterator<uint8_t> end() noexcept{
+            return array_iterator{(uint8_t*)file + size()};
+        }
+
+        array_iterator<const uint8_t> begin() const noexcept{
+            return array_iterator{(const uint8_t*)file};
+        }
+        array_iterator<const uint8_t> end() const noexcept{
+            return array_iterator{(const uint8_t*)file + size()};
+        }
+
+        array_iterator<const uint8_t> cbegin() const noexcept{
+            return array_iterator{(const uint8_t*)file};
+        }
+        array_iterator<const uint8_t> cend() const noexcept{
+            return array_iterator{(const uint8_t*)file + size()};
+        }
+
+        uint8_t& operator[](size_t n){
+            return ((uint8_t*)file)[n];
+        }
+    };
+
+    /**
      * @brief Inertia's POSIX handle.
      */
     class inr_posix_handle{
@@ -27,6 +169,8 @@ namespace inr{
 
         static inr_posix_handle* inr_new_posix_handle(int _fd, size_t buf_size);
         static void inr_delete_posix_handle(inr_posix_handle* _posix);
+        static inr_mem_file inr_posix_memfile(const inr_posix_handle* _posix);
+
         long write(const void* data, size_t n);
         int flush();
         void close();
@@ -50,6 +194,7 @@ namespace inr{
 
         static inr_windows_handle* inr_new_windows_handle(void* _handle, size_t buf_size);
         static void inr_delete_windows_handle(inr_windows_handle* _win);
+        static inr_mem_file inr_windows_memfile(const inr_windows_handle* _win);
         long write(const void* data, size_t n);
         int flush();
         void close();
@@ -139,6 +284,9 @@ namespace inr{
         long write(const void* data, size_t size, size_t n) noexcept;
         // explained in 'inrfile'.
         int read(void* dest, size_t size, size_t n) noexcept;
+
+        // explained in 'inrfile'
+        inr_mem_file fmem_open() const;
 
         int flush() noexcept;
 
@@ -395,6 +543,18 @@ namespace inr{
          */
         const uint32_t& access_meta() const noexcept{
             return file.access_meta();
+        }
+
+        /**
+         * @brief Opens the file in memory.
+         *
+         * Uses mmap in POSIX and malloc + fread on standard.
+         */
+        inr_mem_file fmem_open() const{
+            if(!((uint8_t)file.opt & 0b1000000)){
+                return {inr_mem_file::ERROR_FILE_OPENED_WRONG};
+            }
+            return file.fmem_open();
         }
 
         inrfile(const inrfile&) noexcept = delete;

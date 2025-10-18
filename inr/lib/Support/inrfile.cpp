@@ -2,10 +2,12 @@
 #include "inr/Defines/inrapis.hpp"
 #include "inr/Defines/inrfiledef.hpp"
 #include <cstdio>
+#include <cstdlib>
 #include <new>
 
 #ifdef INERTIA_POSIX
 #include <unistd.h>
+#include <sys/mman.h>
 #endif
 
 namespace inr{
@@ -155,7 +157,31 @@ int inr_posix_handle::flush(){
 void inr_posix_handle::close(){
     return;
 }
+inr_mem_file inr_posix_handle::inr_posix_memfile(const inr_posix_handle* psx){
+    return {};
+}
 #else
+static void close_mmaped_file(inr_mem_file& mf){
+    if(mf.valid()){
+        munmap(mf.get_file(), mf.size());
+    }
+}
+inr_mem_file inr_posix_handle::inr_posix_memfile(const inr_posix_handle* psx){
+    off_t pos = lseek(psx->fd, 0, SEEK_CUR);
+    off_t size = lseek(psx->fd, 0, SEEK_END);
+    if(size < 0){
+        return {inr_mem_file::ERROR_SEEK};
+    }
+    size_t new_size = (size == 0) ? 0x1000 : (size_t)size;
+    lseek(psx->fd, pos, SEEK_SET);
+
+    void* mmaped_file = mmap(nullptr, new_size, PROT_READ | PROT_WRITE, MAP_PRIVATE, psx->fd, 0);
+    if(mmaped_file == MAP_FAILED){
+        return {inr_mem_file::ERROR_ALLOC};
+    }
+
+    return {mmaped_file, close_mmaped_file, new_size};
+}
 long inr_posix_handle::write(const void* data, size_t n){
     if(buff.size() == 0){
         return ::write(fd, data, n);
@@ -183,6 +209,10 @@ void inr_posix_handle::close(){
 }
 #endif
 
+inr_mem_file inr_windows_handle::inr_windows_memfile(const inr_windows_handle*){
+    return {};
+}
+
 inr_windows_handle* inr_windows_handle::inr_new_windows_handle(void* handle, size_t buf_size){
     void* mem = ::operator new(sizeof(inr_windows_handle)+buf_size, std::align_val_t(alignof(inr_windows_handle)));
 
@@ -208,6 +238,44 @@ int inr_windows_handle::flush(){
 
 void inr_windows_handle::close(){
     return;
+}
+
+static void standard_close_fmem(inr_mem_file& mf){
+    free(mf.get_file());
+}
+
+inr_mem_file inr_file_handle::fmem_open() const{
+    if(!valid()) return {};
+
+    switch(api){
+        case APIs::POSIX:
+            return inr_posix_handle::inr_posix_memfile(fd);
+        case APIs::WINDOWS:
+            return inr_windows_handle::inr_windows_memfile(handle);
+        case APIs::STANDARD:{
+                long pos = ftell(file);
+                if(fseek(file, 0, SEEK_END) == EOF) return {inr_mem_file::ERROR_SEEK};
+                long sz = ftell(file);
+                if(sz < 0){
+                    return {inr_mem_file::ERROR_SEEK};
+                }
+                
+
+                size_t new_size = (sz == 0) ? 0x1000 : (size_t)sz;
+                void* ptr = malloc(new_size);
+                if(!ptr){
+                    return {inr_mem_file::ERROR_ALLOC};
+                }
+                fseek(file, 0, SEEK_SET);
+
+                fread(ptr, 1, new_size, file);
+
+                fseek(file, pos, SEEK_SET);
+                return {ptr, standard_close_fmem, new_size};
+            }
+        default:
+            return {};
+    }
 }
 
 }

@@ -3,6 +3,7 @@
 
 #include "inr/Support/inralloc.hpp"
 #include "inr/Support/inrcexpr.hpp"
+#include "inr/Support/inriterator.hpp"
 #include "inr/Support/inrstream.hpp"
 
 #include <cstddef>
@@ -100,6 +101,15 @@ namespace inr{
             }
             mask_trailing();
         }
+    private:
+        array_iterator<uint32_t> begin() noexcept{
+            return array_iterator(on_stack() ? (uint32_t*)stack_base : heap_base);
+        }
+
+        array_iterator<uint32_t> end() noexcept{
+            return array_iterator(on_stack() ? (uint32_t*)stack_base + 2 : heap_base + cycles());
+        }
+
     public:
 
         /** 
@@ -615,34 +625,56 @@ namespace inr{
          * @brief Bit shifts left N times.
          * @param n Times to bit shift.
          */
-        void operator<<=(size_t n) noexcept{
+        inrint& operator<<=(size_t n) noexcept{
             lbit_shift(n);
+            return *this;
+        }
+
+        /**
+         * @brief Copies and shifts the integer.
+         */
+        inrint operator<<(size_t n){
+            inrint cpy(*this);
+            cpy <<= n;
+            return cpy;
         }
 
         /**
          * @brief Bit shifts right N times.
          * @param n Times to bit shift.
          */
-        void operator>>=(size_t n) noexcept{
+        inrint& operator>>=(size_t n) noexcept{
             rbit_shift(n);
+            return *this;
+        }
+
+        /**
+         * @brief Copies and shifts the integer.
+         */
+        inrint operator>>(size_t n){
+            inrint cpy(*this);
+            cpy >>= n;
+            return cpy;
         }
 
         /**
          * @brief Adds another 'inrint' to this one.
          * @param other The other one to add to this one.
          */
-        void operator+=(const inrint& other) noexcept{
+        inrint& operator+=(const inrint& other) noexcept{
             add(other);
+            return *this;
         }
 
         /**
          * @brief Adds N to the current integer.
          * @param n The number to add.
          */
-        void operator+=(int n) noexcept{
-            inrint temp(widthof<int>(), is_signed(), mem);
-            temp.from_int(n);
+        inrint& operator+=(uint64_t n) noexcept{
+            inrint temp(widthof<uint64_t>(), is_signed(), mem);
+            temp.from_uint64_t(n);
             (*this) += temp;
+            return *this;
         }
 
         friend std::ostream& operator<<(std::ostream& os, const inrint& integer){
@@ -651,6 +683,70 @@ namespace inr{
 
         friend inr_ostream& operator<<(inr_ostream& os, const inrint& integer){
             return integer.print_decimal(os);
+        }
+
+        /**
+         * @brief Prefix increment operator.
+         */
+        inrint& operator++() noexcept{
+            (*this) += 1;
+            return *this;
+        }
+
+        /**
+         * @brief Postfix increment operator. 
+         */
+        inrint operator++(int) noexcept{
+            inrint cpy(*this);
+            ++(*this);
+            return cpy;
+        }
+
+        /**
+         * @brief Assignment operator.
+         */
+        inrint& operator=(uint64_t n) noexcept{
+            from_uint64_t(n);
+            return *this;
+        }
+
+        /**
+         * @brief Does ~inrint (not the destructor, the bitwise not) basically.
+         */
+        void bit_not() noexcept{
+            if(on_stack()){
+                stack_base = ~stack_base;
+            }
+            else{
+                size_t cycles_count = cycles();
+                for(size_t i = 0; i < cycles_count; i++){
+                    heap_base[i] = ~heap_base[i];
+                }
+            }
+            mask_trailing();
+        }
+
+        /**
+         * @brief Bitwise OR with another 'inrint'.
+         */
+        void bit_or(const inrint& other) noexcept{
+            if(on_stack() && other.on_stack()){
+                stack_base |= other.stack_base;
+            }
+            else if(on_stack() && !other.on_stack()){
+                stack_base |= *(uint64_t*)heap_base;
+            }
+            else{
+                if(other.on_stack()){
+                    *((uint64_t*)heap_base) |= other.stack_base;
+                }
+                else{
+                    size_t min_cycle = std::min(cycles(), other.cycles());
+                    for(size_t i = 0; i < min_cycle; i++){
+                        heap_base[i] |= other.heap_base[i];
+                    }
+                }
+            }
         }
     };
 
