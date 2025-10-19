@@ -2,6 +2,7 @@
 #define INERTIA_INRCEXPR_HPP
 
 #include <climits>
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
@@ -313,7 +314,41 @@ namespace inr{
             }
             return h;
         }
+
     };
+
+    /**
+     * @brief Rounds x to the nearest multiple of to (yes to, not two).
+     *
+     * @param x The number to round.
+     * @param to The number to round it to.
+     *
+     * @return The final number.
+     */
+    template<std::unsigned_integral T>
+    always_inline_inr
+    constexpr T round_to(T x, T to){
+        T remainder = x % to;
+        return remainder ? x + (to - remainder) : x;
+    }
+
+    /**
+     * @brief Rounds x to the nearest multiple of to. Signed version.
+     *
+     * @param x The number to round.
+     * @param to The number to round it to.
+     *
+     * @return The final number.
+     */
+    template<std::signed_integral T>
+    always_inline_inr
+    constexpr T round_to(T x, T to){
+        bool negative = x < 0;
+        if(negative) x = -x;
+        T remainder = x % to;
+        T final_val = remainder ? x + (to - remainder) : x;
+        return negative ? -final_val : final_val;
+    }
 }
 
 #undef always_inline_inr

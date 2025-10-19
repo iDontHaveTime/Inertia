@@ -7,7 +7,7 @@ if(INERTIA_TEST_EXECUTABLES)
         get_filename_component(test_name ${test_file} NAME_WE)
         add_executable(${test_name} ${test_file})
 
-        target_link_libraries(${test_name} PRIVATE InrSupport)
+        target_link_libraries(${test_name} PRIVATE InrCore)
 
         if(INERTIA_SANITIZE)
             target_compile_options(${test_name} PRIVATE

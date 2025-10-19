@@ -19,6 +19,9 @@
 
 namespace inr{
 
+    template<typename T>
+    class unique;
+
     /**
      * @brief The base allocator class for all allocators.
      *
@@ -141,6 +144,24 @@ namespace inr{
         virtual bool valid() const noexcept = 0;
 
         virtual ~allocator() noexcept = default;
+
+        /**
+         * @brief Makes a new 'inr::unique' pointer.
+         *
+         * @return The newly made 'inr::unique' class.
+         */
+        template<typename T, typename... Args>
+        requires (!std::is_array_v<T>)
+        inr::unique<T> make_unique(Args&&... args);
+
+        /**
+         * @brief Makes a new 'inr::unique' array pointer.
+         *
+         * @return The newly made array 'inr::unique' class.
+         */
+        template<typename T, typename... Args>
+        requires std::is_array_v<T>
+        inr::unique<T> make_unique(size_t count, Args&&... args);
     };
     
     /**

@@ -549,6 +549,7 @@ namespace inr{
          * @brief Opens the file in memory.
          *
          * Uses mmap in POSIX and malloc + fread on standard.
+         * The file must be open in read mode.
          */
         inr_mem_file fmem_open() const{
             if(!((uint8_t)file.opt & 0b1000000)){
