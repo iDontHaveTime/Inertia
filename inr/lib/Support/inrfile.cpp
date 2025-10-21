@@ -13,27 +13,27 @@
 namespace inr{
 
 /* API specific write. */
-long inr_file_handle::write(const void* data, size_t size, size_t n) noexcept{
+write_integer inr_file_handle::write(const void* data, size_t size, size_t n) noexcept{
     if(valid() && (uint8_t)opt & 0x1){
-        if(last_op == fs::LastFileOperation::Reading) return EOF;
+        if(last_op == fs::LastFileOperation::Reading) return 0;
         last_op = fs::LastFileOperation::Writing;
         switch(api){
             case APIs::POSIX:{
-                    long res = fd->write(data, size * n);
-                    return res == EOF ? EOF : res / size;
+                    write_integer res = fd->write(data, size * n);
+                    return res == 0 ? 0 : res / size;
                 }
             case APIs::WINDOWS:{
-                    long res = handle->write(data, size * n);
-                    return res == EOF ? EOF : res / size;
+                    write_integer res = handle->write(data, size * n);
+                    return res == 0 ? 0 : res / size;
                 }
             case APIs::STANDARD:
                 return fwrite(data, size, n, file);
             default:
-                return EOF;
+                return 0;
         }
     }
     else{
-        return EOF;
+        return 0;
     }
 }
 
@@ -112,23 +112,27 @@ const char* inr_open_type_to_cfopen(fs::OpeningType opt) noexcept{
     }
 }
 
-int inr_file_handle::read(void* dest, size_t size, size_t n) noexcept{
+read_integer inr_file_handle::read(void* dest, size_t size, size_t n) noexcept{
     if(valid() && (uint8_t)opt & 0x40){
-        if(last_op == fs::LastFileOperation::Writing) return EOF;
+        if(last_op == fs::LastFileOperation::Writing) return 0;
         last_op = fs::LastFileOperation::Reading;
         switch(api){
-            case APIs::POSIX:
-                return EOF;
-            case APIs::WINDOWS:
-                return EOF;
+            case APIs::POSIX:{
+                    read_integer res = fd->read(dest, size * n);
+                    return res == 0 ? 0 : res / size;
+                }
+            case APIs::WINDOWS:{
+                    read_integer res = handle->read(dest, size * n);
+                    return res == 0 ? 0 : res / size;
+                }
             case APIs::STANDARD:
                 return fread(dest, size, n, file);
             default:
-                return EOF;
+                return 0;
         }
     }
     else{
-        return EOF;
+        return 0;
     }
 }
 
@@ -146,18 +150,24 @@ void inr_posix_handle::inr_delete_posix_handle(inr_posix_handle* psx){
 }
 
 #ifndef INERTIA_POSIX
-long inr_posix_handle::write(const void* data, size_t n){
+read_integer inr_posix_handle::read(void* data, size_t n) noexcept{
     (void)data;
     (void)n;
+    return 0;
+}
+write_integer inr_posix_handle::write(const void* data, size_t n) noexcept{
+    (void)data;
+    (void)n;
+    return 0;
+}
+int inr_posix_handle::flush() noexcept{
     return EOF;
 }
-int inr_posix_handle::flush(){
-    return EOF;
-}
-void inr_posix_handle::close(){
+void inr_posix_handle::close() noexcept{
     return;
 }
 inr_mem_file inr_posix_handle::inr_posix_memfile(const inr_posix_handle* psx){
+    (void)psx;
     return {};
 }
 #else
@@ -182,20 +192,52 @@ inr_mem_file inr_posix_handle::inr_posix_memfile(const inr_posix_handle* psx){
 
     return {mmaped_file, close_mmaped_file, new_size};
 }
-long inr_posix_handle::write(const void* data, size_t n){
+
+read_integer inr_posix_handle::read(void* data, size_t n) noexcept{
+    if(buff.size() == 0){
+        return ::read(fd, data, n);
+    }
+
+    char* dt = (char*)data;
+    
+    while(n){
+        if(read_i < buff.current()){
+            *dt++ = buff[read_i++];
+            n--;
+        }
+        else{
+            buff.flush();
+            read_i = 0;
+            size_t r = ::read(fd, buff.data(), buff.size());
+            if(r < 0){
+                return 0;
+            }
+
+            buff.set_current(r);
+            if(r == 0){
+                break;
+            }
+        }
+
+
+    }
+    return dt - (const char*)data;
+}
+
+write_integer inr_posix_handle::write(const void* data, size_t n) noexcept{
     if(buff.size() == 0){
         return ::write(fd, data, n);
     }
     for(size_t i = 0; i < n; i++){
         if(buff.add(*((const char*)data))){
-            if(this->flush() == EOF) return EOF;
+            if(this->flush() == EOF) return i;
         }
         data = (const char*)data + 1;
     }
 
     return n;
 }
-int inr_posix_handle::flush(){
+int inr_posix_handle::flush() noexcept{
     if(buff.current() == 0 || buff.size() == 0) return 0;
     ssize_t res = ::write(fd, buff.data(), buff.current());
     buff.flush();
@@ -204,7 +246,7 @@ int inr_posix_handle::flush(){
     }
     return 0;
 }
-void inr_posix_handle::close(){
+void inr_posix_handle::close() noexcept{
     ::close(fd);
 }
 #endif
@@ -226,17 +268,23 @@ void inr_windows_handle::inr_delete_windows_handle(inr_windows_handle* wnd){
     ::operator delete(wnd, std::align_val_t(alignof(inr_windows_handle)));
 }
 
-long inr_windows_handle::write(const void* data, size_t n){
+write_integer inr_windows_handle::write(const void* data, size_t n) noexcept{
     (void)data;
     (void)n;
+    return 0;
+}
+
+read_integer inr_windows_handle::read(void* data, size_t n) noexcept{
+    (void)data;
+    (void)n;
+    return 0;
+}
+
+int inr_windows_handle::flush() noexcept{
     return EOF;
 }
 
-int inr_windows_handle::flush(){
-    return EOF;
-}
-
-void inr_windows_handle::close(){
+void inr_windows_handle::close() noexcept{
     return;
 }
 

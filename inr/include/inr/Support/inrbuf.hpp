@@ -1,6 +1,7 @@
 #ifndef INERTIA_INRBUF_HPP
 #define INERTIA_INRBUF_HPP
 
+#include <concepts>
 #include <cstddef>
 
 /**
@@ -14,6 +15,9 @@
 
 namespace inr{
 
+    /**
+     * @brief A constexpr-able buffer that can hold types inside efficiently.
+     */
     template<typename T>
     class inrbuf{
         T* buf;
@@ -28,13 +32,13 @@ namespace inr{
          * @param start The start of the buffer.
          * @param size The total size of the buffer provided.
          */
-        inrbuf(T* start, size_t size) noexcept : buf(start), index(0), buffer_size(size){};
+        constexpr inrbuf(T* start, size_t size) noexcept : buf(start), index(0), buffer_size(size){};
 
         /**
          * @brief Adds the provided element to the next slot.
          * @return True if flush needed, false if not.
          */
-        bool add(const T& elem) noexcept{
+        constexpr bool add(const T& elem) noexcept{
             if(index < buffer_size){
                 buf[index] = elem; 
                 index++;
@@ -48,7 +52,7 @@ namespace inr{
         /**
          * @brief Resets the buffer's index.
          */
-        void flush() noexcept{
+        constexpr void flush() noexcept{
             index = 0;
         }
 
@@ -56,7 +60,7 @@ namespace inr{
          * @brief Returns the underlying pointer to the buffer.
          * @return Pointer to buffer.
          */
-        T* data() noexcept{
+        constexpr T* data() noexcept{
             return buf;
         }
 
@@ -64,7 +68,7 @@ namespace inr{
          * @brief Returns the underlying pointer to the buffer, const version.
          * @return Const pointer to buffer.
          */
-        const T* data() const noexcept{
+        constexpr const T* data() const noexcept{
             return buf;
         }
 
@@ -72,7 +76,7 @@ namespace inr{
          * @brief Returns the size of the underlying buffer.
          * @return Size of buffer.
          */
-        size_t size() const noexcept{
+        constexpr size_t size() const noexcept{
             return buffer_size;
         }
 
@@ -80,8 +84,31 @@ namespace inr{
          * @brief Returns the current element index of the buffer.
          * @return Index of element.
          */
-        size_t current() const noexcept{
+        constexpr size_t current() const noexcept{
             return index;
+        }
+
+        /**
+         * @brief Checks if the buffer's index is 0.
+         *
+         * @return True if empty.
+         */
+        constexpr bool empty() const noexcept{
+            return index == 0;
+        }
+
+        template<std::integral Y>
+        constexpr T& operator[](Y n) noexcept{
+            return buf[n];
+        }
+
+        template<std::integral Y>
+        constexpr const T& operator[](Y n) const noexcept{
+            return buf[n];
+        }
+
+        constexpr void set_current(size_t new_index) noexcept{
+            index = new_index;
         }
     };
 

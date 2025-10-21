@@ -19,7 +19,11 @@
  *
  **/
 
+
+
 namespace inr{
+    using read_integer = decltype(fread(nullptr, 0, 0, nullptr));
+    using write_integer = decltype(fwrite(nullptr, 0, 0, nullptr));
 
     /**
      * @brief Inertia's in-memory file.
@@ -164,22 +168,28 @@ namespace inr{
      * @brief Inertia's POSIX handle.
      */
     class inr_posix_handle{
-        int fd;
         inrbuf<char> buff;
+        size_t read_i;
+        int fd;
 
         static inr_posix_handle* inr_new_posix_handle(int _fd, size_t buf_size);
         static void inr_delete_posix_handle(inr_posix_handle* _posix);
         static inr_mem_file inr_posix_memfile(const inr_posix_handle* _posix);
 
-        long write(const void* data, size_t n);
-        int flush();
-        void close();
+        write_integer write(const void* data, size_t n) noexcept;
+        read_integer read(void* data, size_t n) noexcept;
+        int flush() noexcept;
+        void close() noexcept;
     public:
 
-        inr_posix_handle(int _fd, char* start, size_t size) noexcept : fd(_fd), buff(start, size){};
+        inr_posix_handle(int _fd, char* start, size_t size) noexcept : buff(start, size), read_i(0), fd(_fd){};
 
         bool valid() const noexcept{
             return fd >= 0;
+        }
+
+        decltype(read_i) get_read_pointer() const noexcept{
+            return read_i;
         }
 
         friend struct inr_file_handle;
@@ -191,19 +201,26 @@ namespace inr{
     class inr_windows_handle{
         void* handle;
         inrbuf<char> buff;
+        size_t read_i;
 
         static inr_windows_handle* inr_new_windows_handle(void* _handle, size_t buf_size);
         static void inr_delete_windows_handle(inr_windows_handle* _win);
         static inr_mem_file inr_windows_memfile(const inr_windows_handle* _win);
-        long write(const void* data, size_t n);
-        int flush();
-        void close();
+
+        write_integer write(const void* data, size_t n) noexcept;
+        read_integer read(void* data, size_t n) noexcept;
+        int flush() noexcept;
+        void close() noexcept;
     public:
 
-        inr_windows_handle(void* _handle, char* start, size_t size) noexcept : handle(_handle), buff(start, size){};
+        inr_windows_handle(void* _handle, char* start, size_t size) noexcept : handle(_handle), buff(start, size), read_i(0){};
 
         bool valid() const noexcept{
             return handle != nullptr;
+        }
+
+        decltype(read_i) get_read_pointer() const noexcept{
+            return read_i;
         }
 
         friend struct inr_file_handle;
@@ -281,9 +298,9 @@ namespace inr{
         explicit inr_file_handle(void* _handle, size_t buffer_size, fs::OpeningType _open, bool own) noexcept : handle(inr_windows_handle::inr_new_windows_handle(_handle, buffer_size)), api(APIs::WINDOWS), opt(_open), ownership(own){};
 
         // explained in 'inrfile'.
-        long write(const void* data, size_t size, size_t n) noexcept;
+        write_integer write(const void* data, size_t size, size_t n) noexcept;
         // explained in 'inrfile'.
-        int read(void* dest, size_t size, size_t n) noexcept;
+        read_integer read(void* dest, size_t size, size_t n) noexcept;
 
         // explained in 'inrfile'
         inr_mem_file fmem_open() const;
@@ -470,9 +487,9 @@ namespace inr{
          * @param size Size of the object to write.
          * @param n The number of objects to write.
          *
-         * @return Amount of objects written, if error returns EOF. 
+         * @return Amount of objects written with size. 
          */
-        long write(const void* data, size_t size, size_t n) noexcept{
+        write_integer write(const void* data, size_t size, size_t n) noexcept{
             return file.write(data, size, n);
         }
 
@@ -484,9 +501,9 @@ namespace inr{
          * @param n The number of objects to read.
          *
          *
-         * @return if error returns EOF. 
+         * @return returns amount of N with size read.
          */
-        int read(void* dest, size_t size, size_t n) noexcept{
+        read_integer read(void* dest, size_t size, size_t n) noexcept{
             return file.read(dest, size, n);
         }
 

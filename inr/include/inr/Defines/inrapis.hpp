@@ -26,6 +26,8 @@ namespace inr{
     };
 }
 
+#if !defined(INERTIA_STANDARD) && !defined(INERTIA_POSIX) && !defined(INERTIA_WINDOWS)
+
 #if __has_include(<unistd.h>)
 #define INERTIA_POSIX
 constexpr inr::APIs INERTIA_PLATFORM_API = inr::APIs::POSIX;
@@ -35,6 +37,8 @@ constexpr inr::APIs INERTIA_PLATFORM_API = inr::APIs::WINDOWS;
 #else
 #define INERTIA_STANDARD
 constexpr inr::APIs INERTIA_PLATFORM_API = inr::APIs::STANDARD;
+#endif
+
 #endif
 
 #undef INERTIA_WINDOWS_UNSUPPORTED
