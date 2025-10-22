@@ -55,6 +55,9 @@ write_integer inr_file_handle::write(const void* data, size_t size, size_t n) no
 /* Implement general seek. */
 seek_integer inr_file_handle::seek(tell_integer off, fs::SeekType st) noexcept{
     if(valid()){
+        if(last_op == fs::LastFileOperation::Writing){
+            if(flush() == EOF) return EOF;
+        }
         switch(api){
             case APIs::POSIX:
                 return fd->seek(off, st);

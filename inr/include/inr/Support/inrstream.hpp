@@ -244,6 +244,18 @@ namespace inr{
         auto tell() noexcept{
             return file.tell();
         }
+
+        /**
+         * @brief Seeks in the file.
+         *
+         * @param i The offset from the seek pointer.
+         * @param st The seek type.
+         *
+         * @return EOF if error.
+         */
+        auto seek(tell_integer i, fs::SeekType st = fs::SeekType::SeekSet) noexcept{
+            return file.seek(i, st);
+        }
     };
 
     /**
@@ -424,6 +436,18 @@ namespace inr{
          */
         auto tell() noexcept{
             return file.tell();
+        }
+
+        /**
+         * @brief Seeks in the file.
+         *
+         * @param i The offset from the seek pointer.
+         * @param st The seek type.
+         *
+         * @return EOF if error.
+         */
+        auto seek(tell_integer i, fs::SeekType st = fs::SeekType::SeekSet) noexcept{
+            return file.seek(i, st);
         }
     };
 
