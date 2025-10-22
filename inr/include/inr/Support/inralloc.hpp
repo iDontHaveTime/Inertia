@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdlib>
 
+#include <memory>
 #include <type_traits>
 #include <utility>
 
@@ -53,7 +54,7 @@ namespace inr{
             T* ptr = (T*)alloc_raw(sizeof(T), alignof(T));
             
             if(!ptr) return nullptr;
-            new(ptr) T(std::forward<Args>(args)...);
+            std::construct_at<T>(ptr, std::forward<Args>(args)...);
 
             return ptr;
         }

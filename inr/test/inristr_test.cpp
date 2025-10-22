@@ -1,7 +1,20 @@
 #include "inr/Defines/inrfiledef.hpp"
 #include "inr/Support/inrfile.hpp"
 #include <cstdio>
-#include <fcntl.h>
+
+/**
+ * Expected output:
+ * 34
+ * memory file contents. 1 2 3. ASCII
+ * Standard succeeded.
+ *
+ * if posix:
+ *
+ * 34
+ * memory file contents. 1 2 3. ASCII
+ * POSIX succeeded.
+ *
+ */
 
 int standard(){
     FILE* f = fopen("inr/test/resources/filetest.txt", "rb");
@@ -30,6 +43,8 @@ int standard(){
     return 0;
 }
 
+#ifdef INERTIA_POSIX
+#include <fcntl.h>
 int posix(){
     int fd = open("inr/test/resources/filetest.txt", O_RDONLY);
     if(fd < 0){
@@ -55,6 +70,7 @@ int posix(){
 
     return 0;
 }
+#endif
 
 int main(){
     if(standard()){
@@ -63,11 +79,13 @@ int main(){
     }
     printf("Standard succeeded.\n");
 
+    #ifdef INERTIA_POSIX
     if(posix()){
         printf("POSIX failed.\n");
         return 1;
     }
     printf("POSIX succeeded.\n");
+    #endif
 
     return 0;
 }

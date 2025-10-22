@@ -19,11 +19,13 @@
  *
  **/
 
-
-
 namespace inr{
     using read_integer = decltype(fread(nullptr, 0, 0, nullptr));
     using write_integer = decltype(fwrite(nullptr, 0, 0, nullptr));
+    using tell_integer = decltype(ftell(nullptr));
+    using seek_integer = decltype(fseek(nullptr, 0, 0));
+
+    struct inr_file_handle;
 
     /**
      * @brief Inertia's in-memory file.
@@ -178,6 +180,9 @@ namespace inr{
 
         write_integer write(const void* data, size_t n) noexcept;
         read_integer read(void* data, size_t n) noexcept;
+        tell_integer tell(inr_file_handle&) noexcept;
+        seek_integer seek(tell_integer off, fs::SeekType st) noexcept;
+
         int flush() noexcept;
         void close() noexcept;
     public:
@@ -209,8 +214,12 @@ namespace inr{
 
         write_integer write(const void* data, size_t n) noexcept;
         read_integer read(void* data, size_t n) noexcept;
+        tell_integer tell(inr_file_handle&) noexcept;
+        seek_integer seek(tell_integer off, fs::SeekType st) noexcept;
+
         int flush() noexcept;
         void close() noexcept;
+        
     public:
 
         inr_windows_handle(void* _handle, char* start, size_t size) noexcept : handle(_handle), buff(start, size), read_i(0){};
@@ -366,6 +375,9 @@ namespace inr{
             return meta;
         }
 
+        tell_integer tell() noexcept;
+        seek_integer seek(tell_integer off, fs::SeekType st) noexcept;
+
         ~inr_file_handle() noexcept = default;
     public:
         /**
@@ -382,6 +394,10 @@ namespace inr{
                 default:
                     return false;
             }
+        }
+
+        fs::LastFileOperation last_operation() const noexcept{
+            return last_op;
         }
 
         friend class inrfile;
@@ -569,10 +585,31 @@ namespace inr{
          * The file must be open in read mode.
          */
         inr_mem_file fmem_open() const{
-            if(!((uint8_t)file.opt & 0b1000000)){
+            if(!fs::opening_type_read(file.opt)){
                 return {inr_mem_file::ERROR_FILE_OPENED_WRONG};
             }
             return file.fmem_open();
+        }
+
+        /**
+         * @brief Tells the current file write/read position.
+         *
+         * @return Position if success, EOF if error.
+         */
+        tell_integer tell() noexcept{
+            return file.tell();
+        }
+
+        /**
+         * @brief Seeks in the file based on seek type.
+         *
+         * @param off Offset from the seeked pointer.
+         * @param st Seek type.
+         *
+         * @return EOF if error.
+         */
+        seek_integer seek(tell_integer off, fs::SeekType st) noexcept{
+            return file.seek(off, st);
         }
 
         inrfile(const inrfile&) noexcept = delete;

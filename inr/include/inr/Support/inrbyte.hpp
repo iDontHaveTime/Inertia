@@ -203,7 +203,7 @@ namespace inr{
          * @return The stream.
          */
         friend inr_ostream& operator<<(inr_ostream& os, const byte& other) noexcept{
-            return os.write(&other.val, 1);
+            return os.write((const char*)&other.val, 1);
         }
 
         /**
@@ -229,6 +229,18 @@ namespace inr{
          * @return The stream.
          */
         friend std::istream& operator>>(std::istream& is, byte& to){
+            return is.read((char*)&to.val, 1);
+        }
+
+        /**
+         * @brief Reads a raw byte from Inertia's istream.
+         *
+         * @param is The stream.
+         * @param The byte to write to.
+         *
+         * @return The stream.
+         */
+        friend inr::inr_istream& operator>>(inr::inr_istream& is, byte& to){
             return is.read((char*)&to.val, 1);
         }
     };

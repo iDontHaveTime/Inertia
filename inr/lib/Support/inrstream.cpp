@@ -1,3 +1,4 @@
+/* Inertia's includes. */
 #include "inr/Support/inrstream.hpp"
 
 namespace inr{
@@ -13,10 +14,13 @@ inr_ostream& _inr_flush_implementation(inr_ostream& _stream){
     return _stream;
 }
 
-/* Initialize the stdout inr_stream. */
+/* Initialize the stdout inr_ostream. */
 inr_ostream out = {stdout};
-/* Initialize the stderr inr_stream. */
+/* Initialize the stderr inr_ostream. */
 inr_ostream err = {stderr};
+
+/* Initialize the stdin inr_istream. */
+inr_istream in = {stdin};
 
 /* Initialize the stream endl manipulator. */
 inr_stream_manipulator endl = _inr_endl_implementation;

@@ -13,5 +13,12 @@ int main(){
 
     inrout<<"Hello from POSIX."<<inr::endl;
 
+    inrout<<"Enter a string: "<<inr::flush;
+
+    std::string str;
+    inr::in.getline(str);
+
+    inr::out<<str<<inr::endl;
+
     return 0;
 }

@@ -2,6 +2,7 @@
 #define INERTIA_INRFILEDEF_HPP
 
 #include <cstdint>
+#include <cstdio>
 
 /**
  * @file inr/Defines/inrfiledef.hpp
@@ -31,6 +32,30 @@ namespace inr::fs{
         AppendRead = 0b01010001, /**< Opens the file at the end for appending and reading, creates one if file doesn't exist. */
         ReadWrite = 0b01100001 /**< Opens the file for writing and reading, errors if one doesn't exist. */
     };
+
+    enum class SeekType : uint8_t{
+        SeekSet = SEEK_SET, /**< Seeks absolute. */
+        SeekCurrent = SEEK_CUR, /**< Seeks from current pointer. */
+        SeekEnd = SEEK_END /**< Seeks from the end. */
+    };
+
+    /**
+     * @brief Checks if the provided file opening mode is available for writing.
+     *
+     * @return True if writeable.
+     */
+    constexpr bool opening_type_write(OpeningType ot) noexcept{
+        return ((uint8_t)ot & 1);
+    }
+
+    /**
+     * @brief Checks if the provided file opening mode is available for reading.
+     *
+     * @return True if readable.
+     */
+    constexpr bool opening_type_read(OpeningType ot) noexcept{
+        return ((uint8_t)ot & 0x40);
+    }
 
     /**
      * @brief Last operation for files open with read/write opening type.
