@@ -8,11 +8,7 @@ int main(){
 
     inr::out<<*x<<inr::endl;
 
-    inr::unique<int[]> y = inr::static_allocator.make_unique<int[]>(3);
-
-    for(size_t i = 0; i < y.size(); i++){
-        y[i] = i;
-    }
+    inr::unique<int[]> y = inr::static_allocator.make_unique<int[]>(3, 52);
 
     for(size_t i = 0; i < y.size(); i++){
         inr::out<<y[i]<<inr::endl;

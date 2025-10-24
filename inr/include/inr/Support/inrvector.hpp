@@ -1,12 +1,6 @@
 #ifndef INERTIA_INRVECTOR_HPP
 #define INERTIA_INRVECTOR_HPP
 
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inriterator.hpp"
-
-#include <cstring>
-#include <type_traits>
-
 /**
  * @file inr/Support/inrvector.hpp
  * @brief Inertia's vector class.
@@ -15,6 +9,13 @@
  * This is a replacement for STL's std::vector.
  *
  **/
+
+#include "inr/Support/inralloc.hpp"
+#include "inr/Support/inriterator.hpp"
+
+#include <cstring>
+
+#include <type_traits>
 
 namespace inr{
 
@@ -51,8 +52,12 @@ namespace inr{
                 new_size <<= 1;
             }
 
+            mem->mark_as_might_be_freed(array, allocated * sizeof(T));
             T* new_array = (T*)mem->alloc_raw(new_size * sizeof(T), alignof(T));
-            if(!new_array) return false;
+            if(!new_array){
+                mem->unmark_as_might_be_freed(array, allocated * sizeof(T));
+                return false;
+            }
 
             try{
                 for(size_t i = 0; i < count; i++){
@@ -63,6 +68,7 @@ namespace inr{
                     new_array[j].~T();
                 }
 
+                mem->unmark_as_might_be_freed(array, allocated * sizeof(T));
                 mem->free_raw(new_array, new_size * sizeof(T));
                 throw;
             }
@@ -257,8 +263,13 @@ namespace inr{
         /**
          * @brief Clears all elements.
          */
-        void clear() noexcept{
+        void clear(bool free_everything = false) noexcept{
             count = 0;
+            if(free_everything){
+                if(array)
+                    mem->free_raw(array, allocated);
+                allocated = 0;
+            }
         }
 
         /**
@@ -271,7 +282,7 @@ namespace inr{
          * @brief Pushes this element to the back of the vector (move).
          */
         void push_back(T&& _n){
-            emplace_back(_n);
+            emplace_back(std::move(_n));
         }
 
         /**
@@ -371,6 +382,275 @@ namespace inr{
                 }
                 mem->free_raw(array, allocated);
             }
+        }
+    };
+
+    /**
+     * @brief A vector that stores a certain amount of elements on stack before heap.
+     *
+     */
+    template<typename T, size_t elem_c>
+    class inline_vec{
+        inr_vec<T> heap;
+        size_t cur = 0;
+        alignas(T) uint8_t stack[elem_c * sizeof(T)];
+        enum class vec_storage{
+            STACK, HEAP
+        } storage = inline_vec::vec_storage::STACK;
+    public:
+        
+        /* Constructors. */
+
+        /**
+         * @brief Basic 'inline_vec' constructor.
+         *
+         * This constructor allows you to set the underlying allocator.
+         *
+         * @param _mem The allocator to use inside. 
+         */
+        inline_vec(allocator* _mem = nullptr) noexcept : heap(_mem){};
+
+        inline_vec(allocator& _mem) noexcept : inline_vec(&_mem){};
+
+        /* Destructor. */
+
+        ~inline_vec() noexcept{
+            if(storage == vec_storage::STACK){
+                for(size_t i = 0; i < cur; i++){
+                    ((T*)stack)[i].~T();
+                }
+            }
+        }
+
+        /* Copies. */
+
+        inline_vec(const inline_vec&) = default;
+        inline_vec& operator=(const inline_vec&) = default;
+
+        /* Move. */
+
+        inline_vec(inline_vec&&) = default;
+        inline_vec& operator=(inline_vec&&) = default;
+
+        /* Members. */
+
+        /**
+         * @brief Reserves at least the amount provided.
+         *
+         * @param n The amount of elements to reserve.
+         */
+        void reserve(size_t n) noexcept{
+            if(storage != vec_storage::HEAP) return;
+            heap.reserve(n);
+        }
+
+        /**
+         * @brief Returns the amount of elements in the vector.
+         * @return Amount of elements allocated in the vector.
+         */
+        size_t size() const noexcept{
+            return storage == vec_storage::HEAP ? heap.size() : cur;
+        }
+
+        /**
+         * @brief The amount of elements the vector has space for.
+         * @return Amount of space the vector has allocated for elements.
+         */
+        size_t capacity() const noexcept{
+            return storage == vec_storage::HEAP ? heap.capacity() : elem_c;
+        }
+
+        /**
+         * @brief Returns a read/write reference to the Nth array element. 
+         */
+        T& operator[](size_t n) noexcept{
+            return *(data() + n);
+        }
+
+        /**
+         * @brief Returns a const reference to the Nth array element. 
+         */
+        const T& operator[](size_t n) const noexcept{
+            return *(data() + n);
+        }
+
+        /**
+         * @brief Alternative to operator[].
+         *
+         * @param n Index to access the element at.
+         */
+        T& at(size_t n) noexcept{
+            return (*this)[n];
+        }
+
+        /**
+         * @brief Alternative to operator[] const version.
+         *
+         * @param n Index to access the element at.
+         */
+        const T& at(size_t n) const noexcept{
+            return (*this)[n];
+        }
+
+        /**
+         * @brief Returns a const reference for the first element.
+         */
+        const T& front() const noexcept{
+            return (*this)[0];
+        }
+
+        /**
+         * @brief Returns a read/write reference for the first element.
+         */
+        T& front() noexcept{
+            return (*this)[0];
+        }
+
+        /**
+         * @brief Returns a const reference for the last element.
+         */
+        const T& back() const noexcept{
+            return (*this)[size()-1];
+        }
+
+        /**
+         * @brief Returns a read/write reference for the last element.
+         */
+        T& back() noexcept{
+            return (*this)[size()-1];
+        }
+
+        /**
+         * @brief Removes the last element.
+         */
+        void pop_back() noexcept{
+            if(storage == vec_storage::STACK){
+                if(cur) cur--;
+            }
+            else{
+                heap.pop_back();
+            }
+        }
+
+        /**
+         * @brief Clears all elements.
+         */
+        void clear(bool free_everything = false) noexcept{
+            if(storage == vec_storage::STACK){
+                cur = 0;
+            }
+            else{
+                heap.clear(free_everything);
+            }
+        }
+
+        /**
+         * @brief Pushes this element to the back of the vector (copy).
+         */
+        void push_back(const T& _n){
+            emplace_back(_n);
+        }
+        /**
+         * @brief Pushes this element to the back of the vector (move).
+         */
+        void push_back(T&& _n){
+            emplace_back(_n);
+        }
+
+        /**
+         * @brief Gets the internal allocator.
+         */
+        allocator* get_allocator() const noexcept{
+            return heap.get_allocator();
+        }
+
+        /**
+         * @brief Constructs T at the end.
+         */
+        template<typename... Args>
+        T& emplace_back(Args&&... args){
+            if(storage == vec_storage::STACK){
+                if(cur == elem_c){
+                    storage = vec_storage::HEAP;
+                    for(size_t i = 0; i < elem_c; i++){
+                        heap.emplace_back(std::move(((T*)stack)[i]));
+                    }
+
+                    return heap.emplace_back(std::forward<Args>(args)...);
+                }
+                else{
+                    T* dest = (T*)stack + cur;
+                    new(dest) T(std::forward<Args>(args)...);
+                    cur++;
+                    return *dest;
+                }
+            }
+            else{
+                return heap.emplace_back(std::forward<Args>(args)...);
+            }
+        }
+
+        /**
+         * @brief Returns the array pointer.
+         */
+        T* data() noexcept{
+            return storage == vec_storage::HEAP ? heap.data() : (T*)stack;
+        }
+
+        /**
+         * @brief Returns the array pointer, const version.
+         */
+        const T* data() const noexcept{
+            return storage == vec_storage::HEAP ? heap.data() : (T*)stack;
+        }
+
+        /**
+         * @brief Begin for the normal iterator.
+         */
+        array_iterator<T> begin() noexcept{
+            return array_iterator<T>(data());
+        }
+
+        /**
+         * @brief End for the normal iterator.
+         */
+        array_iterator<T> end() noexcept{
+            return array_iterator<T>(data() + size());
+        }
+
+        /**
+         * @brief Begin for the const iterator.
+         */
+        array_iterator<const T> begin() const noexcept{
+            return array_iterator<const T>(data());
+        }
+
+        /**
+         * @brief End for the const iterator.
+         */
+        array_iterator<const T> end() const noexcept{
+            return array_iterator<const T>(data() + size());
+        }
+
+        /**
+         * @brief Begin for the const iterator explicit.
+         */
+        array_iterator<const T> cbegin() const noexcept{
+            return array_iterator<const T>(data());
+        }
+
+        /**
+         * @brief End for the const iterator explicit.
+         */
+        array_iterator<const T> cend() const noexcept{
+            return array_iterator<const T>(data() + size());
+        }
+
+        /**
+         * @brief Returns the validity of the vector.
+         */
+        bool valid() const noexcept{
+            return data() != nullptr;
         }
     };
 }

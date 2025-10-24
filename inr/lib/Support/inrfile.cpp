@@ -58,6 +58,21 @@ seek_integer inr_file_handle::seek(tell_integer off, fs::SeekType st) noexcept{
         if(last_op == fs::LastFileOperation::Writing){
             if(flush() == EOF) return EOF;
         }
+        else if(last_op == fs::LastFileOperation::Reading){
+            switch(api){
+                case APIs::POSIX:
+                    fd->buff.flush();
+                    fd->read_i = 0;
+                    break;
+                case APIs::WINDOWS:
+                    handle->buff.flush();
+                    handle->read_i = 0;
+                    break;
+                default:
+                    break;
+            }
+        }
+        last_op = fs::LastFileOperation::None;
         switch(api){
             case APIs::POSIX:
                 return fd->seek(off, st);

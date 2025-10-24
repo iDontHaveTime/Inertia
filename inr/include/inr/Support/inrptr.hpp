@@ -47,43 +47,95 @@ namespace inr{
             return *this;
         }
 
+        /**
+         * @brief Allocates a new pointer using the allocator provided.
+         *
+         * @param _mem The allocator to use.
+         * @param args Arguments to pass.
+         *
+         */
         template<typename... Args>
         unique(allocator* _mem, Args&&... args) : mem(_mem), ptr(_mem->alloc<T>(std::forward<Args>(args)...)){};
         
+        /**
+         * @brief Assumes ownership of the pointer provided that uses the provided allocator.
+         */
         unique(allocator* _mem, T* p) noexcept : mem(_mem), ptr(p){};
 
+        /**
+         * @brief Gets the underlying pointer.
+         *
+         * @return Pointer.
+         */
         T* get() noexcept{
             return ptr;
         }
+
+        /**
+         * @brief Gets the underlying pointer. Const version.
+         *
+         * @return Const pointer.
+         */
         const T* get() const noexcept{
             return ptr;
         }
 
+        /**
+         * @brief Checks if the pointer is nullptr or not.
+         *
+         * @return False if nullptr, true if not.
+         */
         bool valid() const noexcept{
             return ptr != nullptr;
         }
 
-
+        /**
+         * @brief Uses valid().
+         *
+         * @return Whatever valid() returns.
+         */
         operator bool() const noexcept{
             return valid();
         }
 
+        /**
+         * @brief Frees the old pointer, and sets the new one provided.
+         *
+         * @param _mem The allocator provided pointer uses.
+         * @param p The pointer to use.
+         */
         void reset(allocator* _mem = nullptr, T* p = nullptr) noexcept{
             mem->free(ptr);
             ptr = (_mem && p) ? p : nullptr;
             mem = (_mem && p) ? _mem : nullptr;
         }
 
+        /**
+         * @brief Returns the old pointer and removes ownership.
+         *
+         * @return The old pointer.
+         */
         T* release() noexcept{
             T* tmp = ptr;
             ptr = nullptr;
+            mem = nullptr;
             return tmp;
         }
 
+        /**
+         * @brief Dereference pointer.
+         *
+         * @return Object.
+         */
         T& operator*() noexcept{
             return *ptr;
         }
 
+        /**
+         * @brief Dereference pointer. Const version.
+         *
+         * @return Const object.
+         */
         T& operator*() const noexcept{
             return *ptr;
         }
@@ -139,9 +191,25 @@ namespace inr{
             return *this;
         }
 
+        /**
+         * @brief Allocates an array of objects using the allocator provided.
+         *
+         * @param _mem The allocator to use.
+         * @param _count How many objects to allocate.
+         * @param args Arguments to pass.
+         * 
+         */
         template<typename... Args>
-        unique(allocator* _mem, size_t _count, Args&&... args) : mem(_mem), count(_count), ptr(_mem->alloc_array<T>(_count), std::forward<Args>(args)...){};
+        unique(allocator* _mem, size_t _count, Args&&... args) : mem(_mem), count(_count), ptr(_mem->alloc_array<T>(_count, std::forward<Args>(args)...)){};
         
+        /**
+         * @brief Assumes ownership of the provided array.
+         *
+         * @param _mem The allocator the array used.
+         * @param p The array.
+         * @param _count How many objects are in the array.
+         *
+         */
         unique(allocator* _mem, T* p, size_t _count) noexcept : mem(_mem), count(_count), ptr(p){};
 
         T* get() noexcept{

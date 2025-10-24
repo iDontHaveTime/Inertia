@@ -1,13 +1,6 @@
 #ifndef INERTIA_INRALLOC_HPP
 #define INERTIA_INRALLOC_HPP
 
-#include <cstddef>
-#include <cstdlib>
-
-#include <memory>
-#include <type_traits>
-#include <utility>
-
 /**
  * @file inr/Support/inralloc.hpp
  * @brief Base class for all Inertia's allocator.
@@ -17,6 +10,13 @@
  * So for example a vector could use an arena allocator and another could use a simple allocator.
  *
  **/
+
+#include <cstddef>
+#include <cstdlib>
+
+#include <memory>
+#include <type_traits>
+#include <utility>
 
 namespace inr{
 
@@ -38,6 +38,12 @@ namespace inr{
     public:
 
         allocator() noexcept = default;
+
+        allocator(const allocator&) = delete;
+        allocator& operator=(const allocator&) = delete;
+
+        allocator(allocator&&) noexcept = default;
+        allocator& operator=(allocator&&) noexcept = default;
         
         /**
          * @brief Allocates an object.
@@ -55,7 +61,7 @@ namespace inr{
             
             if(!ptr) return nullptr;
             std::construct_at<T>(ptr, std::forward<Args>(args)...);
-
+            
             return ptr;
         }
 
@@ -136,6 +142,36 @@ namespace inr{
                 ptr->~T();
             }
             free_raw(ptr, sizeof(T));
+        }
+
+        /**
+         * @brief Used in certain context to mark that an area will be freed after next allocation.
+         *
+         * Used in stuff like arena allocator to minimize fragmentations.
+         *
+         * @param ptr The address.
+         * @param size The size of the pointer provided.
+         *
+         */
+        virtual void mark_as_might_be_freed(void* ptr, size_t size) noexcept{
+            (void)ptr;
+            (void)size;
+            return;
+        }
+
+        /**
+         * @brief Used to unmark pointer that has been marked.
+         *
+         * Used in stuff like arena allocator to minimize fragmentations.
+         *
+         * @param ptr The address.
+         * @param size The size of the pointer provided.
+         *
+         */
+        virtual void unmark_as_might_be_freed(void* ptr, size_t size) noexcept{
+            (void)ptr;
+            (void)size;
+            return;
         }
 
         /**

@@ -1,15 +1,6 @@
 #ifndef INERTIA_INRFILE_HPP
 #define INERTIA_INRFILE_HPP
 
-#include "inr/Defines/inrapis.hpp"
-#include "inr/Defines/inrfiledef.hpp"
-#include "inr/Support/inrbuf.hpp"
-#include "inr/Support/inriterator.hpp"
-
-#include <cstddef>
-#include <cstdint>
-#include <cstdio>
-
 /**
  * @file inr/Support/inrfile.hpp
  * @brief Inertia's implementation of files.
@@ -18,6 +9,15 @@
  * Its aimed to optimize files as much as possible, using OS native stuff when possible.
  *
  **/
+
+#include "inr/Defines/inrapis.hpp"
+#include "inr/Defines/inrfiledef.hpp"
+#include "inr/Support/inrbuf.hpp"
+#include "inr/Support/inriterator.hpp"
+
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
 
 namespace inr{
     using read_integer = decltype(fread(nullptr, 0, 0, nullptr));
@@ -439,6 +439,7 @@ namespace inr{
          * This function opens the new file, and closes the last one if it had the ownership of it. 
          *
          * @param fd File descriptor.
+         * @param buffer_size Size of the buffer to allocate. Can be 0.
          * @param open_type How is the file opened.
          * @param owned Should this class own the file.
          */
@@ -466,6 +467,7 @@ namespace inr{
          * This constructor is the already-existing file descriptor constructor.
          *
          * @param fd The file descriptor.
+         * @param buffer_size The size of the buffer for this file. Can be 0.
          * @param open_type How is the file opened (reading or writing).
          * @param owning Should this class own the file.
          */

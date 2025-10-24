@@ -1,9 +1,6 @@
 #ifndef INERTIA_INRBUF_HPP
 #define INERTIA_INRBUF_HPP
 
-#include <concepts>
-#include <cstddef>
-
 /**
  * @file inr/Support/inrbuf.hpp
  * @brief Inertia's buffer class.
@@ -12,6 +9,8 @@
  *
  **/
 
+#include <concepts>
+#include <cstddef>
 
 namespace inr{
 

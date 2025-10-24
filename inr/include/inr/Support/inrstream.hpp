@@ -1,6 +1,15 @@
 #ifndef INERTIA_INRSTREAM_HPP
 #define INERTIA_INRSTREAM_HPP
 
+/**
+ * @file inr/Support/inrstream.hpp
+ * @brief Inertia's implementation of C++ stream classes.
+ *
+ * This header contains Inertia's custom implementation of C++ streams.
+ * Its aimed at being lightweight and performant while still keeping convenience of streams.
+ *
+ **/
+
 #include "inr/Defines/inrfiledef.hpp"
 #include "inr/Support/inrcexpr.hpp"
 #include "inr/Support/inrfile.hpp"
@@ -12,15 +21,6 @@
 #include <limits>
 #include <string>
 #include <type_traits>
-
-/**
- * @file inr/Support/inrstream.hpp
- * @brief Inertia's implementation of C++ stream classes.
- *
- * This header contains Inertia's custom implementation of C++ streams.
- * Its aimed at being lightweight and performant while still keeping convenience of streams.
- *
- **/
 
 namespace inr{
 
@@ -38,53 +38,38 @@ namespace inr{
     using inr_stream_manipulator = inr_ostream& (*const)(inr_ostream&);
 
     /**
-     * @brief Output stream to file. 
-     * This is a much more lightweight alternative to STL's ostream class.
-     * This uses write functions and then wraps them in a universal operator.
+     * @brief Base class for 'inr::inr_istream' and 'inr::inr_ostream'.
+     *
      */
-    class inr_ostream{
+    template<fs::OpeningType dfopt>
+    class inr_iostream{
+    protected:
         inrfile file;
     public:
-        inr_ostream() = delete;
+        inr_iostream() = delete;
 
         /**
-         * @brief The main constructor of 'inr_ostream' that sets the underlying file.
+         * @brief The main constructor of 'inr_iostream' that sets the underlying file.
          *  
          * This constructor sets the underlying FILE handle to the provided handle.
          * Make sure the file is opened to write!
          *
          * @param _file The FILE handle to output to.
          */
-        inr_ostream(FILE* _file, bool own = false) noexcept : file(_file, fs::OpeningType::Write, own){};
+        inr_iostream(FILE* _file, bool own = false) noexcept : file(_file, dfopt, own){};
 
         /**
          * @brief Opens an already existing 'inrfile' class.
          *
          * @param _inrfile The 'inrfile' to open.
          */
-        inr_ostream(inrfile&& _inrfile) noexcept : file(std::move(_inrfile)){};
+        inr_iostream(inrfile&& _inrfile) noexcept : file(std::move(_inrfile)){};
 
-        /**
-         * @brief Opens a file using fopen and assumes ownership
-         *
-         * This constructor opens a file using fopen with the provided file name and mode.
-         * It assumes ownership of the file, so it closes it for you.
-         *
-         * @param name The name of the file to open.
-         * @param mode The mode to open the file in.
-         */
-        inr_ostream(const char* name, fs::OpeningType mode = fs::OpeningType::Write) noexcept : file(fopen(name, fs::opening_type_write(mode) ? inr_open_type_to_cfopen(mode) : nullptr), mode, true){};
+        inr_iostream(const inr_iostream&) noexcept = delete;
+        inr_iostream& operator=(const inr_iostream&) noexcept = delete;
 
-        inr_ostream(const inr_ostream&) noexcept = delete;
-        inr_ostream& operator=(const inr_ostream&) noexcept = delete;
-
-        inr_ostream(inr_ostream&&) noexcept = default;
-        inr_ostream& operator=(inr_ostream&&) noexcept = default;
-
-        /**
-         * @brief Closes the file if owned.
-         */
-        ~inr_ostream() noexcept = default;
+        inr_iostream(inr_iostream&&) noexcept = default;
+        inr_iostream& operator=(inr_iostream&&) noexcept = default;
 
         /**
          * @brief Checks if the underlying file is valid.
@@ -118,6 +103,70 @@ namespace inr{
         }
 
         /**
+         * @brief Flushes the underlying FILE stream.
+         * @return EOF if error, non-EOF if no errors.
+         */
+        int flush() noexcept{
+            return file.flush();
+        }
+
+        /**
+         * @brief Tells the position in the file.
+         *
+         * @return Position.
+         */
+        auto tell() noexcept{
+            return file.tell();
+        }
+
+        /**
+         * @brief Seeks in the file.
+         *
+         * @param i The offset from the seek pointer.
+         * @param st The seek type.
+         *
+         * @return EOF if error.
+         */
+        auto seek(tell_integer i, fs::SeekType st = fs::SeekType::SeekSet) noexcept{
+            return file.seek(i, st);
+        }
+
+        /**
+         * @brief Makes sure you can read after writing, or vice versa.
+         *
+         *  @return Whatever seek() returns.
+         */
+        auto rw_flush() noexcept{
+            return seek(tell());
+        }
+
+        /**
+         * @brief Closes the file if owned.
+         */
+        ~inr_iostream() noexcept = default;
+    };
+
+    /**
+     * @brief Output stream to file. 
+     * This is a much more lightweight alternative to STL's ostream class.
+     * This uses write functions and then wraps them in a universal operator.
+     */
+    class inr_ostream : public inr_iostream<fs::OpeningType::Write>{
+    public:
+        using inr_iostream::inr_iostream;
+
+        /**
+         * @brief Opens a file using fopen and assumes ownership
+         *
+         * This constructor opens a file using fopen with the provided file name and mode.
+         * It assumes ownership of the file, so it closes it for you.
+         *
+         * @param name The name of the file to open.
+         * @param mode The mode to open the file in.
+         */
+        inr_ostream(const char* name, fs::OpeningType mode = fs::OpeningType::Write) noexcept : inr_iostream(fopen(name, fs::opening_type_write(mode) ? inr_open_type_to_cfopen(mode) : nullptr), true){};
+
+        /**
          * @brief Writes the provided data to the stream.
          *
          * This writes to the stream inside the class.
@@ -144,14 +193,6 @@ namespace inr{
         inr_ostream& write(const char* data, size_t n) noexcept{
             write(data, 1, n);
             return *this;
-        }
-
-        /**
-         * @brief Flushes the underlying FILE stream.
-         * @return EOF if error, non-EOF if no errors.
-         */
-        int flush() noexcept{
-            return file.flush();
         }
 
         /**
@@ -222,7 +263,7 @@ namespace inr{
                 write(buff, 1, result.ptr - buff);
             }
             else{
-                write("err", 1, 3);
+                write("err", 1, cexpr_strlen("err"));
             }
 
             return *this;
@@ -234,27 +275,6 @@ namespace inr{
         template<typename T, typename = std::enable_if_t<std::is_integral_v<T>>>
         inr_ostream& operator<<(T n){
             return write_integer<T>(n);
-        }
-
-        /**
-         * @brief Tells the position in the file.
-         *
-         * @return Position.
-         */
-        auto tell() noexcept{
-            return file.tell();
-        }
-
-        /**
-         * @brief Seeks in the file.
-         *
-         * @param i The offset from the seek pointer.
-         * @param st The seek type.
-         *
-         * @return EOF if error.
-         */
-        auto seek(tell_integer i, fs::SeekType st = fs::SeekType::SeekSet) noexcept{
-            return file.seek(i, st);
         }
     };
 
@@ -282,54 +302,9 @@ namespace inr{
      */
     extern inr_stream_manipulator flush;
 
-    class inr_istream{
-        inrfile file;
+    class inr_istream : public inr_iostream<fs::OpeningType::Read>{
     public:
-        inr_istream() = delete;
-
-        /**
-         * @brief The main constructor of 'inr_istream' that sets the underlying file.
-         *  
-         * This constructor sets the underlying FILE handle to the provided handle.
-         * Make sure the file was opened to read!
-         *
-         * @param _file The FILE handle to output to.
-         */
-        inr_istream(FILE* _file, bool own = false) noexcept : file(_file, fs::OpeningType::Read, own){};
-
-        /**
-         * @brief Opens an already existing 'inrfile' class.
-         *
-         * @param _inrfile The 'inrfile' to open.
-         */
-        inr_istream(inrfile&& _inrfile) noexcept : file(std::move(_inrfile)){};
-
-        inr_istream(const inr_istream&) noexcept = delete;
-        inr_istream& operator=(const inr_istream&) noexcept = delete;
-
-        inr_istream(inr_istream&&) noexcept = default;
-        inr_istream& operator=(inr_istream&&) noexcept = default;
-
-        /**
-         * @brief Closes the file if owned.
-         */
-        ~inr_istream() noexcept = default;
-
-        /**
-         * @brief Checks if the underlying file is valid.
-         * @return True if file is valid, false if it is not.
-         */
-        bool valid() const noexcept{
-            return file.valid();
-        }
-
-        /**
-         * @brief Returns if the stream is valid or not.
-         * @return True if valid, false if not.
-         */
-        operator bool() const noexcept{
-            return valid();
-        }
+        using inr_iostream::inr_iostream;
 
         /**
          * @brief Reads from the stream to the provided buffer.
@@ -427,27 +402,6 @@ namespace inr{
             }
 
             return *this;
-        }
-
-        /**
-         * @brief Tells the position in the file.
-         *
-         * @return Position.
-         */
-        auto tell() noexcept{
-            return file.tell();
-        }
-
-        /**
-         * @brief Seeks in the file.
-         *
-         * @param i The offset from the seek pointer.
-         * @param st The seek type.
-         *
-         * @return EOF if error.
-         */
-        auto seek(tell_integer i, fs::SeekType st = fs::SeekType::SeekSet) noexcept{
-            return file.seek(i, st);
         }
     };
 

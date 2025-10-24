@@ -1,15 +1,6 @@
 #ifndef INERTIA_INRCEXPR_HPP
 #define INERTIA_INRCEXPR_HPP
 
-#include <climits>
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <cstring>
-
-#include <string>
-#include <type_traits>
-
 /**
  * @file inr/Support/inrcexpr.hpp
  * @brief Inertia's constexpr functions.
@@ -18,12 +9,16 @@
  *
  **/
 
-#if defined(__GNUC__) || defined(__clang__)
-#define always_inline_inr [[__gnu__::__always_inline__]]
-#else
-#define always_inline_inr
-#endif
+#include "inr/Defines/inrattribute.hpp"
 
+#include <climits>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+ 
+#include <concepts>
+#include <string>
+#include <type_traits>
 
 namespace inr{
 
@@ -31,9 +26,13 @@ namespace inr{
      * @brief Returns string length, calls normal strlen if not constexpr.
      * @return String length.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr size_t cexpr_strlen(const char* _str) noexcept{
+        #if _inr_check_builtin_(__builtin_strlen)
+            return __builtin_strlen(_str);
+        #else
         if(std::is_constant_evaluated()){
+            
             size_t len = 0;
 
             while(_str[len]) len++;
@@ -43,6 +42,7 @@ namespace inr{
         else{
             return strlen(_str);
         }
+        #endif
     }
 
     /**
@@ -50,7 +50,7 @@ namespace inr{
      * @return Width.
      */
     template<typename T>
-    always_inline_inr
+    _inr_always_inline_
     consteval size_t widthof() noexcept{
         return sizeof(T)*CHAR_BIT;
     }
@@ -60,19 +60,19 @@ namespace inr{
      * @return Width.
      */
     template<typename T>
-    always_inline_inr
+    _inr_always_inline_
     consteval size_t widthof(const T&) noexcept{
         return sizeof(T)*CHAR_BIT;
     }
 
     template<typename T>
-    [[nodiscard]] always_inline_inr
+    [[nodiscard]] _inr_always_inline_
     constexpr inline bool valid(const T& t) noexcept{
         return t.valid();
     }
 
     template<typename T>
-    [[nodiscard]] always_inline_inr
+    [[nodiscard]] _inr_always_inline_
     constexpr inline bool valid(const T* const t) noexcept{
         return t && t->valid();
     }
@@ -81,7 +81,7 @@ namespace inr{
      * @brief Calculates the amount of bytes from bits. Rounds up.
      * @return Bytes rounded up.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr size_t calculate_bytes_up(size_t bits) noexcept{
         return (bits + 7) >> 3;
     }
@@ -90,7 +90,7 @@ namespace inr{
      * @brief Calculates the amount of bytes from bits. Doesn't round.
      * @return Bytes.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr size_t calculate_bytes_down(size_t bits) noexcept{
         return bits >> 3;
     }
@@ -100,7 +100,7 @@ namespace inr{
      * @param x A number with type of unsigned short.
      * @return Trailing zeroes.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr int short_ctz(unsigned short x) noexcept{
         if(!x) return widthof(x);
         return __builtin_ctzs(x);
@@ -112,7 +112,7 @@ namespace inr{
      * @param x A number with type of unsigned int.
      * @return Trailing zeroes.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr int int_ctz(unsigned int x) noexcept{
         if(!x) return widthof(x);
         return __builtin_ctz(x);
@@ -123,7 +123,7 @@ namespace inr{
      * @param x A number with type of unsigned long.
      * @return Trailing zeroes.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr int long_ctz(unsigned long x) noexcept{
         if(!x) return widthof(x);
         return __builtin_ctzl(x);
@@ -134,7 +134,7 @@ namespace inr{
      * @param x A number with type of unsigned long long.
      * @return Trailing zeroes.
      */
-    always_inline_inr
+    _inr_always_inline_
     constexpr int long_long_ctz(unsigned long long x) noexcept{
         if(!x) return widthof(x);
         return __builtin_ctzll(x);
@@ -157,17 +157,14 @@ namespace inr{
             }
             return count;
         }
-        else if constexpr(sizeof(T) <= sizeof(short)){
-            return short_ctz((unsigned short)x);
+        else if constexpr(sizeof(T) <= 2){
+            return short_ctz((uint16_t)x);
         }
-        else if constexpr(sizeof(T) <= sizeof(int)){
-            return int_ctz((unsigned int)x);
+        else if constexpr(sizeof(T) <= 4){
+            return int_ctz((uint32_t)x);
         }
-        else if constexpr(sizeof(T) <= sizeof(long)){
-            return long_ctz((unsigned long)x);
-        }
-        else if constexpr(sizeof(T) <= sizeof(long long)){
-            return long_long_ctz((unsigned long long)x);
+        else if constexpr(sizeof(T) <= 8){
+            return long_ctz((uint64_t)x);
         }
         else{
             static_assert(sizeof(T) <= sizeof(long long), "auto_ctz does not support the provided type.");
@@ -180,7 +177,7 @@ namespace inr{
      * @return True if power of 2, false if not.
      */
     template<typename T>
-    always_inline_inr
+    _inr_always_inline_
     constexpr bool is_power_of_2(T n) noexcept{
         using U = std::make_unsigned_t<T>;
         return (((U)n & ((U)n - 1)) == 0) && n != 0;
@@ -191,7 +188,7 @@ namespace inr{
      * @return True if power of 2, false if not.
      */
     template<typename T>
-    always_inline_inr
+    _inr_always_inline_
     constexpr bool is_power_of_2(const T* n) noexcept{
         return (((uintptr_t)n & ((uintptr_t)n - 1)) == 0) && n != nullptr;
     }
@@ -201,7 +198,7 @@ namespace inr{
      * @return True if aligned, false if not.
      */
     template<size_t alignment, typename T>
-    always_inline_inr
+    _inr_always_inline_
     constexpr bool is_aligned(const T* ptr) noexcept{
         if constexpr(!is_power_of_2(alignment)) return false;
         return ((uintptr_t)ptr & (alignment-1)) == 0;
@@ -212,7 +209,7 @@ namespace inr{
      * @return True if aligned, false if not.
      */
     template<typename T>
-    always_inline_inr
+    _inr_always_inline_
     constexpr bool is_aligned(const T* ptr, size_t alignment) noexcept{
         if(!is_power_of_2(alignment)) return false;
         return ((uintptr_t)ptr & (alignment-1)) == 0;
@@ -326,8 +323,8 @@ namespace inr{
      * @return The final number.
      */
     template<std::unsigned_integral T>
-    always_inline_inr
-    constexpr T round_to(T x, T to){
+    _inr_always_inline_
+    constexpr T round_to(T x, T to) noexcept{
         T remainder = x % to;
         return remainder ? x + (to - remainder) : x;
     }
@@ -341,16 +338,120 @@ namespace inr{
      * @return The final number.
      */
     template<std::signed_integral T>
-    always_inline_inr
-    constexpr T round_to(T x, T to){
+    _inr_always_inline_
+    constexpr T round_to(T x, T to) noexcept{
         bool negative = x < 0;
         if(negative) x = -x;
         T remainder = x % to;
         T final_val = remainder ? x + (to - remainder) : x;
         return negative ? -final_val : final_val;
     }
+
+    /**
+     * @brief Swaps byte places. 2 bytes.
+     *
+     * @param x Bytes to swap.
+     *
+     * @return Swapped bytes.
+     */
+    _inr_always_inline_
+    constexpr uint16_t bswap16(uint16_t x) noexcept{
+        return __builtin_bswap16(x);
+    }
+
+    /**
+     * @brief Swaps byte places. 4 bytes.
+     *
+     * @param x Bytes to swap.
+     *
+     * @return Swapped bytes.
+     */
+    _inr_always_inline_
+    constexpr uint32_t bswap32(uint32_t x) noexcept{
+        return __builtin_bswap32(x);
+    }
+
+    /**
+     * @brief Swaps byte places. 8 bytes.
+     *
+     * @param x Bytes to swap.
+     *
+     * @return Swapped bytes.
+     */
+    _inr_always_inline_
+    constexpr uint64_t bswap64(uint64_t x) noexcept{
+        return __builtin_bswap64(x);
+    }
+
+    /**
+     * @brief Swaps byte places. Auto bytes.
+     *
+     * @param n Bytes to swap.
+     *
+     * @return Swapped bytes.
+     */
+    template<std::integral T>
+    _inr_always_inline_
+    constexpr T bswap(T n) noexcept{
+        if constexpr(sizeof(T) == 1){
+            return n;
+        }
+        else if constexpr(sizeof(T) == 2){
+            return bswap16(n);
+        }
+        else if constexpr(sizeof(T) == 4){
+            return bswap32(n);
+        }
+        else if constexpr(sizeof(T) == 8){
+            return bswap64(n);
+        }
+        else{
+            return n;
+        }
+    }
+
+    /**
+     * @brief Max size of all templates provided.
+     *
+     * The biggest size template out of all of the ones provided.
+     *
+     * @return Biggest size.
+     */
+    template<typename... Ts>
+    consteval size_t max_size_t() noexcept{
+        size_t cur = 1;
+        ((cur = cur < sizeof(Ts) ? sizeof(Ts) : cur), ...);
+        return cur;
+    }
+
+    /**
+     * @brief Equivalent of std::isspace but constexpr.
+     *
+     * @param c Character to check.
+     *
+     * @return True if is a separator.
+     */
+    _inr_always_inline_
+    constexpr bool is_separator(char c) noexcept{
+        switch(c){
+            case '\t':
+                [[fallthrough]];
+            case '\n':
+                [[fallthrough]];
+            case '\v':
+                [[fallthrough]];
+            case '\f':
+                [[fallthrough]];
+            case '\r':
+                [[fallthrough]];
+            case ' ':
+                return true;
+            default:
+                return false;
+        }
+    }
 }
 
-#undef always_inline_inr
+#undef _inr_always_inline_
 
 #endif // INERTIA_INRCEXPR_HPP

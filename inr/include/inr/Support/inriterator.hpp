@@ -1,8 +1,6 @@
 #ifndef INERTIA_INRITERATOR_HPP
 #define INERTIA_INRITERATOR_HPP
 
-#include <iterator>
-
 /**
  * @file inr/Support/inriterator.hpp
  * @brief Inertia's iterator classes.
@@ -10,6 +8,8 @@
  * This header contains Inertia's iterator classes.
  *
  **/
+
+#include <iterator>
 
 namespace inr{
 
