@@ -10,6 +10,10 @@
  *
  **/
 
+#include "inr/IR/inrtype.hpp"
+#include "inr/Support/inralloc.hpp"
+#include "inr/Support/inrmap.hpp"
+
 namespace inr{
 
     /**
@@ -21,7 +25,7 @@ namespace inr{
     public:
 
         /* Constructors / Operators. */
-        inrContext() noexcept = default;
+        inrContext(allocator* _mem = nullptr) noexcept : type_map(_mem){};
 
         inrContext(const inrContext&) = delete;
         inrContext& operator=(const inrContext&) = delete;
@@ -35,10 +39,53 @@ namespace inr{
 
         /* Start of fields. */
     private:
+        inr::inr_map<size_t, type*> type_map;
 
-
-    public:
         /* End of fields. */
+    public:
+
+        type* get_void(){
+            type** tp = type_map.get(hash_type_void());
+            if(tp){
+                return *tp;
+            }
+            else{
+                return type_map[hash_type_void()] = type_map.get_allocator()->alloc<void_type>();
+            }
+        }
+
+        type* get_integer(size_t width){
+            size_t hash = hash_type_int(width);
+            type** tp = type_map.get(hash);
+            if(tp){
+                return *tp;
+            }
+            else{
+                return type_map[hash] = type_map.get_allocator()->alloc<int_type>(width);
+            }
+        }
+
+        type* get_float(float_type::float_variant variant){
+            size_t hash = hash_type_float(variant);
+            type** tp = type_map.get(hash);
+            if(tp){
+                return *tp;
+            }
+            else{
+                return type_map[hash] = type_map.get_allocator()->alloc<float_type>(variant);
+            }
+        }
+
+        type* get_pointer(type* pointee){
+            size_t hash = hash_type_pointer(pointee);
+            type** tp = type_map.get(hash);
+            if(tp){
+                return *tp;
+            }
+            else{
+                return type_map[hash] = type_map.get_allocator()->alloc<ptr_type>(pointee);
+            }
+        }
     };
 
 }

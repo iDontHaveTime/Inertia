@@ -154,6 +154,7 @@ namespace inr{
          */
         inr_vec& operator=(inr_vec&& other) noexcept{
             if(this == &other) return *this;
+            clear(true);
             mem = other.mem;
 
             allocated = other.allocated;
@@ -268,6 +269,7 @@ namespace inr{
             if(free_everything){
                 if(array)
                     mem->free_raw(array, allocated);
+                array = nullptr;
                 allocated = 0;
             }
         }

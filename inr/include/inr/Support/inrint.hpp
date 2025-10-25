@@ -112,6 +112,10 @@ namespace inr{
 
     public:
 
+        decltype(bits) get_width() const noexcept{
+            return bits;
+        }
+
         /** 
          * @brief Sets the bit to either 1 or 0.
          *
@@ -304,6 +308,11 @@ namespace inr{
             if(sign){
                 flags |= 0x2;
             }
+        }
+
+        explicit inrint(const char* _str, size_t width, bool sign = false, allocator* _mem = nullptr) : inrint(width, sign, _mem){
+            // TODO
+            (void)_str;
         }
 
         /**

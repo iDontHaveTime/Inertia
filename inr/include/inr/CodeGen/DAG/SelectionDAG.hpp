@@ -40,8 +40,8 @@ namespace inr::dag{
         /**
          * @brief Creates a new ADD node.
          */
-        Node* create_add(Node* lhs, Node* rhs){
-            Node* node = nodes.get_allocator()->alloc<Node>(DAGOpcode::ADD, next_value_id++, nodes.get_allocator());
+        Node* create_add(type* node_type, Node* lhs, Node* rhs){
+            Node* node = nodes.get_allocator()->alloc<Node>(DAGOpcode::ADD, node_type, next_value_id++, nodes.get_allocator());
             node->add_operand(lhs);
             node->add_operand(rhs);
             nodes.push_back(node);
@@ -51,8 +51,8 @@ namespace inr::dag{
         /**
          * @brief Creates a new SUB node.
          */
-        Node* create_sub(Node* lhs, Node* rhs){
-            Node* node = nodes.get_allocator()->alloc<Node>(DAGOpcode::SUB, next_value_id++, nodes.get_allocator());
+        Node* create_sub(type* node_type, Node* lhs, Node* rhs){
+            Node* node = nodes.get_allocator()->alloc<Node>(DAGOpcode::SUB, node_type, next_value_id++, nodes.get_allocator());
             node->add_operand(lhs);
             node->add_operand(rhs);
             nodes.push_back(node);
@@ -62,8 +62,8 @@ namespace inr::dag{
         /**
          * @brief Creates a new CONSTANT node.
          */
-        Node* create_constant(const inrint& value){
-            Node* node = nodes.get_allocator()->alloc<ConstNode>(value, next_value_id++, nodes.get_allocator());
+        Node* create_constant(type* node_type, const inrint& value){
+            Node* node = nodes.get_allocator()->alloc<ConstNode>(value, node_type, next_value_id++, nodes.get_allocator());
             nodes.push_back(node);
             return node;
         }
@@ -71,8 +71,8 @@ namespace inr::dag{
         /**
          * @brief Creates a new CONSTANT node. Moves the integer, so its more efficient.
          */
-        Node* create_constant(inrint&& value){
-            Node* node = nodes.get_allocator()->alloc<ConstNode>(std::move(value), next_value_id++, nodes.get_allocator());
+        Node* create_constant(type* node_type, inrint&& value){
+            Node* node = nodes.get_allocator()->alloc<ConstNode>(std::move(value), node_type, next_value_id++, nodes.get_allocator());
             nodes.push_back(node);
             return node;
         }
@@ -81,7 +81,7 @@ namespace inr::dag{
          * @brief Creates an ENTRY node (marks the root/result).
          */
         Node* create_entry(Node* result_node){
-            Node* node = nodes.get_allocator()->alloc<Node>(DAGOpcode::ENTRY, next_value_id++, nodes.get_allocator());
+            Node* node = nodes.get_allocator()->alloc<Node>(DAGOpcode::ENTRY, nullptr, next_value_id++, nodes.get_allocator());
             node->add_operand(result_node);
             nodes.push_back(node);
             return node;

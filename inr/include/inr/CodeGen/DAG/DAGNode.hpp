@@ -9,6 +9,7 @@
  *
  **/
 
+#include "inr/IR/inrtype.hpp"
 #include "inr/Support/inralloc.hpp"
 #include "inr/Support/inrint.hpp"
 #include "inr/Support/inrvector.hpp"
@@ -47,6 +48,7 @@ namespace inr::dag{
     class Node{
     public:
         inline_vec<Node*, 4> operands;
+        type* node_type;
         const uint32_t value_id;
         const DAGOpcode op;
 
@@ -57,18 +59,26 @@ namespace inr::dag{
          * @param id The ID the node uses.
          * @param _mem The allocator operands vector will use. Not relevant on stack.
          */
-        Node(DAGOpcode _op, uint32_t id, allocator* _mem = nullptr) noexcept : operands(_mem), value_id(id), op(_op){};
+        Node(DAGOpcode _op, type* _node_type, uint32_t id, allocator* _mem = nullptr) noexcept : operands(_mem), node_type(_node_type), value_id(id), op(_op){};
 
         void add_operand(Node* node){
             operands.push_back(node);
+        }
+
+        const type* get_type() const noexcept{
+            return node_type;
+        }
+
+        type* get_type() noexcept{
+            return node_type;
         }
     };
 
     class ConstNode : public Node{
     public:
         inrint val;
-        ConstNode(const inrint& i, uint32_t id, allocator* _mem = nullptr) noexcept : Node(DAGOpcode::CONSTANT, id, _mem), val(i){};
-        ConstNode(inrint&& i, uint32_t id, allocator* _mem = nullptr) noexcept : Node(DAGOpcode::CONSTANT, id, _mem), val(std::move(i)){};
+        ConstNode(const inrint& i, type* node_type, uint32_t id, allocator* _mem = nullptr) noexcept : Node(DAGOpcode::CONSTANT, node_type, id, _mem), val(i){};
+        ConstNode(inrint&& i, type* node_type, uint32_t id, allocator* _mem = nullptr) noexcept : Node(DAGOpcode::CONSTANT, node_type, id, _mem), val(std::move(i)){};
     };
 }
 

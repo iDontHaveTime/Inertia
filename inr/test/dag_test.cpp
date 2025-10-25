@@ -1,5 +1,6 @@
 #include "inr/CodeGen/DAG/DAGNode.hpp"
 #include "inr/CodeGen/DAG/SelectionDAG.hpp"
+#include "inr/IR/inrcontext.hpp"
 #include "inr/Support/inrarena.hpp"
 #include "inr/Support/inrint.hpp"
 #include "inr/Support/inrstream.hpp"
@@ -64,14 +65,16 @@ void emit_node(inr::dag::Node* node){
 
 int main(){
     inr::arena_allocator<0x10000> arena;
+
+    inr::inrContext ctx;
     inr::dag::SelectionDAG sdag(&arena);
 
-    auto* five = sdag.create_constant(inr::inrint(5, 32, false));
-    auto* ten = sdag.create_constant(inr::inrint(10, 32, false));
-    auto* three = sdag.create_constant(inr::inrint(3, 32, false));
+    auto* five = sdag.create_constant(ctx.get_integer(32), inr::inrint(5, 32, false));
+    auto* ten = sdag.create_constant(ctx.get_integer(32), inr::inrint(10, 32, false));
+    auto* three = sdag.create_constant(ctx.get_integer(32), inr::inrint(3, 32, false));
 
-    auto* sum = sdag.create_add(five, ten);
-    auto* result = sdag.create_sub(sum, three);
+    auto* sum = sdag.create_add(ctx.get_integer(32), five, ten);
+    auto* result = sdag.create_sub(ctx.get_integer(32), sum, three);
 
     auto* entry = sdag.create_entry(result);
 

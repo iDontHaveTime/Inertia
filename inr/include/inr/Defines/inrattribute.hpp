@@ -24,6 +24,19 @@
 #define _inr_check_builtin_(x) 0
 #endif // check builtin
 
+/* Check attribute. */
+#if defined(__has_attribute)
+#define _inr_check_attribute_(x) __has_attribute(x)
+#else
+#define _inr_check_attribute_(x) 0
+#endif
+
+#if _inr_check_attribute_(packed)
+#define _inr_packed_ __attribute__((packed))
+#else
+#define _inr_packed_
+#endif
+
 /* Always inline. */
 #if __has_cpp_attribute(__gnu__::__always_inline__)
 #define _inr_always_inline_ [[__gnu__::__always_inline__]]
