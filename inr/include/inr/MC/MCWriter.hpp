@@ -8,8 +8,10 @@
  *
  **/
 
-#include "inr/Support/Stream.hpp"
+#include "inr/MC/MCOBJ.hpp"
 #include "inr/Target/Triple.hpp"
+#include "inr/Support/Stream.hpp"
+#include "inr/Support/Alloc.hpp"
 
 namespace inr{
     /**
@@ -17,16 +19,16 @@ namespace inr{
      */
     class MCWriter{
     protected:
-        Triple& triple;
         inr_ostream& os;
+        MCOBJ& obj;
     public:
-        MCWriter(Triple& _triple, inr_ostream& ost) noexcept : triple(_triple), os(ost){};
+        MCWriter(MCOBJ& _obj, inr_ostream& ost) noexcept : os(ost), obj(_obj){};
 
         MCWriter(const MCWriter&) = delete;
         MCWriter& operator=(const MCWriter&) = delete;
 
-        Triple& get_triple() const noexcept{
-            return triple;
+        const Triple& get_triple() const noexcept{
+            return obj.get_triple();
         }
 
         inr_ostream& get_stream() noexcept{
@@ -37,7 +39,18 @@ namespace inr{
             return os;
         }
 
-        virtual ~MCWriter() = default;
+        allocator* get_allocator() const noexcept{
+            return obj.get_allocator();
+        }
+
+        virtual bool valid() const noexcept = 0;
+        virtual size_t write() = 0;
+
+        operator bool() const noexcept{
+            return valid();
+        }
+
+        virtual ~MCWriter() noexcept = default;
     };
 
 }

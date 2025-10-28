@@ -411,6 +411,15 @@ namespace inr{
     }
 
     /**
+     * @brief Only byte swaps if condition is true.
+     */
+    template<std::integral T>
+    _inr_always_inline_
+    constexpr T bswap_if(T n, bool to_bswap) noexcept{
+        return to_bswap ? bswap<T>(n) : n;
+    }
+
+    /**
      * @brief Max size of all templates provided.
      *
      * The biggest size template out of all of the ones provided.
@@ -418,9 +427,23 @@ namespace inr{
      * @return Biggest size.
      */
     template<typename... Ts>
-    consteval size_t max_size_t() noexcept{
+    consteval size_t max_size_of_ts() noexcept{
         size_t cur = 1;
         ((cur = cur < sizeof(Ts) ? sizeof(Ts) : cur), ...);
+        return cur;
+    }
+
+    /**
+     * @brief Max align of all templates provided.
+     *
+     * The biggest alignment template out of all of the ones provided.
+     *
+     * @return Biggest alignment.
+     */
+    template<typename... Ts>
+    consteval size_t max_align_of_ts() noexcept{
+        size_t cur = 1;
+        ((cur = cur < alignof(Ts) ? alignof(Ts) : cur), ...);
         return cur;
     }
 

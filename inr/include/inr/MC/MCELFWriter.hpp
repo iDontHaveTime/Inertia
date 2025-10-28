@@ -8,13 +8,32 @@
  *
  **/
 
+#include "inr/MC/MCOBJ.hpp"
 #include "inr/MC/MCWriter.hpp"
+#include "inr/Support/Binary.hpp"
+#include "inr/Support/Stream.hpp"
 
 namespace inr{
 
     class MCELFWriter : public MCWriter{
+        elf_header* hdr;
+
+        void new_elf();
+        void end_elf();
     public:
-        using MCWriter::MCWriter;
+        MCELFWriter(MCOBJ& _obj, inr_ostream& os) noexcept : MCWriter(_obj, os){
+            new_elf();
+        }
+
+        bool valid() const noexcept override{
+            return hdr != nullptr;
+        }
+
+        size_t write() override;
+
+        ~MCELFWriter() noexcept override{
+            end_elf();
+        }
     };
 
 }

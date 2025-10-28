@@ -32,7 +32,8 @@ namespace inr{
         uint8_t val;
     public:
 
-        constexpr byte() noexcept = default;
+        constexpr byte() noexcept : val(0){};
+        constexpr ~byte() noexcept = default;
 
         /**
          * @brief Constructor that sets the value.
@@ -42,7 +43,7 @@ namespace inr{
         constexpr byte(uint8_t n) noexcept : val(n){};
 
         /**
-         * @brief Uses std::byte to construct itself.
+         * @brief Uses std::byte to construct.
          *
          * @param n The byte to set it to.
          */
@@ -53,6 +54,19 @@ namespace inr{
 
         constexpr byte(byte&&) noexcept = default;
         constexpr byte& operator=(byte&&) noexcept = default;
+
+        constexpr void set_bit(bool to, uint8_t bit) noexcept{
+            if(to){
+                val |= (1 << bit);
+            }
+            else{
+                val &= ~(1 << bit);
+            }
+        }
+
+        constexpr bool get_bit(uint8_t bit) const noexcept{
+            return (val & (1 << bit)) != 0;
+        }
 
         constexpr byte& operator=(uint8_t other) noexcept{
             val = other;
@@ -68,6 +82,10 @@ namespace inr{
 
         explicit constexpr operator uint8_t() const noexcept{
             return val;
+        }
+
+        explicit constexpr operator std::byte() const noexcept{
+            return (std::byte)val;
         }
 
         constexpr byte operator~() const noexcept{

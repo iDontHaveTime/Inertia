@@ -13,6 +13,7 @@
 #include "inr/Defines/Attribute.hpp"
 #include "inr/Support/Byte.hpp"
 #include "inr/Support/Endian.hpp"
+#include "inr/Target/Triple.hpp"
 
 #include <cstdint>
 #include <type_traits>
@@ -72,7 +73,7 @@ namespace inr{
     /**
      * @brief Types of the ELF file.
      */
-    enum elf_type : uint16_t{
+    enum class elf_type : uint16_t{
         ELF_NONE = 0x00, /**< Unknown ELF Type. */
         ELF_REL = 0x01, /**< Relocatable ELF Type. */
         ELF_EXEC = 0x02, /**< Executable ELF Type. */
@@ -192,35 +193,41 @@ namespace inr{
     class _inr_packed_ elf_ident : public binary_header {
     public:
         using elf_byte = inr::byte;
+        struct ident{
+            /**
+            * @brief ELF Magic, should be 0x7f, E, L, F.
+            */
+            const elf_byte ei_magic[4] = {'\x7f', 'E', 'L', 'F'};
+            /**
+            * @brief ELF Class, 32 or 64bit.
+            */
+            const elf_header_class ei_class;
+            /**
+            * @brief ELF Endianness, little or big endians.
+            */
+            const elf_endian_type ei_data;
+            /**
+            * @brief ELF Version, 1 for the current ELF version.
+            */
+            const elf_byte ei_version;
+            /**
+            * @brief ELF ABI, nothing interesting here.
+            */
+            const elf_os_abi ei_osabi;
+            /**
+            * @brief ELF ABI Version, most of the time just padding.
+            */
+            const elf_byte ei_abiversion;
+            /**
+            * @brief ELF Padding, nothing to see here.
+            */
+            const elf_byte ei_pad[7] = {0};
 
-        /**
-         * @brief ELF Magic, should be 0x7f, E, L, F.
-         */
-        const elf_byte ei_magic[4] = {'\x7f', 'E', 'L', 'F'};
-        /**
-         * @brief ELF Class, 32 or 64bit.
-         */
-        const elf_header_class ei_class;
-        /**
-         * @brief ELF Endianness, little or big endians.
-         */
-        const elf_endian_type ei_data;
-        /**
-         * @brief ELF Version, 1 for the current ELF version.
-         */
-        const elf_byte ei_version;
-        /**
-         * @brief ELF ABI, nothing interesting here.
-         */
-        const elf_os_abi ei_osabi;
-        /**
-         * @brief ELF ABI Version, most of the time just padding.
-         */
-        const elf_byte ei_abiversion;
-        /**
-         * @brief ELF Padding, nothing to see here.
-         */
-        const elf_byte ei_pad[7] = {0};
+            constexpr ident(elf_header_class elf_class, endian elf_endian, elf_os_abi abi, 
+                            elf_byte elf_version = 1, elf_byte abi_version = 0) noexcept : 
+            ei_class(elf_class), ei_data(inr_endian_to_elf(elf_endian)),
+            ei_version(elf_version), ei_osabi(abi), ei_abiversion(abi_version){};
+        } e_ident;
 
         /**
          * @brief Basic constexpr constructor for the ELF.
@@ -233,15 +240,44 @@ namespace inr{
          */
         constexpr elf_ident(elf_header_class elf_class, endian elf_endian, elf_os_abi abi, 
                             elf_byte elf_version = 1, elf_byte abi_version = 0) noexcept : 
-            ei_class(elf_class), ei_data(inr_endian_to_elf(elf_endian)),
-            ei_version(elf_version), ei_osabi(abi), ei_abiversion(abi_version){};
+            e_ident(elf_class, elf_endian, abi, elf_version, abi_version){};
     };
+
+    class _inr_packed_ elf_header : public elf_ident{
+        using elf_ident::elf_ident;
+    };
+
+    constexpr elf_isa triple_to_elf_isa(const Triple& t) noexcept{
+        switch(t.get_arch()){
+            case Triple::x86_64:
+                return elf_isa::ELF_x86_64;
+            case Triple::AArch64:
+                return elf_isa::ELF_Arm64;
+            default:
+                return elf_isa::ELF_NONE;
+        }
+    }
+
+    constexpr elf_os_abi triple_to_elf_abi(const Triple& t) noexcept{
+        switch(t.get_os()){
+            case Triple::linux_:
+                switch(t.get_abi()){
+                    case Triple::gnu:
+                        return elf_os_abi::ELF_SystemV;
+                    default:
+                        break;
+                }
+            default:
+                break;
+        }
+        return (elf_os_abi)0;
+    }
 
     /**
      * @brief Base class for 32bit and 64bit ELF files.
      */
     template<elf_header_class elf_class>
-    class _inr_packed_ elf_header_base_class : public elf_ident{
+    class _inr_packed_ elf_header_base_class : public elf_header{
     public:
         /* Types. */
         using elf_width = std::conditional_t<elf_class == elf_header_class::ELF_32bit, uint32_t, uint64_t>;
@@ -254,7 +290,7 @@ namespace inr{
          */
         constexpr elf_header_base_class(endian elf_endian, elf_os_abi abi, elf_type type, elf_isa arch, elf_byte elf_version = 1,
                                 elf_byte abi_version = 0, uint32_t elf_header_version = 1) noexcept : 
-            elf_ident(elf_class, elf_endian, abi, 
+            elf_header(elf_class, elf_endian, abi, 
                     elf_version, abi_version), e_type(type), e_machine(arch), e_version(elf_header_version), e_ehsize(sizeof(*this)){};
 
         /**
@@ -309,6 +345,23 @@ namespace inr{
          * @brief Index of the section header table entry that contains the section names. 
          */
         uint16_t e_shstrndx = 0;
+
+        void flip_fields() noexcept{
+            e_type = (elf_type)bswap((uint16_t)e_type);
+            e_machine = (elf_isa)bswap((uint16_t)e_machine);
+
+            e_version = bswap(e_version);
+            e_entry = bswap(e_entry);
+            e_phoff = bswap(e_phoff);
+            e_shoff = bswap(e_shoff);
+            e_flags = bswap(e_flags);
+            e_ehsize = bswap(e_ehsize);
+            e_phentsize = bswap(e_phentsize);
+            e_phnum = bswap(e_phnum);
+            e_shentsize = bswap(e_shentsize);
+            e_shnum = bswap(e_shnum);
+            e_shstrndx = bswap(e_shstrndx);
+        }
     };
 
     /**

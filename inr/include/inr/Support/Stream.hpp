@@ -28,6 +28,8 @@ namespace inr{
     class inr_ostream;
     /* Forward declare. */
     class inr_istream;
+    /* Forward declare. */
+    class byte;
 
     /**
      * @brief The stream calls it if put via operator<<.
@@ -196,6 +198,18 @@ namespace inr{
         }
 
         /**
+         * @brief Allows 'inr::byte' to be used for data param.
+         *
+         * @param data The byte array.
+         * @param n Amount of bytes to write from data.
+         *
+         * @return *this
+         */
+        inr_ostream& write(const byte* data, size_t n) noexcept{
+            return write((const char*)data, n);
+        }
+
+        /**
          * @brief Writes the provided character to the stream.
          */
         inr_ostream& operator<<(char c) noexcept{
@@ -333,6 +347,18 @@ namespace inr{
         inr_istream& read(char* data, size_t n) noexcept{
             read(data, 1, n);
             return *this;
+        }
+
+        /**
+         * @brief Read to data with 'inr::byte' type.
+         *
+         * @param data The destination to read to.
+         * @param n Amount of bytes to read from the stream.
+         *
+         * @return *this
+         */
+        inr_istream& read(byte* data, size_t n) noexcept{
+            return read((char*)data, n);
         }
 
         /**
