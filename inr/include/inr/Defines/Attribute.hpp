@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRATTRIBUTE_HPP
-#define INERTIA_INRATTRIBUTE_HPP
+#ifndef INERTIA_ATTRIBUTE_HPP
+#define INERTIA_ATTRIBUTE_HPP
 
 /**
- * @file inr/Defines/inrattribute.hpp
+ * @file inr/Defines/Attribute.hpp
  * @brief Inertia's attribute macros.
  *
  * This header contains macros to make the code more understandable to the compiler.
@@ -61,4 +61,4 @@
 #undef INR_GNU
 #endif // INR_GNU
 
-#endif // INERTIA_INRATTRIBUTE_HPP
+#endif // INERTIA_ATTRIBUTE_HPP

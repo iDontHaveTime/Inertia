@@ -1,6 +1,6 @@
-#include "inr/IR/inrcontext.hpp"
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrptr.hpp"
+#include "inr/IR/Context.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Ptr.hpp"
 
 int main(){
     /* Create a new unique pointer context. */

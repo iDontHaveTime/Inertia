@@ -1,7 +1,7 @@
 /* Inertia's includes. */
-#include "inr/Support/inrfile.hpp"
-#include "inr/Defines/inrapis.hpp"
-#include "inr/Defines/inrfiledef.hpp"
+#include "inr/Support/File.hpp"
+#include "inr/Defines/APIs.hpp"
+#include "inr/Defines/FileDef.hpp"
 
 /* C standard includes. */
 #include <cstdio>

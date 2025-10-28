@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRCLASSLIST_HPP
-#define INERTIA_INRCLASSLIST_HPP
+#ifndef INERTIA_CLASSLIST_HPP
+#define INERTIA_CLASSLIST_HPP
 
 /**
- * @file inr/Defines/inrclasslist.hpp
+ * @file inr/Defines/ClassList.hpp
  * @brief Header for Inertia's classes.
  *
  * This header is useless, it just lists classes.
@@ -128,4 +128,4 @@ namespace inr{
     class inline_vec;
 }
 
-#endif // INERTIA_INRCLASSLIST_HPP
+#endif // INERTIA_CLASSLIST_HPP

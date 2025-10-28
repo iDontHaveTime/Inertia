@@ -1,11 +1,11 @@
-#ifndef INERTIA_INRFILEDEF_HPP
-#define INERTIA_INRFILEDEF_HPP
+#ifndef INERTIA_FILEDEF_HPP
+#define INERTIA_FILEDEF_HPP
 
 #include <cstdint>
 #include <cstdio>
 
 /**
- * @file inr/Defines/inrfiledef.hpp
+ * @file inr/Defines/FileDef.hpp
  * @brief Inertia's defines for files.
  *
  * This header contains Inertia's definitions for anything file related.
@@ -67,4 +67,4 @@ namespace inr::fs{
     };
 }
 
-#endif // INERTIA_INRFILEDEF_HPP
+#endif // INERTIA_FILEDEF_HPP

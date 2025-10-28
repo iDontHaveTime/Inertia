@@ -1,15 +1,15 @@
-#ifndef INERTIA_INRCEXPR_HPP
-#define INERTIA_INRCEXPR_HPP
+#ifndef INERTIA_CEXPR_HPP
+#define INERTIA_CEXPR_HPP
 
 /**
- * @file inr/Support/inrcexpr.hpp
+ * @file inr/Support/Cexpr.hpp
  * @brief Inertia's constexpr functions.
  *
  * This header contains convenient constexpr functions that Inertia's classes use.
  *
  **/
 
-#include "inr/Defines/inrattribute.hpp"
+#include "inr/Defines/Attribute.hpp"
 
 #include <climits>
 #include <cstddef>
@@ -454,4 +454,4 @@ namespace inr{
 
 #undef _inr_always_inline_
 
-#endif // INERTIA_INRCEXPR_HPP
+#endif // INERTIA_CEXPR_HPP

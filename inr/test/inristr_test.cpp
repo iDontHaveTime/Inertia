@@ -1,5 +1,5 @@
-#include "inr/Defines/inrfiledef.hpp"
-#include "inr/Support/inrfile.hpp"
+#include "inr/Defines/FileDef.hpp"
+#include "inr/Support/File.hpp"
 #include <cstdio>
 
 /**

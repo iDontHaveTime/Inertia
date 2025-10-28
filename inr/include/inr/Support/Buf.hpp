@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRBUF_HPP
-#define INERTIA_INRBUF_HPP
+#ifndef INERTIA_BUF_HPP
+#define INERTIA_BUF_HPP
 
 /**
- * @file inr/Support/inrbuf.hpp
+ * @file inr/Support/Buf.hpp
  * @brief Inertia's buffer class.
  *
  * This header contains the buffer classed used by Inertia's classes.
@@ -113,4 +113,4 @@ namespace inr{
 
 }
 
-#endif // INERTIA_INRBUF_HPP
+#endif // INERTIA_BUF_HPP

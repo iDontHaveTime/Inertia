@@ -1,9 +1,9 @@
 #include "inr/CodeGen/DAG/DAGNode.hpp"
 #include "inr/CodeGen/DAG/SelectionDAG.hpp"
-#include "inr/IR/inrcontext.hpp"
-#include "inr/Support/inrarena.hpp"
-#include "inr/Support/inrint.hpp"
-#include "inr/Support/inrstream.hpp"
+#include "inr/IR/Context.hpp"
+#include "inr/Support/Arena.hpp"
+#include "inr/Support/Int.hpp"
+#include "inr/Support/Stream.hpp"
 
 void print_dag(const inr::dag::SelectionDAG& dag){
     inr::out<<"--- DAG Nodes ---\n";

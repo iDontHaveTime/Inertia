@@ -9,10 +9,10 @@
  *
  **/
 
-#include "inr/IR/inrtype.hpp"
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrint.hpp"
-#include "inr/Support/inrvector.hpp"
+#include "inr/IR/Type.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Int.hpp"
+#include "inr/Support/Vector.hpp"
 
 #include <cstdint>
 

@@ -1,6 +1,6 @@
-#include "inr/Support/inrarena.hpp"
-#include "inr/Support/inrstream.hpp"
-#include "inr/Support/inrvector.hpp"
+#include "inr/Support/Arena.hpp"
+#include "inr/Support/Stream.hpp"
+#include "inr/Support/Vector.hpp"
 
 /**
  * Expected output, assuming int is 4 bytes:

@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRFILE_HPP
-#define INERTIA_INRFILE_HPP
+#ifndef INERTIA_FILE_HPP
+#define INERTIA_FILE_HPP
 
 /**
- * @file inr/Support/inrfile.hpp
+ * @file inr/Support/File.hpp
  * @brief Inertia's implementation of files.
  *
  * This header contains Inertia's implementation of a file.
@@ -10,10 +10,10 @@
  *
  **/
 
-#include "inr/Defines/inrapis.hpp"
-#include "inr/Defines/inrfiledef.hpp"
-#include "inr/Support/inrbuf.hpp"
-#include "inr/Support/inriterator.hpp"
+#include "inr/Defines/APIs.hpp"
+#include "inr/Defines/FileDef.hpp"
+#include "inr/Support/Buf.hpp"
+#include "inr/Support/Iterator.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -622,4 +622,4 @@ namespace inr{
     };
 }
 
-#endif // INERTIA_INRFILE_HPP
+#endif // INERTIA_FILE_HPP

@@ -1,12 +1,12 @@
-#ifndef INERTIA_INRAPIS_HPP
-#define INERTIA_INRAPIS_HPP
+#ifndef INERTIA_APIS_HPP
+#define INERTIA_APIS_HPP
 
 #define INERTIA_WINDOWS_UNSUPPORTED
 
 #include <cstdint>
 
 /**
- * @file inr/Defines/inrapis.hpp
+ * @file inr/Defines/APIs.hpp
  * @brief Inertia's defines for APIs.
  *
  * This header contains Inertia's definitions for APIs.
@@ -43,4 +43,4 @@ constexpr inr::APIs INERTIA_PLATFORM_API = inr::APIs::STANDARD;
 
 #undef INERTIA_WINDOWS_UNSUPPORTED
 
-#endif // INERTIA_INRAPIS_HPP
+#endif // INERTIA_APIS_HPP

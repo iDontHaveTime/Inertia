@@ -1,18 +1,18 @@
-#ifndef INERTIA_INRCONTEXT_HPP
-#define INERTIA_INRCONTEXT_HPP
+#ifndef INERTIA_CONTEXT_HPP
+#define INERTIA_CONTEXT_HPP
 
 
 /**
- * @file inr/IR/inrcontext.hpp
+ * @file inr/IR/Context.hpp
  * @brief Inertia's context class.
  *
  * This header contains Inertia's IR context class.
  *
  **/
 
-#include "inr/IR/inrtype.hpp"
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrmap.hpp"
+#include "inr/IR/Type.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Map.hpp"
 
 namespace inr{
 
@@ -34,7 +34,24 @@ namespace inr{
         inrContext& operator=(inrContext&&) = default;
 
         /* Destructor. */
-        ~inrContext() noexcept = default;
+        ~inrContext() noexcept{
+            for(auto [_, v] : type_map){
+                switch(v->get_kind()){
+                    case TypeKind::Integer:
+                        type_map.get_allocator()->free((int_type*)v);
+                        break;
+                    case TypeKind::Float:
+                        type_map.get_allocator()->free((float_type*)v);
+                        break;
+                    case TypeKind::Void:
+                        type_map.get_allocator()->free((void_type*)v);
+                        break;
+                    case TypeKind::Pointer:
+                        type_map.get_allocator()->free((ptr_type*)v);
+                        break;
+                }
+            }
+        }
         /* End of Constructors | Operators | Destructor. */
 
         /* Start of fields. */
@@ -90,4 +107,4 @@ namespace inr{
 
 }
 
-#endif // INERTIA_INRCONTEXT_HPP
+#endif // INERTIA_CONTEXT_HPP

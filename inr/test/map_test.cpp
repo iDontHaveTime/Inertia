@@ -1,5 +1,5 @@
-#include "inr/Support/inrmap.hpp"
-#include "inr/Support/inrstream.hpp"
+#include "inr/Support/Map.hpp"
+#include "inr/Support/Stream.hpp"
 #include <cstddef>
 
 int main(){

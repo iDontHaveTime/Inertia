@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRTYPE_HPP
-#define INERTIA_INRTYPE_HPP
+#ifndef INERTIA_TYPE_HPP
+#define INERTIA_TYPE_HPP
 
 /**
- * @file inr/IR/inrtype.hpp
+ * @file inr/IR/Type.hpp
  * @brief Inertia's type class.
  *
  * This header contains Inertia's type class.
@@ -153,4 +153,4 @@ namespace inr{
     }
 }
 
-#endif // INERTIA_INRTYPE_HPP
+#endif // INERTIA_TYPE_HPP

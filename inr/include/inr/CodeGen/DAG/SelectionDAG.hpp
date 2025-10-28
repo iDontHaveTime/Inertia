@@ -10,8 +10,8 @@
  **/
 
 #include "inr/CodeGen/DAG/DAGNode.hpp"
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrvector.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Vector.hpp"
 
 #include <cstdint>
 

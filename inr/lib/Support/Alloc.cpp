@@ -1,5 +1,5 @@
 /* Inertia's includes. */
-#include "inr/Support/inralloc.hpp"
+#include "inr/Support/Alloc.hpp"
 
 namespace inr{
 

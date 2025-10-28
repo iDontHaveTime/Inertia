@@ -8,6 +8,8 @@ build/
 *.s
 *.ll
 *.bin
+*.o
 *~
 # Local scripts
 loc.py
+run_tests.sh

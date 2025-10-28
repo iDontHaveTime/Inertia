@@ -1,5 +1,5 @@
 /* Inertia's includes. */
-#include "inr/Support/inrstream.hpp"
+#include "inr/Support/Stream.hpp"
 
 namespace inr{
 

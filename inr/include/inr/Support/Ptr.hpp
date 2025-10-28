@@ -1,15 +1,15 @@
-#ifndef INERTIA_INRPTR_HPP
-#define INERTIA_INRPTR_HPP
+#ifndef INERTIA_PTR_HPP
+#define INERTIA_PTR_HPP
 
 /**
- * @file inr/Support/inrptr.hpp
+ * @file inr/Support/Ptr.hpp
  * @brief Inertia's pointer classes.
  *
  * This header contains various types of pointers.
  *
  **/
 
-#include "inr/Support/inralloc.hpp"
+#include "inr/Support/Alloc.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -272,4 +272,4 @@ namespace inr{
     }
 }
 
-#endif // INERTIA_INRPTR_HPP
+#endif // INERTIA_PTR_HPP

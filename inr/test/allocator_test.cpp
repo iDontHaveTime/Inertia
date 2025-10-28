@@ -1,5 +1,5 @@
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrstream.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Stream.hpp"
 
 /**
  * Expected output:

@@ -1,15 +1,15 @@
-#ifndef INERTIA_INRBYTE_HPP
-#define INERTIA_INRBYTE_HPP
+#ifndef INERTIA_BYTE_HPP
+#define INERTIA_BYTE_HPP
 
 /**
- * @file inr/Support/inrbyte.hpp
+ * @file inr/Support/Byte.hpp
  * @brief Inertia's byte class.
  *
  * This header contains a byte class.
  *
  **/
 
-#include "inr/Support/inrstream.hpp"
+#include "inr/Support/Stream.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -247,4 +247,4 @@ namespace inr{
 
 }
 
-#endif // INERTIA_INRBYTE_HPP
+#endif // INERTIA_BYTE_HPP

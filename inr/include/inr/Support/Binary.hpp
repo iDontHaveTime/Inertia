@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRBINARY_HPP
-#define INERTIA_INRBINARY_HPP
+#ifndef INERTIA_BINARY_HPP
+#define INERTIA_BINARY_HPP
 
 /**
- * @file inr/Support/inrbinary.hpp
+ * @file inr/Support/Binary.hpp
  * @brief Inertia's binary support classes.
  *
  * This header contains helpers relating to binary, like for file formats and whatnot.
@@ -10,9 +10,9 @@
  *
  **/
 
-#include "inr/Defines/inrattribute.hpp"
-#include "inr/Support/inrbyte.hpp"
-#include "inr/Support/inrendian.hpp"
+#include "inr/Defines/Attribute.hpp"
+#include "inr/Support/Byte.hpp"
+#include "inr/Support/Endian.hpp"
 
 #include <cstdint>
 #include <type_traits>
@@ -601,4 +601,4 @@ namespace inr{
     /* END OF ELF. */
 }
 
-#endif // INERTIA_INRBINARY_HPP
+#endif // INERTIA_BINARY_HPP

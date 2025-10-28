@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRITERATOR_HPP
-#define INERTIA_INRITERATOR_HPP
+#ifndef INERTIA_ITERATOR_HPP
+#define INERTIA_ITERATOR_HPP
 
 /**
- * @file inr/Support/inriterator.hpp
+ * @file inr/Support/Iterator.hpp
  * @brief Inertia's iterator classes.
  *
  * This header contains Inertia's iterator classes.
@@ -98,7 +98,6 @@ namespace inr{
             return ptr != other.ptr;
         }
     };
-
 }
 
-#endif // INERTIA_INRITERATOR_HPP
+#endif // INERTIA_ITERATOR_HPP

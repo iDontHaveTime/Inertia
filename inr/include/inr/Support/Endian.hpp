@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRENDIAN_HPP
-#define INERTIA_INRENDIAN_HPP
+#ifndef INERTIA_ENDIAN_HPP
+#define INERTIA_ENDIAN_HPP
 
 /**
- * @file inr/Support/inrendian.hpp
+ * @file inr/Support/Endian.hpp
  * @brief Inertia's endian related classes and functions.
  *
  *
@@ -53,4 +53,4 @@ namespace inr{
 #undef _INR_BIG_ENDIAN_
 #undef _INR_LITTLE_ENDIAN_
 
-#endif // INERTIA_INRENDIAN_HPP
+#endif // INERTIA_ENDIAN_HPP

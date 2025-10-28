@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRVECTOR_HPP
-#define INERTIA_INRVECTOR_HPP
+#ifndef INERTIA_VECTOR_HPP
+#define INERTIA_VECTOR_HPP
 
 /**
- * @file inr/Support/inrvector.hpp
+ * @file inr/Support/Vector.hpp
  * @brief Inertia's vector class.
  *
  * This header contains Inertia's vector class.
@@ -10,8 +10,8 @@
  *
  **/
 
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inriterator.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Iterator.hpp"
 
 #include <cstring>
 
@@ -657,4 +657,4 @@ namespace inr{
     };
 }
 
-#endif // INERTIA_INRVECTOR_HPP
+#endif // INERTIA_VECTOR_HPP

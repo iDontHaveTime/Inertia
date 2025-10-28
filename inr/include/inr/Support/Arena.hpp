@@ -1,15 +1,15 @@
-#ifndef INERTIA_INRARENA_HPP
-#define INERTIA_INRARENA_HPP
+#ifndef INERTIA_ARENA_HPP
+#define INERTIA_ARENA_HPP
 
 /**
- * @file inr/Support/inrarena.hpp
+ * @file inr/Support/Arena.hpp
  * @brief Inertia's arena allocator.
  *
  * This header contains Inertia's arena allocator class.
  *
  **/
 
-#include "inr/Support/inralloc.hpp"
+#include "inr/Support/Alloc.hpp"
 
 namespace inr{
     /**
@@ -90,4 +90,4 @@ namespace inr{
     };
 }
 
-#endif // INERTIA_INRARENA_HPP
+#endif // INERTIA_ARENA_HPP

@@ -1,18 +1,18 @@
-#ifndef INERTIA_INRINT_HPP
-#define INERTIA_INRINT_HPP
+#ifndef INERTIA_INT_HPP
+#define INERTIA_INT_HPP
 
 /**
- * @file inr/Support/inrint.hpp
+ * @file inr/Support/Int.hpp
  * @brief Inertia's arbitrary precision integer class.
  *
  * This header contains Inertia's arbitrary precision integer class.
  *
  **/
 
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrcexpr.hpp"
-#include "inr/Support/inriterator.hpp"
-#include "inr/Support/inrstream.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Cexpr.hpp"
+#include "inr/Support/Iterator.hpp"
+#include "inr/Support/Stream.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -761,4 +761,4 @@ namespace inr{
 
 }
 
-#endif // INERTIA_INRINT_HPP
+#endif // INERTIA_INT_HPP

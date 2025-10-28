@@ -1,15 +1,15 @@
-#ifndef INERTIA_INRMAP_HPP
-#define INERTIA_INRMAP_HPP
+#ifndef INERTIA_MAP_HPP
+#define INERTIA_MAP_HPP
 
 /**
- * @file inr/Support/inrmap.hpp
+ * @file inr/Support/Map.hpp
  * @brief Inertia's hash map implementation.
  *
  * A simple hash map using chaining for collision resolution.
  **/
 
-#include "inr/Support/inralloc.hpp"
-#include "inr/Support/inrvector.hpp"
+#include "inr/Support/Alloc.hpp"
+#include "inr/Support/Vector.hpp"
 
 #include <concepts>
 #include <cstddef>
@@ -48,6 +48,48 @@ namespace inr{
 
             entry(const K& k, const V& v, size_t h) : key(k), value(v), hash(h), next(nullptr){};
   
+        };
+
+        class map_it{
+            inr_map* map;
+            size_t bucket_idx;
+            entry* current;
+        public:
+            using iterator_category = std::forward_iterator_tag;
+            using value_type = std::pair<const K&, V&>;
+            using difference_type = std::ptrdiff_t;
+            using pointer = value_type*;
+            using reference = value_type;
+
+            map_it() noexcept : map(nullptr), bucket_idx(0), current(nullptr){};
+            map_it(inr_map* m, size_t idx, entry* e) noexcept : map(m), bucket_idx(idx), current(e){};
+
+            reference operator*() const noexcept{
+                return {current->key, current->value};
+            }
+
+            map_it& operator++() noexcept{
+                if(current->next){
+                    current = current->next;
+                    return *this;
+                }
+
+                bucket_idx++;
+
+                while(bucket_idx < map->buckets.size()){
+                    if(map->buckets[bucket_idx]){
+                        current = map->buckets[bucket_idx];
+                        return *this;
+                    }
+                    bucket_idx++;
+                }
+
+                current = nullptr;
+                return *this;
+            }
+
+            auto operator<=>(const map_it& other) const noexcept = default;
+
         };
 
     public:
@@ -245,8 +287,19 @@ namespace inr{
         ~inr_map() noexcept{
             clear();
         }
+
+        map_it begin() noexcept{
+            for(size_t i = 0; i < buckets.size(); i++){
+                if(buckets[i]) return map_it(this, i, buckets[i]);
+            }
+            return end();
+        }
+
+        map_it end() noexcept{
+            return {this, buckets.size(), nullptr};
+        }
     };
 
 }
 
-#endif // INERTIA_INRMAP_HPP
+#endif // INERTIA_MAP_HPP

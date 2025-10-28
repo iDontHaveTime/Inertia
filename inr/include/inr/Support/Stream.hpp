@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRSTREAM_HPP
-#define INERTIA_INRSTREAM_HPP
+#ifndef INERTIA_STREAM_HPP
+#define INERTIA_STREAM_HPP
 
 /**
- * @file inr/Support/inrstream.hpp
+ * @file inr/Support/Stream.hpp
  * @brief Inertia's implementation of C++ stream classes.
  *
  * This header contains Inertia's custom implementation of C++ streams.
@@ -10,9 +10,9 @@
  *
  **/
 
-#include "inr/Defines/inrfiledef.hpp"
-#include "inr/Support/inrcexpr.hpp"
-#include "inr/Support/inrfile.hpp"
+#include "inr/Defines/FileDef.hpp"
+#include "inr/Support/Cexpr.hpp"
+#include "inr/Support/File.hpp"
 
 #include <cstdio>
 #include <cstring>
@@ -414,4 +414,4 @@ namespace inr{
     extern inr_istream in;
 }
 
-#endif // INERTIA_INRSTREAM_HPP
+#endif // INERTIA_STREAM_HPP

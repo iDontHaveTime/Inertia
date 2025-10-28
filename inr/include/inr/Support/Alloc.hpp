@@ -1,8 +1,8 @@
-#ifndef INERTIA_INRALLOC_HPP
-#define INERTIA_INRALLOC_HPP
+#ifndef INERTIA_ALLOC_HPP
+#define INERTIA_ALLOC_HPP
 
 /**
- * @file inr/Support/inralloc.hpp
+ * @file inr/Support/Alloc.hpp
  * @brief Base class for all Inertia's allocator.
  *
  * This header contains Inertia's base allocator class.
@@ -228,4 +228,4 @@ namespace inr{
     extern basic_allocator static_allocator;
 }
 
-#endif // INERTIA_INRALLOC_HPP
+#endif // INERTIA_ALLOC_HPP
