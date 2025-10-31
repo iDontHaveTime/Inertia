@@ -122,6 +122,7 @@ namespace inr{
          */
         inr_vec& operator=(const inr_vec& other){
             if(this == &other) return *this;
+            clear(true);
             mem = other.mem;
             array = nullptr;
             allocated = 0;
@@ -385,6 +386,9 @@ namespace inr{
                 mem->free_raw(array, allocated);
             }
         }
+
+        template<typename, size_t>
+        friend class inline_vec;
     };
 
     /**
@@ -394,7 +398,6 @@ namespace inr{
     template<typename T, size_t elem_c>
     class inline_vec{
         inr_vec<T> heap;
-        size_t cur = 0;
         alignas(T) uint8_t stack[elem_c * sizeof(T)];
         enum class vec_storage{
             STACK, HEAP
@@ -418,8 +421,10 @@ namespace inr{
 
         ~inline_vec() noexcept{
             if(storage == vec_storage::STACK){
-                for(size_t i = 0; i < cur; i++){
-                    ((T*)stack)[i].~T();
+                if constexpr(std::is_destructible_v<T>){
+                    for(size_t i = 0; i < heap.count; i++){
+                        ((T*)stack)[i].~T();
+                    }
                 }
             }
         }
@@ -451,7 +456,7 @@ namespace inr{
          * @return Amount of elements allocated in the vector.
          */
         size_t size() const noexcept{
-            return storage == vec_storage::HEAP ? heap.size() : cur;
+            return heap.size();
         }
 
         /**
@@ -526,12 +531,7 @@ namespace inr{
          * @brief Removes the last element.
          */
         void pop_back() noexcept{
-            if(storage == vec_storage::STACK){
-                if(cur) cur--;
-            }
-            else{
-                heap.pop_back();
-            }
+            heap.pop_back();
         }
 
         /**
@@ -539,7 +539,7 @@ namespace inr{
          */
         void clear(bool free_everything = false) noexcept{
             if(storage == vec_storage::STACK){
-                cur = 0;
+                heap.count = 0;
             }
             else{
                 heap.clear(free_everything);
@@ -572,8 +572,9 @@ namespace inr{
         template<typename... Args>
         T& emplace_back(Args&&... args){
             if(storage == vec_storage::STACK){
-                if(cur == elem_c){
+                if(heap.count == elem_c){
                     storage = vec_storage::HEAP;
+                    heap.count = 0;
                     for(size_t i = 0; i < elem_c; i++){
                         heap.emplace_back(std::move(((T*)stack)[i]));
                     }
@@ -581,9 +582,9 @@ namespace inr{
                     return heap.emplace_back(std::forward<Args>(args)...);
                 }
                 else{
-                    T* dest = (T*)stack + cur;
+                    T* dest = (T*)stack + heap.count;
                     new(dest) T(std::forward<Args>(args)...);
-                    cur++;
+                    heap.count++;
                     return *dest;
                 }
             }

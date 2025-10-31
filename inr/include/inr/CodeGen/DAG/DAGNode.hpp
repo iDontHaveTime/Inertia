@@ -48,6 +48,7 @@ namespace inr::dag{
     class Node{
     public:
         inline_vec<Node*, 4> operands;
+        inline_vec<Node*, 4> users;
         type* node_type;
         const uint32_t value_id;
         const DAGOpcode op;
@@ -63,6 +64,7 @@ namespace inr::dag{
 
         void add_operand(Node* node){
             operands.push_back(node);
+            node->users.push_back(this);
         }
 
         const type* get_type() const noexcept{
