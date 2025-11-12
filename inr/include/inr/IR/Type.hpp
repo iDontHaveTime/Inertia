@@ -9,6 +9,7 @@
  *
  **/
 
+#include "inr/Support/Stream.hpp"
 #include <cstdint>
 #include <cstddef>
 
@@ -150,6 +151,43 @@ namespace inr{
             default:
                 return 0;
         }
+    }
+
+    inline inr_ostream& operator<<(inr_ostream& os, const type& t) noexcept{
+        switch(t.get_kind()){
+            case TypeKind::Integer:
+                os<<'i'<<((const int_type&)t).get_width();
+                break;
+            case TypeKind::Float:
+                os<<'f';
+                switch(((const float_type&)t).get_variant()){
+                    case float_type::float_variant::Float16:
+                        os<<"16";
+                        break;
+                    case float_type::float_variant::Float32:
+                        os<<"32";
+                        break;
+                    case float_type::float_variant::Float64:
+                        os<<"64";
+                        break;
+                    case float_type::float_variant::Float128:
+                        os<<"128";
+                        break;
+                    case float_type::float_variant::Float256:
+                        os<<"256";
+                        break;
+                }
+                break;
+            case TypeKind::Void:
+                os<<"void";
+                break;
+            case TypeKind::Pointer:
+                os<<"ptr("<<*((const ptr_type&)t).get_pointee()<<')';
+                break;
+            default:
+                break;
+        }
+        return os;
     }
 }
 

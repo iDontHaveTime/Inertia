@@ -1,7 +1,11 @@
 #include "inr/CodeGen/DAG/SelectionDAG.hpp"
+#include "inr/CodeGen/DAG/DAGPrinter.hpp"
 #include "inr/IR/Context.hpp"
 #include "inr/Support/Arena.hpp"
 #include "inr/Support/Int.hpp"
+#include "inr/Support/Stream.hpp"
+
+
 int main(){
     inr::arena_allocator<0x10000> arena;
 
@@ -16,6 +20,13 @@ int main(){
     auto* result = sdag.create_sub(ctx.get_integer(32), sum, three);
 
     auto* entry = sdag.create_entry(result);
+
+    inr::DAGPrinter dp;
+
+    inr::out<<"Linear:\n";
+    dp.print(inr::out, sdag);
+    inr::out<<"Tree:\n";
+    dp.print(inr::out, entry);
 
     return 0;
 }

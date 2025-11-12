@@ -408,7 +408,7 @@ namespace inr{
     /**
      * @brief A simple operator to make flags combining easier.
      */
-    inline elf_phdr_flags operator|(elf_phdr_flags a, elf_phdr_flags b) noexcept{
+    constexpr inline elf_phdr_flags operator|(elf_phdr_flags a, elf_phdr_flags b) noexcept{
         return (elf_phdr_flags)((uint32_t)a | (uint32_t)b);
     }
 
@@ -558,21 +558,28 @@ namespace inr{
      * @brief Flags of the section header.
      */
     enum class elf_shdr_flags : uint32_t{
-        _SHF_WRITE = 0x1, /**< Writeable. */
-        _SHF_ALLOC = 0x2, /**< Occupies memory during execution. */
-        _SHF_EXECINSTR = 0x4, /**< Executable. */
-        _SHF_MERGE = 0x10, /**< Might be merged. */
-        _SHF_STRINGS = 0x20, /**< Contains null-term strings. */
-        _SHF_INFO_LINK = 0x40, /**< sh_info has the SHT index. */
-        _SHF_LINK_ORDER = 0x80, /**< Preserve order after combining. */
-        _SHF_OS_NONCONFORMING = 0x100, /**< Non standard OS specific handling needed. */
-        _SHF_GROUP = 0x200, /**< Section is a member of a group. */
-        _SHF_TLS = 0x400, /**< Holds thread-local data. */
-        _SHF_MASKOS = 0x0FF00000, /**< OS specific. */
-        _SHF_MASKPROC = 0xF0000000, /**< Processor specific. */
-        _SHF_ORDERED = 0x4000000, /**< Special ordering (Solaris). */
-        _SHF_EXCLUDE = 0x8000000 /**< Not included unless referenced or allocated. (Also Solaris). */
+        SHF_WRITE = 0x1, /**< Writeable. */
+        SHF_ALLOC = 0x2, /**< Occupies memory during execution. */
+        SHF_EXECINSTR = 0x4, /**< Executable. */
+        SHF_MERGE = 0x10, /**< Might be merged. */
+        SHF_STRINGS = 0x20, /**< Contains null-term strings. */
+        SHF_INFO_LINK = 0x40, /**< sh_info has the SHT index. */
+        SHF_LINK_ORDER = 0x80, /**< Preserve order after combining. */
+        SHF_OS_NONCONFORMING = 0x100, /**< Non standard OS specific handling needed. */
+        SHF_GROUP = 0x200, /**< Section is a member of a group. */
+        SHF_TLS = 0x400, /**< Holds thread-local data. */
+        SHF_MASKOS = 0x0FF00000, /**< OS specific. */
+        SHF_MASKPROC = 0xF0000000, /**< Processor specific. */
+        SHF_ORDERED = 0x4000000, /**< Special ordering (Solaris). */
+        SHF_EXCLUDE = 0x8000000 /**< Not included unless referenced or allocated. (Also Solaris). */
     };
+
+    /**
+     * @brief An operator to make section header flag combining easier.
+     */
+    constexpr inline elf_shdr_flags operator|(elf_shdr_flags a, elf_shdr_flags b) noexcept{
+        return (elf_shdr_flags)((uint32_t)a | (uint32_t)b);
+    }
 
     /**
      * @brief Base class for the section header.
@@ -629,13 +636,6 @@ namespace inr{
          */
         shdr_width sh_entsize;
     };
-
-    /**
-     * @brief An operator to make section header flag combining easier.
-     */
-    inline elf_shdr_flags operator|(elf_shdr_flags a, elf_shdr_flags b) noexcept{
-        return (elf_shdr_flags)((uint32_t)a | (uint32_t)b);
-    }
 
     /**
      * @brief ELF 32bit Section header table entry.

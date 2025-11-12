@@ -374,6 +374,13 @@ namespace inr{
         }
 
         /**
+         * @brief Returns true if empty.
+         */
+        bool empty() const noexcept{
+            return count == 0;
+        }
+
+        /**
          * @brief This destructor calls the elements' destructors then frees the array.
          */
         ~inr_vec() noexcept{
@@ -654,6 +661,13 @@ namespace inr{
          */
         bool valid() const noexcept{
             return data() != nullptr;
+        }
+
+        /**
+         * @brief Returns true if empty.
+         */
+        bool empty() const noexcept{
+            return size() == 0;
         }
     };
 }
