@@ -9,6 +9,7 @@
  **/
 
 #include "inr/Support/Endian.hpp"
+
 #include <cstdint>
 
 /* Use these following macros for accurate architecture defining. */

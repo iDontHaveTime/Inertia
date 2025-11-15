@@ -14,9 +14,6 @@
 #include <cstddef>
 #include <cstdint>
 
-#include <ostream>
-#include <istream>
-
 namespace inr{
 
     /**
@@ -213,19 +210,7 @@ namespace inr{
         }
 
         /**
-         * @brief Writes the raw byte to the Inertia's ostream.
-         *
-         * Does not write an integer in ascii, writes a raw byte.
-         *
-         * @param os The stream.
-         * @return The stream.
-         */
-        friend inr_ostream& operator<<(inr_ostream& os, const byte& other) noexcept{
-            return os.write((const char*)&other.val, 1);
-        }
-
-        /**
-         * @brief Writes the raw byte to the STL's ostream.
+         * @brief Writes the raw byte to the  ostream.
          *
          * Does not write an integer in ascii, writes a raw byte.
          *
@@ -234,31 +219,21 @@ namespace inr{
          *
          * @return The stream.
          */
-        friend std::ostream& operator<<(std::ostream& os, const byte& other){
+        template<ostream_t T>
+        friend T& operator<<(T& os, const byte& other) noexcept{
             return os.write((const char*)&other.val, 1);
         }
 
         /**
-         * @brief Reads a raw byte from STL's istream.
+         * @brief Reads a raw byte from the istream.
          *
          * @param is The stream.
-         * @param The byte to write to.
+         * @param to The byte to write to.
          *
          * @return The stream.
          */
-        friend std::istream& operator>>(std::istream& is, byte& to){
-            return is.read((char*)&to.val, 1);
-        }
-
-        /**
-         * @brief Reads a raw byte from Inertia's istream.
-         *
-         * @param is The stream.
-         * @param The byte to write to.
-         *
-         * @return The stream.
-         */
-        friend inr::inr_istream& operator>>(inr::inr_istream& is, byte& to){
+        template<istream_t T>
+        friend T& operator>>(T& is, byte& to){
             return is.read((char*)&to.val, 1);
         }
     };

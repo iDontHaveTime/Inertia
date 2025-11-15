@@ -11,6 +11,8 @@
  *
  **/
 
+#include "inr/Support/Alloc.hpp"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -46,11 +48,8 @@ namespace inr{
 
     /* Header: inr/Support/inralloc.hpp */
 
-    /* Base class for all Inertia's Allocators. */
+    /* Normal heap allocator. */
     class allocator;
-
-    /* Inherits allocator, uses malloc and free inside. Compatible with them too. */
-    class basic_allocator;
 
     /* Header: inr/Support/inrarena.hpp */
 
@@ -94,6 +93,7 @@ namespace inr{
     /* Header: inr/Support/inrint.hpp */
 
     /* An arbitrary precision integer class. */
+    template<inertia_allocator>
     class inrint;
 
     /* Header: inr/Support/inriterator.hpp */
@@ -105,7 +105,7 @@ namespace inr{
     /* Header: inr/Support/inrptr.hpp */
 
     /* A unique pointer class that supports Inertia's allocator class. */
-    template<typename T>
+    template<typename T, inertia_allocator>
     class unique;
 
     /* Header: inr/Support/inrstream.hpp */

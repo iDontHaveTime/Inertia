@@ -16,6 +16,7 @@
 #include "inr/Target/Triple.hpp"
 
 #include <cstdint>
+
 #include <type_traits>
 
 namespace inr{

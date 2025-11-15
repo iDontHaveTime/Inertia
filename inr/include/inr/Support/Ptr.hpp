@@ -9,6 +9,7 @@
  *
  **/
 
+#include "inr/Defines/CommonTypes.hpp"
 #include "inr/Support/Alloc.hpp"
 
 #include <type_traits>
@@ -18,49 +19,45 @@ namespace inr{
     /**
      * @brief Inertia's unique ptr replacement.
      */
-    template<typename T>
-    class unique{
+    template<typename T, inertia_allocator _unique_alloc_ = allocator>
+    class unique : private _unique_alloc_{
         T* ptr;
-        allocator* mem;
 
     public:
-        unique() = delete;
 
         unique(const unique&) = delete;
         unique& operator=(const unique&) = delete;
 
-        unique(unique&& other) noexcept : mem(other.mem), ptr(other.ptr){
-            other.mem = nullptr;
+        unique(unique&& other) noexcept : ptr(other.ptr){
             other.ptr = nullptr;
         }
 
         unique& operator=(unique&& other) noexcept{
             if(this != &other){
-                mem->free(ptr);
+                _unique_alloc_::free(ptr);
 
-                mem = other.mem;
                 ptr = other.ptr;
 
-                other.mem = nullptr;
                 other.ptr = nullptr;
             }
             return *this;
         }
 
+        unique() : ptr(_unique_alloc_::template alloc<T>()){};
+
         /**
          * @brief Allocates a new pointer using the allocator provided.
          *
-         * @param _mem The allocator to use.
          * @param args Arguments to pass.
          *
          */
         template<typename... Args>
-        unique(allocator* _mem, Args&&... args) : mem(_mem), ptr(_mem->alloc<T>(std::forward<Args>(args)...)){};
+        unique(Args&&... args) : ptr(_unique_alloc_::template alloc<T>(std::forward<Args>(args)...)){};
         
         /**
          * @brief Assumes ownership of the pointer provided that uses the provided allocator.
          */
-        unique(allocator* _mem, T* p) noexcept : mem(_mem), ptr(p){};
+        unique(T* p) noexcept : ptr(p){};
 
         /**
          * @brief Gets the underlying pointer.
@@ -101,13 +98,11 @@ namespace inr{
         /**
          * @brief Frees the old pointer, and sets the new one provided.
          *
-         * @param _mem The allocator provided pointer uses.
          * @param p The pointer to use.
          */
-        void reset(allocator* _mem = nullptr, T* p = nullptr) noexcept{
-            mem->free(ptr);
-            ptr = (_mem && p) ? p : nullptr;
-            mem = (_mem && p) ? _mem : nullptr;
+        void reset(T* p = nullptr) noexcept{
+            _unique_alloc_::free(ptr);
+            ptr = p;
         }
 
         /**
@@ -118,7 +113,6 @@ namespace inr{
         T* release() noexcept{
             T* tmp = ptr;
             ptr = nullptr;
-            mem = nullptr;
             return tmp;
         }
 
@@ -158,11 +152,10 @@ namespace inr{
     /**
      * @brief Array version of 'inr::unique'.
      */
-    template<typename T>
-    class unique<T[]>{
+    template<typename T, inertia_allocator _unique_alloc_>
+    class unique<T[], _unique_alloc_> : private _unique_alloc_{
         T* ptr;
         size_t count;
-        allocator* mem;
 
     public:
         unique() = delete;
@@ -170,21 +163,18 @@ namespace inr{
         unique(const unique&) = delete;
         unique& operator=(const unique&) = delete;
 
-        unique(unique&& other) noexcept : mem(other.mem), count(other.count), ptr(other.ptr){
-            other.mem = nullptr;
+        unique(unique&& other) noexcept : count(other.count), ptr(other.ptr){
             other.ptr = nullptr;
             other.count = 0;
         }
 
         unique& operator=(unique&& other) noexcept{
             if(this != &other){
-                mem->free_array(ptr, count);
+                _unique_alloc_::free_array(ptr, count);
 
-                mem = other.mem;
                 ptr = other.ptr;
                 count = other.count;
 
-                other.mem = nullptr;
                 other.ptr = nullptr;
                 other.count = 0;
             }
@@ -194,23 +184,22 @@ namespace inr{
         /**
          * @brief Allocates an array of objects using the allocator provided.
          *
-         * @param _mem The allocator to use.
          * @param _count How many objects to allocate.
          * @param args Arguments to pass.
          * 
          */
         template<typename... Args>
-        unique(allocator* _mem, size_t _count, Args&&... args) : mem(_mem), count(_count), ptr(_mem->alloc_array<T>(_count, std::forward<Args>(args)...)){};
+        unique(size_t _count, Args&&... args) : count(_count), 
+            ptr(_unique_alloc_::template alloc_array<T>(_count, std::forward<Args>(args)...)){};
         
         /**
          * @brief Assumes ownership of the provided array.
          *
-         * @param _mem The allocator the array used.
          * @param p The array.
          * @param _count How many objects are in the array.
          *
          */
-        unique(allocator* _mem, T* p, size_t _count) noexcept : mem(_mem), count(_count), ptr(p){};
+        unique(T* p, size_t _count) noexcept : count(_count), ptr(p){};
 
         T* get() noexcept{
             return ptr;
@@ -227,10 +216,9 @@ namespace inr{
             return valid();
         }
 
-        void reset(allocator* _mem = nullptr, T* p = nullptr, size_t _count = 0) noexcept{
-            mem->free_array(ptr, count);
-            ptr = (_mem && p) ? p : nullptr;
-            mem = (ptr) ? _mem : nullptr;
+        void reset(T* p = nullptr, size_t _count = 0) noexcept{
+            _unique_alloc_::free_array(ptr, count);
+            ptr = p;
             count = (ptr) ? _count : 0;
         }
 
@@ -240,11 +228,11 @@ namespace inr{
             return tmp;
         }
 
-        T& operator[](size_t i) noexcept{
+        T& operator[](array_access i) noexcept{
             return ptr[i];
         }
 
-        const T& operator[](size_t i) const noexcept{
+        const T& operator[](array_access i) const noexcept{
             return ptr[i];
         }
 
@@ -261,14 +249,14 @@ namespace inr{
 
     template<typename T, typename... Args>
     requires (!std::is_array_v<T>)
-    inr::unique<T> allocator::make_unique(Args&&... args){
-        return inr::unique<T>(this, std::forward<Args>(args)...);
+    inr::unique<T, allocator> allocator::make_unique(Args&&... args) const noexcept{
+        return inr::unique<T, allocator>(std::forward<Args>(args)...);
     }
 
     template<typename T, typename... Args>
     requires std::is_array_v<T>
-    inr::unique<T> allocator::make_unique(size_t count, Args&&... args){
-        return inr::unique<T>(this, count, std::forward<Args>(args)...);
+    inr::unique<T, allocator> allocator::make_unique(size_t count, Args&&... args) const noexcept{
+        return inr::unique<T, allocator>(count, std::forward<Args>(args)...);
     }
 }
 

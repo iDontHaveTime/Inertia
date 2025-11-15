@@ -11,8 +11,9 @@
 #include "inr/Support/Alloc.hpp"
 #include "inr/Support/Vector.hpp"
 
-#include <concepts>
 #include <cstddef>
+
+#include <concepts>
 
 namespace inr{
 
@@ -38,8 +39,8 @@ namespace inr{
         }
     };
     
-    template<typename K, typename V>
-    class inr_map{
+    template<typename K, typename V, inertia_allocator _map_alloc_ = allocator>
+    class inr_map : private _map_alloc_{
         struct entry{
             K key;
             V value;
@@ -115,7 +116,7 @@ namespace inr{
     private:
         using hasher = inr::hash<K>;
 
-        inr_vec<entry*> buckets;
+        inr_vec<entry*, _map_alloc_> buckets;
         size_t count;
         hasher hashf;
 
@@ -134,7 +135,7 @@ namespace inr{
         }
 
         void resize(size_t new_size){
-            inr_vec<entry*> new_buckets(buckets.get_allocator());
+            inr_vec<entry*, _map_alloc_> new_buckets;
 
             new_buckets.reserve(new_size);
             for(size_t i = 0; i < new_size; i++){
@@ -161,10 +162,9 @@ namespace inr{
         /**
          * @brief Creates a new hash map.
          * 
-         * @param _alloc Allocator to use.
          * @param initial_buckets Initial number of buckets (default 16).
          */
-        inr_map(allocator* _alloc = nullptr, size_t initial_buckets = 16) : buckets(_alloc), count(0){
+        inr_map(size_t initial_buckets = 16) : buckets(), count(0){
             buckets.reserve(initial_buckets);
             for(size_t i = 0; i < initial_buckets; i++){
                 buckets.push_back(nullptr);
@@ -185,7 +185,7 @@ namespace inr{
                 }
             }
 
-            entry* new_entry = (*buckets.get_allocator()).template alloc<entry>(key, value, hash);
+            entry* new_entry = _map_alloc_::template alloc<entry>(key, value, hash);
             new_entry->next = buckets[idx];
             buckets[idx] = new_entry;
             count++;
@@ -256,14 +256,12 @@ namespace inr{
         }
 
         void clear() noexcept{
-            allocator* alloc = buckets.get_allocator();
-
             for(size_t i = 0; i < buckets.size(); i++){
                 entry* e = buckets[i];
 
                 while(e){
                     entry* next = e->next;
-                    alloc->free(e);
+                    _map_alloc_::template free<entry>(e);
                     e = next;
                 }
             }
@@ -280,8 +278,8 @@ namespace inr{
         /**
          * @brief Gets the internal allocator.
          */
-        allocator* get_allocator() const noexcept{
-            return buckets.get_allocator();
+        _map_alloc_ get_allocator() const noexcept{
+            return _map_alloc_{};
         }
 
         ~inr_map() noexcept{

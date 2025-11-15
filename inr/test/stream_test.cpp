@@ -1,6 +1,8 @@
 #include "inr/Defines/FileDef.hpp"
 #include "inr/Support/File.hpp"
+#include "inr/Support/Byte.hpp"
 #include "inr/Support/Stream.hpp"
+#include <iostream>
 
 int main(){
     
@@ -19,6 +21,13 @@ int main(){
     inr::in.getline(str);
 
     inr::out<<str<<inr::endl;
+
+    inr::byte b = 'A';
+
+    inr::out<<b<<inr::endl;
+    std::cout<<b<<std::endl;
+
+    (inr::out<<"UTF: ").put(U'🦄')<<inr::endl;
 
     return 0;
 }

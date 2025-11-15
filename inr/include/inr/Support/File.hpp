@@ -11,6 +11,7 @@
  **/
 
 #include "inr/Defines/APIs.hpp"
+#include "inr/Defines/CommonTypes.hpp"
 #include "inr/Defines/FileDef.hpp"
 #include "inr/Support/Buf.hpp"
 #include "inr/Support/Iterator.hpp"
@@ -141,27 +142,27 @@ namespace inr{
         friend struct inr_file_handle;
 
         array_iterator<uint8_t> begin() noexcept{
-            return array_iterator{(uint8_t*)file};
+            return array_iterator<uint8_t>{(uint8_t*)file};
         }
         array_iterator<uint8_t> end() noexcept{
-            return array_iterator{(uint8_t*)file + size()};
+            return array_iterator<uint8_t>{(uint8_t*)file + size()};
         }
 
         array_iterator<const uint8_t> begin() const noexcept{
-            return array_iterator{(const uint8_t*)file};
+            return array_iterator<const uint8_t>{(const uint8_t*)file};
         }
         array_iterator<const uint8_t> end() const noexcept{
-            return array_iterator{(const uint8_t*)file + size()};
+            return array_iterator<const uint8_t>{(const uint8_t*)file + size()};
         }
 
         array_iterator<const uint8_t> cbegin() const noexcept{
-            return array_iterator{(const uint8_t*)file};
+            return array_iterator<const uint8_t>{(const uint8_t*)file};
         }
         array_iterator<const uint8_t> cend() const noexcept{
-            return array_iterator{(const uint8_t*)file + size()};
+            return array_iterator<const uint8_t>{(const uint8_t*)file + size()};
         }
 
-        uint8_t& operator[](size_t n){
+        uint8_t& operator[](array_access n){
             return ((uint8_t*)file)[n];
         }
     };

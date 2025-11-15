@@ -21,11 +21,12 @@ namespace inr{
      *
      * Keeps one IR context, is thread safe.
      */
-    class inrContext{
+    template<inertia_allocator _ctx_alloc_ = allocator>
+    class inrContext : private _ctx_alloc_{
     public:
 
         /* Constructors / Operators. */
-        inrContext(allocator* _mem = nullptr) noexcept : type_map(_mem){};
+        inrContext() noexcept = default;
 
         inrContext(const inrContext&) = delete;
         inrContext& operator=(const inrContext&) = delete;
@@ -38,16 +39,16 @@ namespace inr{
             for(auto [_, v] : type_map){
                 switch(v->get_kind()){
                     case TypeKind::Integer:
-                        type_map.get_allocator()->free((int_type*)v);
+                        _ctx_alloc_::free((int_type*)v);
                         break;
                     case TypeKind::Float:
-                        type_map.get_allocator()->free((float_type*)v);
+                        _ctx_alloc_::free((float_type*)v);
                         break;
                     case TypeKind::Void:
-                        type_map.get_allocator()->free((void_type*)v);
+                        _ctx_alloc_::free((void_type*)v);
                         break;
                     case TypeKind::Pointer:
-                        type_map.get_allocator()->free((ptr_type*)v);
+                        _ctx_alloc_::free((ptr_type*)v);
                         break;
                 }
             }
@@ -56,7 +57,7 @@ namespace inr{
 
         /* Start of fields. */
     private:
-        inr::inr_map<size_t, type*> type_map;
+        inr::inr_map<size_t, type*, _ctx_alloc_> type_map;
 
         /* End of fields. */
     public:
@@ -67,7 +68,7 @@ namespace inr{
                 return *tp;
             }
             else{
-                return type_map[hash_type_void()] = type_map.get_allocator()->alloc<void_type>();
+                return type_map[hash_type_void()] = _ctx_alloc_::template alloc<void_type>();
             }
         }
 
@@ -78,7 +79,7 @@ namespace inr{
                 return *tp;
             }
             else{
-                return type_map[hash] = type_map.get_allocator()->alloc<int_type>(width);
+                return type_map[hash] = _ctx_alloc_::template alloc<int_type>(width);
             }
         }
 
@@ -89,7 +90,7 @@ namespace inr{
                 return *tp;
             }
             else{
-                return type_map[hash] = type_map.get_allocator()->alloc<float_type>(variant);
+                return type_map[hash] = _ctx_alloc_::template alloc<float_type>(variant);
             }
         }
 
@@ -100,7 +101,7 @@ namespace inr{
                 return *tp;
             }
             else{
-                return type_map[hash] = type_map.get_allocator()->alloc<ptr_type>(pointee);
+                return type_map[hash] = _ctx_alloc_::template alloc<ptr_type>(pointee);
             }
         }
     };

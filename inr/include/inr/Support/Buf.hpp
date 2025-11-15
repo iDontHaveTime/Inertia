@@ -9,7 +9,8 @@
  *
  **/
 
-#include <concepts>
+#include "inr/Defines/CommonTypes.hpp"
+
 #include <cstddef>
 
 namespace inr{
@@ -96,13 +97,11 @@ namespace inr{
             return index == 0;
         }
 
-        template<std::integral Y>
-        constexpr T& operator[](Y n) noexcept{
+        constexpr T& operator[](array_access n) noexcept{
             return buf[n];
         }
 
-        template<std::integral Y>
-        constexpr const T& operator[](Y n) const noexcept{
+        constexpr const T& operator[](array_access n) const noexcept{
             return buf[n];
         }
 

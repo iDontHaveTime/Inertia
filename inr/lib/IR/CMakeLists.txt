@@ -7,7 +7,7 @@ target_compile_options(InrCore PRIVATE
     ${INR_MODULE_FLAGS}
 )
 
-target_link_libraries(InrCore PUBLIC InrSupport InrMC)
+target_link_libraries(InrCore PUBLIC InrSupport)
 
 if(INERTIA_SANITIZE)
     target_compile_options(InrCore PRIVATE

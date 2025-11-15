@@ -4,7 +4,8 @@
 
 int main(){
     /* Create a new unique pointer context. */
-    inr::unique<inr::inrContext> ctx = inr::static_allocator.make_unique<inr::inrContext>();
+    inr::allocator alloc;
+    inr::unique<inr::inrContext<inr::allocator>, inr::allocator> ctx = alloc.make_unique<inr::inrContext<inr::allocator>>();
 
     return 0;
 }

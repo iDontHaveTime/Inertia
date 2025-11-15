@@ -30,15 +30,14 @@ namespace inr{
      * This integer class can store integers with any amount of bits specified.
      * Can be outputted to a stream (either std::ostream or inr::inr_ostream).
      *
-     * It holds an array to uint32_t if heap, but if the bits are less or equal to 64 its on stack.
      * 
      */
-    class inrint{
+    template<inertia_allocator _inrint_alloc_ = allocator>
+    class inrint : private _inrint_alloc_{
         union{
             uint64_t stack_base;
             uint32_t* heap_base;
         };
-        allocator* mem;
         size_t bits;
         /**
          * Bit 0: 0 - on heap, 1 - on stack
@@ -46,10 +45,6 @@ namespace inr{
          * Bit 2: 0 - original, 1 - temporary
          */
         uint32_t flags;
-
-        void choose_memory(allocator* _mem) noexcept{
-            mem = _mem ? _mem : &static_allocator;
-        }
 
         void new_inrint_helper(size_t width){
             flags = 0;
@@ -60,7 +55,7 @@ namespace inr{
             }
             else{
                 size_t bytes = calculate_bytes_up(width);
-                heap_base = (uint32_t*)mem->alloc_raw(bytes, alignof(std::max_align_t));
+                heap_base = (uint32_t*)_inrint_alloc_::alloc_raw(bytes, alignof(std::max_align_t));
                 if(!heap_base){
                     return;
                 }
@@ -68,12 +63,9 @@ namespace inr{
             }
         }
 
-        inrint(allocator* _mem) noexcept{
-            choose_memory(_mem);
-        }
+        inrint() noexcept = default;
 
         inrint(uint32_t* buffer, size_t width) noexcept{
-            choose_memory(nullptr);
             flags = 0x4;
             heap_base = buffer;
             bits = width;
@@ -103,11 +95,11 @@ namespace inr{
         }
     private:
         array_iterator<uint32_t> begin() noexcept{
-            return array_iterator(on_stack() ? (uint32_t*)stack_base : heap_base);
+            return array_iterator<uint32_t>(on_stack() ? (uint32_t*)stack_base : heap_base);
         }
 
         array_iterator<uint32_t> end() noexcept{
-            return array_iterator(on_stack() ? (uint32_t*)stack_base + 2 : heap_base + cycles());
+            return array_iterator<uint32_t>(on_stack() ? (uint32_t*)stack_base + 2 : heap_base + cycles());
         }
 
     public:
@@ -220,8 +212,6 @@ namespace inr{
 
             flags = other.flags;
             other.flags = 0;
-
-            mem = other.mem;
         }
 
         /** 
@@ -247,8 +237,6 @@ namespace inr{
             flags = other.flags;
             other.flags = 0;
 
-            mem = other.mem;
-
             return *this;
         }
 
@@ -256,7 +244,6 @@ namespace inr{
          * @brief Copy constructor. Deep copy.
          */
         inrint(const inrint& other){
-            mem = other.mem;
             new_inrint_helper(other.bits);
 
             if(on_stack()){
@@ -279,7 +266,6 @@ namespace inr{
 
             close();
 
-            mem = other.mem;
             new_inrint_helper(other.bits);
 
             if(on_stack()){
@@ -301,16 +287,15 @@ namespace inr{
          *
          * @param width How many bits should the integer be.
          * @param sign Should the integer be signed.
-         * @param _mem Optional, changes the internal allocator.
          */
-        explicit inrint(size_t width, bool sign = false, allocator* _mem = nullptr) : inrint(_mem){
+        explicit inrint(size_t width, bool sign = false){
             new_inrint_helper(width);
             if(sign){
                 flags |= 0x2;
             }
         }
 
-        explicit inrint(const char* _str, size_t width, bool sign = false, allocator* _mem = nullptr) : inrint(width, sign, _mem){
+        explicit inrint(const char* _str, size_t width, bool sign = false) : inrint(width, sign){
             // TODO
             (void)_str;
         }
@@ -321,9 +306,8 @@ namespace inr{
          * @param n The number to initialize it to.
          * @param width How many bits should the integer be.
          * @param sign Should the integer be signed.
-         * @param _mem Optional, changes the internal allocator.
          */
-        explicit inrint(int n, size_t width, bool sign = false, allocator* _mem = nullptr) : inrint(width, sign, _mem){
+        explicit inrint(int n, size_t width, bool sign = false) : inrint(width, sign){
             from_int(n);
         };
 
@@ -379,8 +363,8 @@ namespace inr{
          * @brief Returns integer's allocator.
          * @return Pointer to allocator.
          */
-        allocator* get_allocator() const noexcept{
-            return mem;
+        _inrint_alloc_ get_allocator() const noexcept{
+            return _inrint_alloc_{};
         }
 
         /**
@@ -389,7 +373,7 @@ namespace inr{
         void close() noexcept{
             if(flags & 0x4) return;
             if(!on_stack()){
-                mem->free_raw((void*)heap_base, capacity());
+                _inrint_alloc_::free_raw((void*)heap_base, capacity());
             }
             bits = 0;
             flags = 0;
@@ -480,7 +464,7 @@ namespace inr{
             }
 
             size_t decimal_digits = (bits * 643 + 2135) / 2136;
-            void* decimal_buffer_and_apint = mem->alloc_raw(decimal_digits + capacity(), alignof(inrint));
+            void* decimal_buffer_and_apint = _inrint_alloc_::alloc_raw(decimal_digits + capacity(), alignof(inrint));
 
             void* apint_limbs = decimal_buffer_and_apint;
             uint8_t* decimal_buffer = (uint8_t*)((char*)decimal_buffer_and_apint + capacity());
@@ -556,7 +540,7 @@ namespace inr{
             }
             os.write(start_of_decimal, size_of_decimal_output);
             
-            mem->free_raw(decimal_buffer_and_apint, decimal_digits + capacity());
+            _inrint_alloc_::free_raw(decimal_buffer_and_apint, decimal_digits + capacity());
             return os;
         }
 
@@ -680,7 +664,7 @@ namespace inr{
          * @param n The number to add.
          */
         inrint& operator+=(uint64_t n) noexcept{
-            inrint temp(widthof<uint64_t>(), is_signed(), mem);
+            inrint temp(widthof<uint64_t>(), is_signed());
             temp.from_uint64_t(n);
             (*this) += temp;
             return *this;

@@ -1,9 +1,11 @@
 /* Inertia's includes. */
 #include "inr/Support/Int.hpp"
+#include "inr/Support/Alloc.hpp"
 
 namespace inr{
 
-void inrint::add(const inrint& other) noexcept{
+template<inertia_allocator _al>
+void inrint<_al>::add(const inrint& other) noexcept{
     if(!valid() || !other.valid()) return;
     
     uint32_t* lhs_limbs;
@@ -37,7 +39,8 @@ void inrint::add(const inrint& other) noexcept{
     mask_trailing();
 }
 
-void inrint::lbit_shift(size_t n) noexcept{
+template<inertia_allocator _al>
+void inrint<_al>::lbit_shift(size_t n) noexcept{
     if(!valid() || n == 0) return;
 
     size_t limb_shift = n >> 5;
@@ -72,7 +75,8 @@ void inrint::lbit_shift(size_t n) noexcept{
     mask_trailing();
 }
 
-void inrint::rbit_shift(size_t n) noexcept{
+template<inertia_allocator _al>
+void inrint<_al>::rbit_shift(size_t n) noexcept{
     if(!valid() || n == 0) return;
 
     size_t limb_shift = n >> 5;

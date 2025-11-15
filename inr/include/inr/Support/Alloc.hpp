@@ -14,13 +14,19 @@
 #include <cstddef>
 #include <cstdlib>
 
-#include <memory>
 #include <type_traits>
 #include <utility>
 
 namespace inr{
 
-    template<typename T>
+    template<class T>
+    concept inertia_allocator = requires(T t, size_t b, size_t a){
+        {t.alloc_raw(b, a)};
+    } && requires(T t, void* p, size_t s){
+        {t.free_raw(p, s)};
+    };
+    
+    template<typename T, inertia_allocator>
     class unique;
 
     /**
@@ -56,11 +62,12 @@ namespace inr{
          * @return The pointer to the object.
          */
         template<typename T, typename... Args>
-        T* alloc(Args&&... args){
+        T* alloc(Args&&... args) const{
             T* ptr = (T*)alloc_raw(sizeof(T), alignof(T));
             
             if(!ptr) return nullptr;
-            std::construct_at<T>(ptr, std::forward<Args>(args)...);
+            new(ptr) T(std::forward<Args>(args)...);
+            // std::construct_at<T>(ptr, std::forward<Args>(args)...);
             
             return ptr;
         }
@@ -76,7 +83,7 @@ namespace inr{
          * @return The pointer to the first element in the array.
          */
         template<typename T, typename... Args>
-        T* alloc_array(size_t count, Args&&... args){
+        T* alloc_array(size_t count, Args&&... args) const noexcept{
             T* ptr = (T*)alloc_raw(sizeof(T) * count, alignof(T));
             if(!ptr) return nullptr;
 
@@ -96,7 +103,7 @@ namespace inr{
          * @param count The number of elements in the array.
          */
         template<typename T>
-        void free_array(T* ptr, size_t count){
+        void free_array(T* ptr, size_t count) const noexcept{
             if(!ptr) return;
             for(size_t i = 0; i < count; i++){
                 ptr[i].~T();
@@ -113,7 +120,10 @@ namespace inr{
          *
          * @return The pointer allocated. nullptr if failed.
          */
-        virtual void* alloc_raw(size_t bytes, size_t alignment) = 0;
+        void* alloc_raw(size_t bytes, size_t alignment) const noexcept{
+            size_t padded_size = ((bytes + alignment - 1) / alignment) * alignment;
+            return std::aligned_alloc(alignment, padded_size);
+        }
 
         /**
          * @brief Frees the pointer provided by the same allocator.
@@ -124,7 +134,9 @@ namespace inr{
          * @param ptr The pointer to free.
          * @param size The size of the pointer provided.
          */
-        virtual void free_raw(void* ptr, size_t size) = 0;
+        void free_raw(void* ptr, size_t) const noexcept{
+            std::free(ptr);
+        }
 
         /**
          * @brief Frees the provided object.
@@ -136,7 +148,7 @@ namespace inr{
          * @param ptr The pointer to free.
          */
         template<typename T>
-        void free(T* ptr){
+        void free(T* ptr) const noexcept{
             if(!ptr) return;
             if constexpr(std::is_destructible_v<T>){
                 ptr->~T();
@@ -153,7 +165,7 @@ namespace inr{
          * @param size The size of the pointer provided.
          *
          */
-        virtual void mark_as_might_be_freed(void* ptr, size_t size) noexcept{
+        void mark_as_might_be_freed(void* ptr, size_t size) const noexcept{
             (void)ptr;
             (void)size;
             return;
@@ -168,7 +180,7 @@ namespace inr{
          * @param size The size of the pointer provided.
          *
          */
-        virtual void unmark_as_might_be_freed(void* ptr, size_t size) noexcept{
+        void unmark_as_might_be_freed(void* ptr, size_t size) const noexcept{
             (void)ptr;
             (void)size;
             return;
@@ -178,9 +190,11 @@ namespace inr{
          * @brief Returns if the allocator is valid or not.
          * @return Depends on the underlying allocator.
          */
-        virtual bool valid() const noexcept = 0;
+        bool valid() const noexcept{
+            return true;
+        }
 
-        virtual ~allocator() noexcept = default;
+        ~allocator() noexcept = default;
 
         /**
          * @brief Makes a new 'inr::unique' pointer.
@@ -189,7 +203,7 @@ namespace inr{
          */
         template<typename T, typename... Args>
         requires (!std::is_array_v<T>)
-        inr::unique<T> make_unique(Args&&... args);
+        inr::unique<T, allocator> make_unique(Args&&... args) const noexcept;
 
         /**
          * @brief Makes a new 'inr::unique' array pointer.
@@ -198,34 +212,8 @@ namespace inr{
          */
         template<typename T, typename... Args>
         requires std::is_array_v<T>
-        inr::unique<T> make_unique(size_t count, Args&&... args);
+        inr::unique<T, allocator> make_unique(size_t count, Args&&... args) const noexcept;
     };
-    
-    /**
-     * @brief Basic allocator class, uses malloc underneath.
-     *
-     * This class is a super basic allocator with basic allocate and free.
-     * It technically doesn't use malloc but rather aligned_alloc.
-     *
-     */
-    class basic_allocator : public allocator{
-    public:
-        basic_allocator() noexcept = default;
-        void* alloc_raw(size_t bytes, size_t alignment) noexcept override{
-            size_t padded_size = ((bytes + alignment - 1) / alignment) * alignment;
-            return std::aligned_alloc(alignment, padded_size);
-        }
-
-        void free_raw(void* ptr, size_t) noexcept override{
-            std::free(ptr);
-        }
-
-        bool valid() const noexcept override{
-            return true;
-        }
-    };
-
-    extern basic_allocator static_allocator;
 }
 
 #endif // INERTIA_ALLOC_HPP

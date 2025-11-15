@@ -44,7 +44,7 @@ int main(){
 
     inr::out<<arena.current()<<inr::endl;
 
-    inr::inr_vec<int> vec(arena);
+    inr::inr_vec<int, inr::arena_allocator<0x1000>> vec;
 
     for(int i = 0; i < 100; i++){
         vec.emplace_back(1);

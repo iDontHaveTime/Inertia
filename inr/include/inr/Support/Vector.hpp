@@ -10,34 +10,40 @@
  *
  **/
 
+#include "inr/Defines/CommonTypes.hpp"
 #include "inr/Support/Alloc.hpp"
 #include "inr/Support/Iterator.hpp"
 
+#include <cstdint>
 #include <cstring>
 
+#include <limits>
 #include <type_traits>
 
 namespace inr{
 
     constexpr size_t inr_vec_starting_allocation = 16;
+    template<typename T>
+    using vector_word = std::conditional_t<(sizeof(T) < sizeof(std::max_align_t)), size_t, uint32_t>;
 
     /**
      * @brief Inertia's replacement to std::vector.
      *
      * This is a custom implementation of a vector to support Inertia's custom allocators.
      */
-    template<typename T>
-    class inr_vec{
-        allocator* mem;
+    template<typename T, inertia_allocator _vec_alloc_ = allocator>
+    class inr_vec : private _vec_alloc_{
+    public:
+        using word = vector_word<T>; // Can be size_t too.
+    private:
         T* array;
-        size_t count;
-        size_t allocated;
+        word count;
+        word allocated;
 
         /* Returns true on success. */
-        bool resize_vector(size_t goal){
-            if(!mem) return false;
+        bool resize_vector(word goal){
             if(!array){
-                array = (T*)mem->alloc_raw(inr_vec_starting_allocation * sizeof(T), alignof(T));
+                array = (T*)_vec_alloc_::alloc_raw(inr_vec_starting_allocation * sizeof(T), alignof(T));
                 if(array){
                     count = 0;
                     allocated = inr_vec_starting_allocation;
@@ -47,15 +53,15 @@ namespace inr{
                 }
                 return true;
             }
-            size_t new_size = inr_vec_starting_allocation;
+            word new_size = inr_vec_starting_allocation;
             while(new_size < goal){
                 new_size <<= 1;
             }
 
-            mem->mark_as_might_be_freed(array, allocated * sizeof(T));
-            T* new_array = (T*)mem->alloc_raw(new_size * sizeof(T), alignof(T));
+            _vec_alloc_::mark_as_might_be_freed(array, allocated * sizeof(T));
+            T* new_array = (T*)_vec_alloc_::alloc_raw(new_size * sizeof(T), alignof(T));
             if(!new_array){
-                mem->unmark_as_might_be_freed(array, allocated * sizeof(T));
+                _vec_alloc_::unmark_as_might_be_freed(array, allocated * sizeof(T));
                 return false;
             }
 
@@ -63,21 +69,22 @@ namespace inr{
                 for(size_t i = 0; i < count; i++){
                     new(new_array + i) T(std::move(array[i]));
                 }
-            } catch(...){
+            }
+            catch(...){
                 for(size_t j = 0; j < count; j++){
                     new_array[j].~T();
                 }
 
-                mem->unmark_as_might_be_freed(array, allocated * sizeof(T));
-                mem->free_raw(new_array, new_size * sizeof(T));
+                _vec_alloc_::unmark_as_might_be_freed(array, allocated * sizeof(T));
+                _vec_alloc_::free_raw(new_array, new_size * sizeof(T));
                 throw;
             }
 
             
-            for(size_t i = 0; i < count; i++){
+            for(word i = 0; i < count; i++){
                 array[i].~T();
             }
-            mem->free_raw(array, allocated * sizeof(T));
+            _vec_alloc_::free_raw(array, allocated * sizeof(T));
 
             array = new_array;
             allocated = new_size;
@@ -91,23 +98,13 @@ namespace inr{
          *
          * This constructor allows you to set the underlying allocator.
          *
-         * @param _mem The allocator to use inside. 
          */
-        inr_vec(allocator* _mem = nullptr) noexcept : array(nullptr), count(0), allocated(0){
-            if(_mem){
-                mem = _mem;
-            }
-            else{
-                mem = &static_allocator;
-            }
-        }
-        inr_vec(allocator& _mem) noexcept : inr_vec(&_mem){};
+        inr_vec() noexcept : array(nullptr), count(0), allocated(0){};
 
         /**
          * @brief Constructor deep copies the vector.
          */
         inr_vec(const inr_vec& other){
-            mem = other.mem;
             array = nullptr;
             allocated = 0;
             if(!reserve(other.allocated)) return;
@@ -123,7 +120,6 @@ namespace inr{
         inr_vec& operator=(const inr_vec& other){
             if(this == &other) return *this;
             clear(true);
-            mem = other.mem;
             array = nullptr;
             allocated = 0;
             if(!reserve(other.allocated)) return;
@@ -138,7 +134,6 @@ namespace inr{
          * @brief Constructor transfers vector's ownership.
          */
         inr_vec(inr_vec&& other) noexcept{
-            mem = other.mem; // mem does NOT need to be moved.
 
             allocated = other.allocated;
             other.allocated = 0;
@@ -156,7 +151,6 @@ namespace inr{
         inr_vec& operator=(inr_vec&& other) noexcept{
             if(this == &other) return *this;
             clear(true);
-            mem = other.mem;
 
             allocated = other.allocated;
             other.allocated = 0;
@@ -175,7 +169,7 @@ namespace inr{
          *
          * @param n The amount of elements to reserve.
          */
-        void reserve(size_t n) noexcept{
+        void reserve(word n){
             resize_vector(n);
         }
 
@@ -183,7 +177,7 @@ namespace inr{
          * @brief Returns the amount of elements in the vector.
          * @return Amount of elements allocated in the vector.
          */
-        size_t size() const noexcept{
+        word size() const noexcept{
             return count;
         }
 
@@ -191,21 +185,29 @@ namespace inr{
          * @brief The amount of elements the vector has space for.
          * @return Amount of space the vector has allocated for elements.
          */
-        size_t capacity() const noexcept{
+        word capacity() const noexcept{
             return allocated;
+        }
+
+        /**
+         * @brief Returns the maximum amount of elements the vector can hold.
+         * @return Size type.
+         */
+        constexpr word max_size() const noexcept{
+            return std::numeric_limits<word>::max();
         }
 
         /**
          * @brief Returns a read/write reference to the Nth array element. 
          */
-        T& operator[](size_t n) noexcept{
+        T& operator[](array_access n) noexcept{
             return *(array + n);
         }
 
         /**
          * @brief Returns a const reference to the Nth array element. 
          */
-        const T& operator[](size_t n) const noexcept{
+        const T& operator[](array_access n) const noexcept{
             return *(array + n);
         }
 
@@ -214,7 +216,7 @@ namespace inr{
          *
          * @param n Index to access the element at.
          */
-        T& at(size_t n) noexcept{
+        T& at(array_access n) noexcept{
             return (*this)[n];
         }
 
@@ -223,7 +225,7 @@ namespace inr{
          *
          * @param n Index to access the element at.
          */
-        const T& at(size_t n) const noexcept{
+        const T& at(array_access n) const noexcept{
             return (*this)[n];
         }
 
@@ -269,7 +271,7 @@ namespace inr{
             count = 0;
             if(free_everything){
                 if(array)
-                    mem->free_raw(array, allocated);
+                    _vec_alloc_::free_raw(array, allocated);
                 array = nullptr;
                 allocated = 0;
             }
@@ -291,8 +293,8 @@ namespace inr{
         /**
          * @brief Gets the internal allocator.
          */
-        allocator* get_allocator() const noexcept{
-            return mem;
+        _vec_alloc_ get_allocator() const noexcept{
+            return _vec_alloc_{};
         }
 
         /**
@@ -367,6 +369,48 @@ namespace inr{
         }
 
         /**
+         * @brief Begin for the reverse iterator.
+         */
+        rarray_iterator<T> rbegin() noexcept{
+            return rarray_iterator<T>(array + (count-1));
+        }
+        
+        /**
+         * @brief End for the reverse iterator.
+         */
+        rarray_iterator<T> rend() noexcept{
+            return rarray_iterator<T>(array - 1);
+        }
+
+        /**
+         * @brief Begin for the reverse iterator const version.
+         */
+        rarray_iterator<const T> rbegin() const noexcept{
+            return rarray_iterator<const T>(array + (count-1));
+        }
+        
+        /**
+         * @brief End for the reverse iterator const version.
+         */
+        rarray_iterator<const T> rend() const noexcept{
+            return rarray_iterator<const T>(array - 1);
+        }
+
+        /**
+         * @brief Begin for the reverse iterator const version explicit.
+         */
+        rarray_iterator<const T> crbegin() const noexcept{
+            return rarray_iterator<const T>(array + (count-1));
+        }
+        
+        /**
+         * @brief End for the reverse iterator const version explicit.
+         */
+        rarray_iterator<const T> crend() const noexcept{
+            return rarray_iterator<const T>(array - 1);
+        }
+
+        /**
          * @brief Returns the validity of the vector.
          */
         bool valid() const noexcept{
@@ -390,11 +434,11 @@ namespace inr{
                         elem.~T();
                     }
                 }
-                mem->free_raw(array, allocated);
+                _vec_alloc_::free_raw(array, allocated);
             }
         }
 
-        template<typename, size_t>
+        template<typename, size_t, inertia_allocator>
         friend class inline_vec;
     };
 
@@ -402,14 +446,15 @@ namespace inr{
      * @brief A vector that stores a certain amount of elements on stack before heap.
      *
      */
-    template<typename T, size_t elem_c>
+    template<typename T, size_t elem_c, inertia_allocator _ivec_alloc_ = allocator>
     class inline_vec{
-        inr_vec<T> heap;
         alignas(T) uint8_t stack[elem_c * sizeof(T)];
-        enum class vec_storage{
+        inr_vec<T, _ivec_alloc_> heap;
+        enum class vec_storage : uint8_t{
             STACK, HEAP
         } storage = inline_vec::vec_storage::STACK;
     public:
+        using word = decltype(heap)::word;
         
         /* Constructors. */
 
@@ -418,18 +463,15 @@ namespace inr{
          *
          * This constructor allows you to set the underlying allocator.
          *
-         * @param _mem The allocator to use inside. 
          */
-        inline_vec(allocator* _mem = nullptr) noexcept : heap(_mem){};
-
-        inline_vec(allocator& _mem) noexcept : inline_vec(&_mem){};
+        inline_vec() noexcept = default;
 
         /* Destructor. */
 
         ~inline_vec() noexcept{
             if(storage == vec_storage::STACK){
                 if constexpr(std::is_destructible_v<T>){
-                    for(size_t i = 0; i < heap.count; i++){
+                    for(word i = 0; i < heap.count; i++){
                         ((T*)stack)[i].~T();
                     }
                 }
@@ -453,16 +495,19 @@ namespace inr{
          *
          * @param n The amount of elements to reserve.
          */
-        void reserve(size_t n) noexcept{
-            if(storage != vec_storage::HEAP) return;
-            heap.reserve(n);
+        void reserve(word n) noexcept{
+            if(storage == vec_storage::STACK && n > elem_c){
+                switch_to_heap_storage();
+            }
+            
+            if(storage != vec_storage::STACK) heap.reserve(n);
         }
 
         /**
          * @brief Returns the amount of elements in the vector.
          * @return Amount of elements allocated in the vector.
          */
-        size_t size() const noexcept{
+        word size() const noexcept{
             return heap.size();
         }
 
@@ -470,21 +515,29 @@ namespace inr{
          * @brief The amount of elements the vector has space for.
          * @return Amount of space the vector has allocated for elements.
          */
-        size_t capacity() const noexcept{
+        word capacity() const noexcept{
             return storage == vec_storage::HEAP ? heap.capacity() : elem_c;
+        }
+
+        /**
+         * @brief Returns the maximum amount of elements the vector can hold.
+         * @return Size type.
+         */
+        constexpr word max_size() const noexcept{
+            return std::numeric_limits<word>::max();
         }
 
         /**
          * @brief Returns a read/write reference to the Nth array element. 
          */
-        T& operator[](size_t n) noexcept{
+        T& operator[](array_access n) noexcept{
             return *(data() + n);
         }
 
         /**
          * @brief Returns a const reference to the Nth array element. 
          */
-        const T& operator[](size_t n) const noexcept{
+        const T& operator[](array_access n) const noexcept{
             return *(data() + n);
         }
 
@@ -493,7 +546,7 @@ namespace inr{
          *
          * @param n Index to access the element at.
          */
-        T& at(size_t n) noexcept{
+        T& at(array_access n) noexcept{
             return (*this)[n];
         }
 
@@ -502,7 +555,7 @@ namespace inr{
          *
          * @param n Index to access the element at.
          */
-        const T& at(size_t n) const noexcept{
+        const T& at(array_access n) const noexcept{
             return (*this)[n];
         }
 
@@ -550,6 +603,9 @@ namespace inr{
             }
             else{
                 heap.clear(free_everything);
+                if(free_everything){
+                    storage = vec_storage::STACK;
+                }
             }
         }
 
@@ -569,9 +625,21 @@ namespace inr{
         /**
          * @brief Gets the internal allocator.
          */
-        allocator* get_allocator() const noexcept{
-            return heap.get_allocator();
+        _ivec_alloc_ get_allocator() const noexcept{
+            return _ivec_alloc_{};
         }
+
+    private:
+        void switch_to_heap_storage(){
+            if(storage != vec_storage::STACK) return;
+            size_t count = heap.count;
+            heap.count = 0;
+            storage = vec_storage::HEAP;
+            for(size_t i = 0; i < count; i++){
+                heap.emplace_back(std::move(((T*)stack)[i]));
+            }
+        }
+    public:
 
         /**
          * @brief Constructs T at the end.
@@ -580,11 +648,7 @@ namespace inr{
         T& emplace_back(Args&&... args){
             if(storage == vec_storage::STACK){
                 if(heap.count == elem_c){
-                    storage = vec_storage::HEAP;
-                    heap.count = 0;
-                    for(size_t i = 0; i < elem_c; i++){
-                        heap.emplace_back(std::move(((T*)stack)[i]));
-                    }
+                    switch_to_heap_storage();
 
                     return heap.emplace_back(std::forward<Args>(args)...);
                 }
@@ -654,6 +718,48 @@ namespace inr{
          */
         array_iterator<const T> cend() const noexcept{
             return array_iterator<const T>(data() + size());
+        }
+
+        /**
+         * @brief Begin for the reverse iterator.
+         */
+        rarray_iterator<T> rbegin() noexcept{
+            return rarray_iterator<T>(data() + (size()-1));
+        }
+        
+        /**
+         * @brief End for the reverse iterator.
+         */
+        rarray_iterator<T> rend() noexcept{
+            return rarray_iterator<T>(data() - 1);
+        }
+
+        /**
+         * @brief Begin for the reverse iterator const version.
+         */
+        rarray_iterator<const T> rbegin() const noexcept{
+            return rarray_iterator<const T>(data() + (size()-1));
+        }
+        
+        /**
+         * @brief End for the reverse iterator const version.
+         */
+        rarray_iterator<const T> rend() const noexcept{
+            return rarray_iterator<const T>(data() - 1);
+        }
+
+        /**
+         * @brief Begin for the reverse iterator const version explicit.
+         */
+        rarray_iterator<const T> crbegin() const noexcept{
+            return rarray_iterator<const T>(data() + (size()-1));
+        }
+        
+        /**
+         * @brief End for the reverse iterator const version explicit.
+         */
+        rarray_iterator<const T> crend() const noexcept{
+            return rarray_iterator<const T>(data() - 1);
         }
 
         /**

@@ -17,6 +17,7 @@
 #include <cstdio>
 #include <cstring>
 
+#include <concepts>
 #include <charconv>
 #include <limits>
 #include <string>
@@ -290,6 +291,57 @@ namespace inr{
         inr_ostream& operator<<(T n){
             return write_integer<T>(n);
         }
+
+        /**
+         * @brief Puts a char into the stream.
+         *
+         * @param c The char to put.
+         *
+         * @return *this.
+         */
+        inr_ostream& put(char c) noexcept{
+            return write(&c, sizeof(c));
+        }
+
+        /**
+         * @brief Puts a wchar into the stream.
+         *
+         * @param c The wchar to put.
+         *
+         * @return *this.
+         */
+        inr_ostream& put(wchar_t c) noexcept{
+            if constexpr(sizeof(wchar_t) == sizeof(char32_t)){
+                return put((char32_t)c);
+            }
+            else{
+                return *this;
+            }
+        }
+
+        /**
+         * @brief Puts a char8 into the stream.
+         *
+         * @param c The char8 to put.
+         *
+         * @return *this.
+         */
+        inr_ostream& put(char8_t c) noexcept{
+            return write((const char*)&c, sizeof(c));
+        }
+
+        /**
+         * @brief Puts a char32 into the stream.
+         *
+         * @param c The char32 to put.
+         *
+         * @return *this.
+         */
+        inr_ostream& put(char32_t c) noexcept{
+            char buf[4];
+
+            return write(buf, char32_to_utf8(buf, c));
+        }
     };
 
     /**
@@ -438,6 +490,19 @@ namespace inr{
      * This is like std::cin but provided by Inertia's API.
      */
     extern inr_istream in;
+    
+    template<class T>
+    concept ostream_t = requires(T t, const char* p, size_t n){
+        {t.write(p, n)} -> std::same_as<T&>;
+    };
+
+    template<class T>
+    concept istream_t = requires(T t, char* p, size_t n){
+        {t.read(p, n)} -> std::same_as<T&>;
+    };
+
+    template<class T>
+    concept stream_t = ostream_t<T> || istream_t<T>;
 }
 
 #endif // INERTIA_STREAM_HPP

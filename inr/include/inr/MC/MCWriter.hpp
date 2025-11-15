@@ -17,12 +17,13 @@ namespace inr{
     /**
      * @brief This is the base class for object files writers (ELF, PE, etc..).
      */
-    class MCWriter{
+    template<inertia_allocator _mcwriter_alloc_ = allocator>
+    class MCWriter : protected _mcwriter_alloc_{
     protected:
         inr_ostream& os;
-        MCOBJ& obj;
+        MCOBJ<_mcwriter_alloc_>& obj;
     public:
-        MCWriter(MCOBJ& _obj, inr_ostream& ost) noexcept : os(ost), obj(_obj){};
+        MCWriter(MCOBJ<_mcwriter_alloc_>& _obj, inr_ostream& ost) noexcept : os(ost), obj(_obj){};
 
         MCWriter(const MCWriter&) = delete;
         MCWriter& operator=(const MCWriter&) = delete;
@@ -39,8 +40,8 @@ namespace inr{
             return os;
         }
 
-        allocator* get_allocator() const noexcept{
-            return obj.get_allocator();
+        _mcwriter_alloc_ get_allocator() const noexcept{
+            return _mcwriter_alloc_{};
         }
 
         virtual bool valid() const noexcept = 0;

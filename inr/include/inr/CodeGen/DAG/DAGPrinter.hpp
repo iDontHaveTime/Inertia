@@ -11,6 +11,7 @@
 
 #include "inr/CodeGen/DAG/DAGNode.hpp"
 #include "inr/CodeGen/DAG/SelectionDAG.hpp"
+#include "inr/Support/Alloc.hpp"
 #include "inr/Support/Stream.hpp"
 #include "inr/Support/Vector.hpp"
 
@@ -46,8 +47,9 @@ namespace inr{
         /**
          * @brief This prints out the contents of the DAG linearly.
          */
-        void print(inr::inr_ostream& os, const inr::dag::SelectionDAG& dag) noexcept{
-            for(const inr::dag::Node* nd : dag.get_nodes()){
+        template<inertia_allocator _al>
+        void print(inr::inr_ostream& os, const inr::dag::SelectionDAG<_al>& dag) noexcept{
+            for(const inr::dag::Node<_al>* nd : dag.get_nodes()){
                 os<<'x'<<nd->value_id<<": "<<opcode_to_str(nd->op);
 
                 if(nd->get_type()){
@@ -66,7 +68,7 @@ namespace inr{
                 }
 
                 if(nd->op == dag::DAGOpcode::CONSTANT){
-                    os<<" = "<<((const dag::ConstNode*)nd)->val;
+                    os<<" = "<<((const dag::ConstNode<_al>*)nd)->val;
                 }
 
                 os<<'\n';
@@ -76,7 +78,8 @@ namespace inr{
         /**
          * @brief Prints out the dag as a tree.
          */
-        void print(inr_ostream& os, const dag::Node* nd) noexcept{
+        template<inertia_allocator _na>
+        void print(inr_ostream& os, const dag::Node<_na>* nd) noexcept{
             if(!nd) return;
 
             inr_vec<bool> drawBar;
@@ -85,7 +88,8 @@ namespace inr{
 
     private:
 
-        void print_node(inr_ostream& os, const dag::Node* node, inr_vec<bool>& drawBar, bool isLast){
+        template<inertia_allocator _na>
+        void print_node(inr_ostream& os, const dag::Node<_na>* node, inr_vec<bool>& drawBar, bool isLast){
             if(!node) return;
 
             for(bool draw : drawBar){
@@ -96,7 +100,7 @@ namespace inr{
 
             os<<'x'<<node->value_id<<": "<<opcode_to_str(node->op);
             if(node->op == dag::DAGOpcode::CONSTANT){
-                os<<" = "<<((const dag::ConstNode*)node)->val;
+                os<<" = "<<((const dag::ConstNode<_na>*)node)->val;
             }
             os<<'\n';
 

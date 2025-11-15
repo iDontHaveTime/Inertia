@@ -9,7 +9,7 @@
 
 int main(){
     /* Create the allocator. */
-    inr::basic_allocator alloc;
+    inr::allocator alloc;
 
     /* Allocate an int. */
     int* x = alloc.alloc<int>();

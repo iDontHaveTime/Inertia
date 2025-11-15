@@ -142,7 +142,7 @@ namespace inr{
 
     /**
      * @brief Counts the amount of trailing zeroes, auto determines type.
-     * @return The amount of trailing zeroes.
+     * @return The amount of trailing zeroes. -1 if unsupported.
      */
     template<typename T>
     constexpr int auto_ctz(T x) noexcept{
@@ -158,13 +158,37 @@ namespace inr{
             return count;
         }
         else if constexpr(sizeof(T) <= 2){
-            return short_ctz((uint16_t)x);
+            if constexpr(sizeof(short) == 2){
+                return short_ctz((uint16_t)x);
+            }
+            else if constexpr(sizeof(int) == 2){
+                return int_ctz((uint16_t)x);
+            }
+            else{
+                return -1;
+            }
         }
         else if constexpr(sizeof(T) <= 4){
-            return int_ctz((uint32_t)x);
+            if constexpr(sizeof(int) == 4){
+                return int_ctz((uint32_t)x);
+            }
+            else if constexpr(sizeof(long) == 4){
+                long_ctz((uint32_t)x);
+            }
+            else{
+                return -1;
+            }
         }
         else if constexpr(sizeof(T) <= 8){
-            return long_ctz((uint64_t)x);
+            if constexpr(sizeof(long) == 8){
+                return long_ctz((uint64_t)x);
+            }
+            else if constexpr(sizeof(long long) == 8){
+                return long_long_ctz((uint64_t)x);
+            }
+            else{
+                return -1;
+            }
         }
         else{
             static_assert(sizeof(T) <= sizeof(long long), "auto_ctz does not support the provided type.");
@@ -472,6 +496,93 @@ namespace inr{
             default:
                 return false;
         }
+    }
+
+    /**
+     * @brief Bit to shifts, so like 32bit to shift 5. Must be a power of 2.
+     * @return Bitshift.
+     */
+    template<std::unsigned_integral shT>
+    _inr_always_inline_
+    constexpr shT bit_to_shift(shT width) noexcept{
+        if(!is_power_of_2(width)) return 0;
+        return auto_ctz(width);
+    }
+
+    /**
+     * @brief Converts a char32_t to a utf byte array.
+     *
+     * @param buf The buffer to write to, for safety must be at least 4 bytes.
+     * @param c The character to convert.
+     *
+     * @return Bytes written to array.
+     */
+    [[nodiscard]] _inr_always_inline_
+    constexpr size_t char32_to_utf8(char buf[4], char32_t c) noexcept{
+        uint32_t codepoint = c;
+
+        if(codepoint > 0x10FFFF || (codepoint >= 0xD800 && codepoint <= 0xDFFF)){
+            return 0;
+        }
+
+        if(codepoint <= 0x7F){
+            buf[0] = char(codepoint);
+            return 1;
+        }
+        else if(codepoint <= 0x7FF){
+            buf[0] = char(0xC0 | ((codepoint >> 6) & 0x1F));
+            buf[1] = char(0x80 | (codepoint & 0x3F));
+            return 2;
+        }
+        else if(codepoint <= 0xFFFF){
+            buf[0] = char(0xE0 | ((codepoint >> 12) & 0x0F));
+            buf[1] = char(0x80 | ((codepoint >> 6) & 0x3F));
+            buf[2] = char(0x80 | (codepoint & 0x3F));
+            return 3;
+        }
+        else{
+            buf[0] = char(0xF0 | ((codepoint >> 18) & 0x07));
+            buf[1] = char(0x80 | ((codepoint >> 12) & 0x3F));
+            buf[2] = char(0x80 | ((codepoint >> 6) & 0x3F));
+            buf[3] = char(0x80 | (codepoint & 0x3F));
+            return 4;
+        }
+    }
+
+    /**
+     * @brief Converts a char16_t unit to utf byte array.
+     *
+     * @param buf The buffer to write to, recommended size of 3.
+     * @param cu The character.
+     *
+     * @return Bytes written.
+     */
+    [[nodiscard]] _inr_always_inline_
+    constexpr size_t char16_unit_to_utf8(char buf[4], char16_t cu) noexcept{
+        if(cu >= 0xD800 && cu <= 0xDFFF){
+            return 0;
+        }
+        return char32_to_utf8(buf, (char32_t)cu);
+    }
+
+    /**
+     * @brief Converts a char16_t pair to a utf byte array.
+     *
+     * @param buf The buffer to write to, size must be at least 4.
+     * @param high High surrogate.
+     * @param low Low surrogate.
+     *
+     * @return Bytes written.
+     */
+    [[nodiscard]] _inr_always_inline_
+    constexpr size_t char16_surrogate_pair_to_utf8(char buf[4], char16_t high, char16_t low) noexcept{
+        if(high < 0xD800 || high > 0xDBFF || low  < 0xDC00 || low  > 0xDFFF){
+            return 0;
+        }
+
+        char32_t codepoint = 0x10000 + ((char32_t(high) - 0xD800) << 10) + (char32_t(low) - 0xDC00);
+
+        return char32_to_utf8(buf, codepoint);
     }
 }
 

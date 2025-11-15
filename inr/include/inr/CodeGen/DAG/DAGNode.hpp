@@ -45,10 +45,11 @@ namespace inr::dag{
     /**
      * @brief The DAG Node class.
      */
+    template<inertia_allocator _node_alloc_ = allocator>
     class Node{
     public:
-        inline_vec<Node*, 4> operands;
-        inline_vec<Node*, 4> users;
+        inline_vec<Node*, 4, _node_alloc_> operands;
+        inline_vec<Node*, 4, _node_alloc_> users;
         type* node_type;
         const uint32_t value_id;
         const DAGOpcode op;
@@ -60,7 +61,7 @@ namespace inr::dag{
          * @param id The ID the node uses.
          * @param _mem The allocator operands vector will use. Not relevant on stack.
          */
-        Node(DAGOpcode _op, type* _node_type, uint32_t id, allocator* _mem = nullptr) noexcept : operands(_mem), node_type(_node_type), value_id(id), op(_op){};
+        Node(DAGOpcode _op, type* _node_type, uint32_t id) noexcept : operands(), node_type(_node_type), value_id(id), op(_op){};
 
         void add_operand(Node* node){
             operands.push_back(node);
@@ -76,11 +77,12 @@ namespace inr::dag{
         }
     };
 
-    class ConstNode : public Node{
+    template<inertia_allocator _cnode_alloc_ = allocator>
+    class ConstNode : public Node<_cnode_alloc_>{
     public:
-        inrint val;
-        ConstNode(const inrint& i, type* node_type, uint32_t id, allocator* _mem = nullptr) noexcept : Node(DAGOpcode::CONSTANT, node_type, id, _mem), val(i){};
-        ConstNode(inrint&& i, type* node_type, uint32_t id, allocator* _mem = nullptr) noexcept : Node(DAGOpcode::CONSTANT, node_type, id, _mem), val(std::move(i)){};
+        inrint<_cnode_alloc_> val;
+        ConstNode(const inrint<_cnode_alloc_>& i, type* node_type, uint32_t id) noexcept : Node<_cnode_alloc_>(DAGOpcode::CONSTANT, node_type, id), val(i){};
+        ConstNode(inrint<_cnode_alloc_>&& i, type* node_type, uint32_t id) noexcept : Node<_cnode_alloc_>(DAGOpcode::CONSTANT, node_type, id), val(std::move(i)){};
     };
 }
 

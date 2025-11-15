@@ -1,16 +1,14 @@
 #include "inr/CodeGen/DAG/SelectionDAG.hpp"
 #include "inr/CodeGen/DAG/DAGPrinter.hpp"
 #include "inr/IR/Context.hpp"
-#include "inr/Support/Arena.hpp"
 #include "inr/Support/Int.hpp"
 #include "inr/Support/Stream.hpp"
 
 
 int main(){
-    inr::arena_allocator<0x10000> arena;
 
     inr::inrContext ctx;
-    inr::dag::SelectionDAG sdag(&arena);
+    inr::dag::SelectionDAG sdag;
 
     auto* five = sdag.create_constant(ctx.get_integer(32), inr::inrint(5, 32, false));
     auto* ten = sdag.create_constant(ctx.get_integer(32), inr::inrint(10, 32, false));

@@ -11,12 +11,17 @@
 
 #include "inr/Support/Alloc.hpp"
 
+#include <cstdlib>
+#include <cstdint>
+
+#include <memory>
+
 namespace inr{
     /**
      * @brief A simple arena allocator with pre-set size (and alignment).
      */
-    template<size_t size, size_t align = 32>
-    class arena_allocator : public allocator{
+    template<size_t size, size_t align = 32, inertia_allocator _arena_alloc_ = allocator>
+    class arena_allocator : private _arena_alloc_{
         void* arena;
         size_t cur = 0;
     public:
@@ -32,7 +37,17 @@ namespace inr{
             return cur;
         }
 
-        void* alloc_raw(size_t bytes, size_t alignment) noexcept override{
+        template<typename T, typename... Args>
+        T* alloc(Args&&... args){
+            return _arena_alloc_::template alloc<T>(std::forward<Args>(args)...);
+        }
+
+        template<typename T>
+        void free(T* ptr){
+            return _arena_alloc_::template free<T>(ptr);
+        }
+
+        void* alloc_raw(size_t bytes, size_t alignment) noexcept{
             void* ptr = (char*)arena + cur;
             size_t space = size - cur;
 
@@ -43,22 +58,22 @@ namespace inr{
             return nullptr;
         }
 
-        void free_raw(void* ptr, size_t sz) noexcept override{
+        void free_raw(void* ptr, size_t sz) noexcept{
             if((uintptr_t)ptr == (((uintptr_t)arena + cur) - sz)){
                 cur -= sz;
             }
         }
 
-        bool valid() const noexcept override{
+        bool valid() const noexcept{
             return arena != nullptr;
         }
 
         arena_allocator(){
-            arena = static_allocator.alloc_raw(size, align);
+            arena = _arena_alloc_::alloc_raw(size, align);
         }
 
         ~arena_allocator() noexcept{
-            static_allocator.free_raw(arena, size);
+            _arena_alloc_::free_raw(arena, size);
         }
 
         arena_allocator(arena_allocator&& o) noexcept{
@@ -67,7 +82,7 @@ namespace inr{
         }
         arena_allocator& operator=(arena_allocator&& o) noexcept{
             if(this != &o){
-                static_allocator.free_raw(arena, size);
+                _arena_alloc_::free_raw(arena, size);
                 arena = o.arena;
                 o.arena = nullptr;
             }
@@ -78,11 +93,11 @@ namespace inr{
             cur = 0;
         }
 
-        void mark_as_might_be_freed(void* ptr, size_t sz) noexcept override{
+        void mark_as_might_be_freed(void* ptr, size_t sz) noexcept{
             free_raw(ptr, sz);
         }
 
-        void unmark_as_might_be_freed(void* ptr, size_t sz) noexcept override{
+        void unmark_as_might_be_freed(void* ptr, size_t sz) noexcept{
             if(ptr == ((char*)arena + cur)){
                 cur += sz;
             }
