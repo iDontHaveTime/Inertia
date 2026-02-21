@@ -2,12 +2,8 @@
 
 ## Overview
 
-Inertia is a modular compiler framework inspired by LLVM. Currently it offers:
-
- - **InertiaSupport**: The support library containing support headers implementations.
- - **InertiaCore**: The core library, that contains everything related to the IR and alike.
-
-While its not much currently, it is getting expanded quickly.
+Inertia is a modular compiler framework inspired by LLVM.
+It is not implemented much currently, it is getting expanded quickly.
 
 ---
 
