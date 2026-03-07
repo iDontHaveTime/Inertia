@@ -22,6 +22,7 @@ namespace inr::str {
 /// If GNU extensions exist and builtin for strlen exists we use that.
 /// If no GNU extensions are present,
 /// we either calculate it manually for constexpr or rely on strlen().
+/// This is mainly used so that the `sview` class can be constexpr-able.
 constexpr size_t length(const char* str) noexcept {
 #if __has_builtin(strlen)
     return __builtin_strlen(str);

@@ -95,5 +95,20 @@ int main() {
     tree ? (inr::outs() << *tree)
          : (inr::outs() << "Making the tree was unsuccessful\n");
 
+    /// Now I want to add 2 32bit registers, well how do I do that?
+    /// Simple, use the walker like this:
+    const inr::LeafNode* add = inr::Walker::walk(
+        tree, ctx.getI32(), inr::InstructionType(EISAInstructionTypes::ADD),
+        inr::OperandType(EISAOperands::RR));
+
+    /// Lets check if it found it.
+    add ? (inr::outs() << "Add i32 Reg, Reg was found!\n")
+        : (inr::outs() << "Add instruction was not found.\n");
+
+    /// Last check is if the opcodes match or not.
+    inr::outs() << "Does the opcode match: "
+                << (add->getOp() == inr::OpcodeType(EISAOpcodes::ADD32RR))
+                << '\n';
+
     return 0;
 }
