@@ -1,0 +1,6 @@
+; Module = main_module
+define i32 @main(i32 %argc, i8** %argv) {
+entry:
+	%sum = add i32 20, %argc;
+	ret %sum;
+}

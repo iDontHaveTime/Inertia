@@ -1,0 +1,11 @@
+
+# Folders
+build/
+.vscode/
+.zed/
+.cache/
+
+# Files
+*.o
+*.a
+*.so
