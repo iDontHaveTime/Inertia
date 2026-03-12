@@ -30,50 +30,58 @@ enum class EISAOperands : inr::OperandType { RR, RM };
 enum class EISAInstructionTypes : inr::InstructionType { ADD, MOV };
 
 /// If this is not a reason for why make a DSL, I don't know what is.
-inr::TreeNodeInitializerObject add64rr(inr::InrContext& ctx) {
-    return {ctx.getI64(), inr::InstructionType(EISAInstructionTypes::ADD),
+inr::TreeNodeInitializerObject add64rr(const inr::InrContext& ctx) {
+    return {ctx.getI64(), "add64rr",
+            inr::InstructionType(EISAInstructionTypes::ADD),
             inr::OperandType(EISAOperands::RR),
             inr::OpcodeType(EISAOpcodes::ADD64RR)};
 }
 
-inr::TreeNodeInitializerObject add64rm(inr::InrContext& ctx) {
-    return {ctx.getI64(), inr::InstructionType(EISAInstructionTypes::ADD),
+inr::TreeNodeInitializerObject add64rm(const inr::InrContext& ctx) {
+    return {ctx.getI64(), "add64rm",
+            inr::InstructionType(EISAInstructionTypes::ADD),
             inr::OperandType(EISAOperands::RM),
             inr::OpcodeType(EISAOpcodes::ADD64RM)};
 }
 
-inr::TreeNodeInitializerObject add32rr(inr::InrContext& ctx) {
-    return {ctx.getI32(), inr::InstructionType(EISAInstructionTypes::ADD),
+inr::TreeNodeInitializerObject add32rr(const inr::InrContext& ctx) {
+    return {ctx.getI32(), "add32rr",
+            inr::InstructionType(EISAInstructionTypes::ADD),
             inr::OperandType(EISAOperands::RR),
             inr::OpcodeType(EISAOpcodes::ADD32RR)};
 }
 
-inr::TreeNodeInitializerObject add32rm(inr::InrContext& ctx) {
-    return {ctx.getI32(), inr::InstructionType(EISAInstructionTypes::ADD),
+inr::TreeNodeInitializerObject add32rm(const inr::InrContext& ctx) {
+    return {ctx.getI32(), "add32rm",
+            inr::InstructionType(EISAInstructionTypes::ADD),
             inr::OperandType(EISAOperands::RM),
             inr::OpcodeType(EISAOpcodes::ADD32RM)};
 }
 
-inr::TreeNodeInitializerObject mov64rr(inr::InrContext& ctx) {
-    return {ctx.getI64(), inr::InstructionType(EISAInstructionTypes::MOV),
+inr::TreeNodeInitializerObject mov64rr(const inr::InrContext& ctx) {
+    return {ctx.getI64(), "mov64rr",
+            inr::InstructionType(EISAInstructionTypes::MOV),
             inr::OperandType(EISAOperands::RR),
             inr::OpcodeType(EISAOpcodes::MOV64RR)};
 }
 
-inr::TreeNodeInitializerObject mov64rm(inr::InrContext& ctx) {
-    return {ctx.getI64(), inr::InstructionType(EISAInstructionTypes::MOV),
+inr::TreeNodeInitializerObject mov64rm(const inr::InrContext& ctx) {
+    return {ctx.getI64(), "mov64rm",
+            inr::InstructionType(EISAInstructionTypes::MOV),
             inr::OperandType(EISAOperands::RM),
             inr::OpcodeType(EISAOpcodes::MOV64RM)};
 }
 
-inr::TreeNodeInitializerObject mov32rr(inr::InrContext& ctx) {
-    return {ctx.getI32(), inr::InstructionType(EISAInstructionTypes::MOV),
+inr::TreeNodeInitializerObject mov32rr(const inr::InrContext& ctx) {
+    return {ctx.getI32(), "mov32rr",
+            inr::InstructionType(EISAInstructionTypes::MOV),
             inr::OperandType(EISAOperands::RR),
             inr::OpcodeType(EISAOpcodes::MOV32RR)};
 }
 
-inr::TreeNodeInitializerObject mov32rm(inr::InrContext& ctx) {
-    return {ctx.getI32(), inr::InstructionType(EISAInstructionTypes::MOV),
+inr::TreeNodeInitializerObject mov32rm(const inr::InrContext& ctx) {
+    return {ctx.getI32(), "mov32rm",
+            inr::InstructionType(EISAInstructionTypes::MOV),
             inr::OperandType(EISAOperands::RM),
             inr::OpcodeType(EISAOpcodes::MOV32RM)};
 }

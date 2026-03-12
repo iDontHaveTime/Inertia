@@ -31,6 +31,14 @@ class MachineFunction : public ilist_node<MachineFunction> {
         name_(name), parent_(parent) {}
 
 public:
+    MachineModule* getParent() const noexcept {
+        return parent_;
+    }
+
+    MachineModule* getParent() noexcept {
+        return parent_;
+    }
+
     static MachineFunction* create(sview name, MachineModule* parent) {
         return new MachineFunction(name, parent);
     }

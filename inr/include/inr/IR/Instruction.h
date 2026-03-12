@@ -43,6 +43,13 @@ protected:
         operands_(std::move(operands)),
         insID_(id) {
         append(parent, this);
+        for(Value* op : operands_) {
+            op->addUser(op);
+        }
+    }
+
+    ~Instruction() {
+        for(Value* op : operands_) op->removeUser(this);
     }
 
 public:
@@ -86,7 +93,7 @@ public:
 /// @brief The "ret" (Return) instruction.
 class ReturnInst : public Instruction {
     /// @brief The basic return instruction constructor.
-    /// @see Create(Value*, Block*) to get more details.
+    /// @see create(Value*, Block*) to get more details.
     ReturnInst(Value* retVal, Block* parent);
 
 public:

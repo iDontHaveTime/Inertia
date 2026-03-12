@@ -25,6 +25,14 @@ class Function : public Value, public ilist_node<Function> {
     }
 
 public:
+    const ilist<Block>& getBlocks() const noexcept {
+        return blocks_;
+    }
+
+    ilist<Block>& getBlocks() noexcept {
+        return blocks_;
+    }
+
     const FunctionType* getType() const noexcept {
         return (const FunctionType*)type_;
     }

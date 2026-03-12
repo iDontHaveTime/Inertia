@@ -3,6 +3,8 @@
 #include <inr/IR/Function.h>
 #include <inr/IR/Instruction.h>
 #include <inr/IR/Module.h>
+#include <inr/ISel/LinearISel.h>
+#include <inr/PassManager.h>
 #include <inr/Support/Stream.h>
 #include <inr/Target/Triple.h>
 
@@ -35,6 +37,12 @@ int main() {
 
     inr::outs() << "Default triple: " << inr::Triple::getDefaultTriple()
                 << '\n';
+
+    inr::PassManager pm(inr::Triple::getDefaultTriple(), ctx, *mod);
+
+    pm.setISel(inr::TripleLinearISel::get(pm.getTriple()));
+
+    pm.runISel();
 
     return 0;
 }

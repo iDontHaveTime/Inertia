@@ -14,6 +14,8 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "inr/Target/Triple.h"
+
 namespace inr {
 
 /// @brief Result returned by the target tree related methods.
@@ -121,12 +123,18 @@ using InstructionTree =
 
 class LeafNode : public TargetTree {
     OpcodeType op_;
+    sview name_;
 
 public:
-    LeafNode(OpcodeType op) noexcept : TargetTree(NodeType::Leaf), op_(op) {}
+    LeafNode(OpcodeType op, sview name) noexcept :
+        TargetTree(NodeType::Leaf), op_(op), name_(name) {}
 
     OpcodeType getOp() const noexcept {
         return op_;
+    }
+
+    sview getName() const noexcept {
+        return name_;
     }
 };
 
@@ -147,6 +155,7 @@ public:
 /// a tree.
 class TreeNodeInitializerObject {
     const Type* type_; ///< Type of the instruction, as in integer, float, etc..
+    sview name_; ///< The name of the instruction, as in add64rr, mov32rr, etc..
     InstructionType
         instType_; ///<  Type of the instruction, as in add, sub, mul, etc..
     OperandType
@@ -159,14 +168,18 @@ public:
     /// @param instType Instruction type for the node.
     /// @param ops Operands for the node.
     /// @param op Opcode for the leaf node.
-    constexpr TreeNodeInitializerObject(const Type* type,
+    constexpr TreeNodeInitializerObject(const Type* type, sview name,
                                         InstructionType instType,
                                         OperandType ops, OpcodeType op) noexcept
         :
-        type_(type), instType_(instType), ops_(ops), op_(op) {}
+        type_(type), name_(name), instType_(instType), ops_(ops), op_(op) {}
 
     constexpr const Type* getType() const noexcept {
         return type_;
+    }
+
+    constexpr sview getName() const noexcept {
+        return name_;
     }
 
     constexpr InstructionType getInstType() const noexcept {
@@ -182,14 +195,15 @@ public:
     }
 };
 
-using TreeNodeObjectFunc = TreeNodeInitializerObject (*)(class InrContext&);
+using TreeNodeObjectFunc =
+    TreeNodeInitializerObject (*)(const class InrContext&);
 
 /// @brief Builds a tree from a list of tree initializer objects.
 ///
 /// This class builds the tree only once, thus buildTree() can be called however
 /// many times.
 class TreeNodeBuilder {
-    InrContext& ctx_;
+    const InrContext& ctx_;
     std::vector<TreeNodeObjectFunc> nodes_;
     std::vector<std::unique_ptr<TargetTree>> storage_;
     bool exists_;
@@ -198,15 +212,17 @@ public:
     TreeNodeBuilder(const TreeNodeBuilder&) = delete;
     TreeNodeBuilder& operator=(const TreeNodeBuilder&) = delete;
 
-    TreeNodeBuilder(InrContext& ctx,
+    TreeNodeBuilder(const InrContext& ctx,
                     std::initializer_list<TreeNodeObjectFunc> nodes) :
         ctx_(ctx), nodes_(nodes), storage_(), exists_(false) {}
 
-    TreeNodeBuilder(InrContext& ctx, arrview<TreeNodeObjectFunc> nodes) :
+    TreeNodeBuilder(const InrContext& ctx, arrview<TreeNodeObjectFunc> nodes) :
         ctx_(ctx), nodes_(nodes.vec()), storage_(), exists_(false) {}
 
     TargetTree* buildTree();
 };
+
+arrview<TreeNodeObjectFunc> getTargetTreeInit(Triple);
 
 raw_stream& operator<<(raw_stream&, const TargetTree&);
 

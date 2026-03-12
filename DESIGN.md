@@ -46,8 +46,7 @@ This is a super straightforward solution, if the target has an instruction that 
 
 **Legalizer:**
 
-Every target should have a legalizer, it is a must, because for example an instruction like `ret 42` can exist in the IR, but for example on x86-64 there is no `retq $imm`, technically there is but that instruction is for adding back to the stack, not returning an immediate in RAX.
-So in a case where the instruction wasn't found we can either restrict usage of that instruction if the instruction is rarely needed (e.g. `add i65 1, %vreg` since why would you need `i65` in most code), or legalize it.
+Every target should have a legalizer, it is a must, because for example the instruction wasn't found we can either restrict usage of that instruction if the instruction is rarely needed (e.g. `add i65 1, %vreg` since why would you need `i65` in most code), or legalize it.
 
 Legalizing an instruction involved replacing the original instruction with another instruction or even instructions. In the example I gave above in the brackets which is `add i65 1, %vreg` its preferred to disallow that until later where the target is stable, but you could split that into multiple instructions, like 2 `i64`s, yes inefficient, but that's what happens when you pick those types of sizes.
 

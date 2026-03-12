@@ -22,7 +22,7 @@ function(map_name_to_library var_to_set)
 endfunction()
 
 # This will hold all libraries created with add_inertia_library
-map_name_to_library(INERTIA_LIBRARIES Core IR Target ISel)
+map_name_to_library(INERTIA_LIBRARIES Core IR Target ISel Option)
 
 # add_inertia_library(NAME files...)
 function(add_inertia_library lib_name)
@@ -43,3 +43,4 @@ endfunction()
 
 add_subdirectory(lib)
 add_subdirectory(test)
+add_subdirectory(tools)

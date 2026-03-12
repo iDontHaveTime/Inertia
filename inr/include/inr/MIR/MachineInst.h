@@ -32,6 +32,14 @@ public:
         return new MachineInst(op, parent, std::move(operands));
     }
 
+    MachineBlock* getParent() const noexcept {
+        return parent_;
+    }
+
+    MachineBlock* getParent() noexcept {
+        return parent_;
+    }
+
     uint32_t getOp() const noexcept {
         return op_;
     }

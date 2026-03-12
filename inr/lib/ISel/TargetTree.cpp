@@ -57,7 +57,9 @@ TargetTree* TreeNodeBuilder::buildTree() {
             if(!leaf)
                 op->newNode(
                     obj.getOperands(),
-                    storage_.emplace_back(new LeafNode(obj.getOp())).get());
+                    storage_
+                        .emplace_back(new LeafNode(obj.getOp(), obj.getName()))
+                        .get());
         }
 
         exists_ = true;
@@ -99,7 +101,8 @@ raw_stream& printNode(raw_stream& os, const TargetTree& node,
             }
             break;
         case TargetTree::NodeType::Leaf:
-            return os.indent(indent) << ((const LeafNode&)node).getOp() << '\n';
+            return os.indent(indent)
+                   << ((const LeafNode&)node).getName() << '\n';
     }
 
     return os;
@@ -108,6 +111,21 @@ raw_stream& printNode(raw_stream& os, const TargetTree& node,
 raw_stream& operator<<(raw_stream& os, const TargetTree& node) {
     unsigned indent = 0;
     return printNode(os, node, indent);
+}
+
+namespace x86 {
+arrview<TreeNodeObjectFunc> getTargetTree();
+}
+
+arrview<TreeNodeObjectFunc> getTargetTreeInit(Triple T) {
+    switch(T.getArch()) {
+        case Triple::Arch::x86_64:
+            return x86::getTargetTree();
+        case Triple::Arch::Unknown:
+            [[fallthrough]];
+        default:
+            return {};
+    }
 }
 
 } // namespace inr

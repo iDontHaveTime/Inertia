@@ -22,6 +22,18 @@ class Module {
     Module(sview name) noexcept : name_(name) {}
 
 public:
+    sview getName() const noexcept {
+        return name_;
+    }
+
+    const ilist<Function>& getFunctions() const noexcept {
+        return functions_;
+    }
+
+    ilist<Function>& getFunctions() noexcept {
+        return functions_;
+    }
+
     Function* newFunction(sview name, const FunctionType* signature) {
         return functions_.push_back(new Function(signature, name));
     }
