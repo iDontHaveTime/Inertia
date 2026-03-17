@@ -1,8 +1,10 @@
 
-define target(x86, endian:little, pointer:integer<64>){
-    new Operand(R64);
+define target(x86, little, integer<64>){
+    new Operand(Reg); // Register operand
+    new Operand(Mem); // Memory operand
+    new Operand(Imm); // Immediate operand
 
     new InstructionType(PUSH);
 
-    new Instruction();
+    new Instruction(PUSH, [{Reg, integer<64>}]);
 }

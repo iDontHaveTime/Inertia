@@ -36,9 +36,14 @@ constexpr sview none() noexcept {
 /// @param author Source of the message. If empty, no prefix is printed.
 /// @param msg The message after the author and level.
 ///
-/// For example doing send(errs(), Level::WARN, "inertia", "test warning") would
-/// output: "inertia: warning: test warning"
+/// For example doing `send(errs(), Level::WARN, "inertia", "test warning")`
+/// would output: "inertia: warning: test warning"
 void send(raw_stream& os, Level lvl, sview author, sview msg);
+
+/// @brief Works exactly like send but without the message.
+void sendNoMsg(raw_stream& os, Level lvl, sview author);
+void sendPosNoMsg(raw_stream& os, Level lvl, sview file, uint32_t line,
+                  uint32_t column);
 
 /// @brief Sends a message to the stream provided, preferred for files.
 /// @param os Stream to send it to.
@@ -48,7 +53,7 @@ void send(raw_stream& os, Level lvl, sview author, sview msg);
 /// @param column What column is it from.
 /// @param msg The message after the file, position, and level.
 ///
-/// For example doing sendpos(errs(), Level::WARN, "main.cpp", 3, 20, "test")
+/// For example doing `sendpos(errs(), Level::WARN, "main.cpp", 3, 20, "test")`
 /// would output: "main.cpp:3:20: warning: test"
 void sendpos(raw_stream& os, Level lvl, sview file, uint32_t line,
              uint32_t column, sview msg);

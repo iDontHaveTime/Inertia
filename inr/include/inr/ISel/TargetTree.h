@@ -28,7 +28,7 @@ enum class TreeErrc : uint8_t {
 /// @brief Base class for target trees.
 class TargetTree {
 public:
-    enum class NodeType : uint8_t { Type, InstructionType, Operand, Leaf };
+    enum class NodeType : uint8_t { InstructionType, Operand, Leaf };
 
 protected:
     NodeType nodeType_;
@@ -48,31 +48,18 @@ struct TreeResult {
 };
 
 /// @brief Node that holds other nodes based on T.
-///
-/// A new node type can be created easily via the `using` keyword.
-/// Below this class you can find these two lines:
-/// `using TypeTree = TargetTreeNode<const Type*, TargetTree::NodeType::Type>`,
-/// `using OperandTree = TargetTreeNode<OperandType,
-/// TargetTree::NodeType::Operand>`. The first line being the type tree node
-/// creates a new node type that can hold other nodes based on the type, so for
-/// example you could hold RR (Reg-Reg) node under the i32 type.
-/// The second line creates a tree node that is splitting the nodes based on
-/// their operands. To create your own node you just put the key as the first
-/// template argument, and the second template argument is what type of node it
-/// is. Although this class shouldn't be used outside of this header, since this
-/// is mainly to reduce code repetition rather than provide a generic tree
-/// class.
-template<typename T, TargetTree::NodeType nodeType>
+template<typename T, TargetTree::NodeType nodeType,
+         typename Hash = std::hash<T>>
 class TargetTreeNode : public TargetTree {
 protected:
-    std::unordered_map<T, TargetTree*> nodes_;
+    std::unordered_map<T, TargetTree*, Hash> nodes_;
 
 public:
     TargetTreeNode() noexcept(
         std::is_nothrow_default_constructible_v<decltype(nodes_)>) :
         TargetTree(nodeType) {}
 
-    const std::unordered_map<T, TargetTree*>& getNodes() const noexcept {
+    const std::unordered_map<T, TargetTree*, Hash>& getNodes() const noexcept {
         return nodes_;
     }
 
@@ -113,10 +100,60 @@ using InstructionType = uint32_t;
 /// @brief This should be used when making an enum for opcodes.
 using OpcodeType = uint32_t;
 
-/// @brief A node that holds other nodes based on the type.
-using TypeTree = TargetTreeNode<const Type*, TargetTree::NodeType::Type>;
+/// @brief A single operand descriptor.
+class OperandDesc {
+    OperandType id_;
+    const Type* type_;
+
+public:
+    constexpr OperandDesc(OperandType id, const Type* type) noexcept :
+        id_(id), type_(type) {}
+
+    constexpr OperandType getID() const noexcept {
+        return id_;
+    }
+
+    constexpr const Type* getType() const noexcept {
+        return type_;
+    }
+
+    constexpr bool operator==(const OperandDesc& o) const noexcept {
+        return id_ == o.id_ && type_ == o.type_;
+    }
+};
+
+/// @brief Signature of all operands for an instruction.
+/// Used as the key in OperandTree.
+class OperandSignature {
+    std::vector<OperandDesc> operands_;
+
+public:
+    constexpr OperandSignature(std::vector<OperandDesc> operands) :
+        operands_(std::move(operands)) {}
+
+    constexpr const std::vector<OperandDesc>& getOperands() const noexcept {
+        return operands_;
+    }
+
+    constexpr bool operator==(const OperandSignature& o) const noexcept {
+        return operands_ == o.operands_;
+    }
+};
+
+struct OperandSignatureHash {
+    constexpr size_t operator()(const OperandSignature& sig) const noexcept {
+        size_t hash = 0;
+        for(const OperandDesc& op : sig.getOperands())
+            hash ^= std::hash<uint16_t>{}(op.getID()) + 0x9e3779b9 +
+                    (hash << 6) + (hash >> 2);
+        return hash;
+    }
+};
+
 /// @brief A node that holds other nodes based on the operands.
-using OperandTree = TargetTreeNode<OperandType, TargetTree::NodeType::Operand>;
+using OperandTree =
+    TargetTreeNode<OperandSignature, TargetTree::NodeType::Operand,
+                   OperandSignatureHash>;
 /// @brief A node that holds other nodes based on an integer.
 using InstructionTree =
     TargetTreeNode<uint32_t, TargetTree::NodeType::InstructionType>;
@@ -141,55 +178,46 @@ public:
 /// @brief Walks the tree based on the conditions given.
 class Walker {
 public:
-    /// @brief Walks from the root to the node with the given keys.
+    /// @brief Walks from the root to the leaf with the given keys.
     /// @param root The node to start from.
-    /// @param keyType The type of the requested node.
     /// @param keyInstT The instruction type of the requested node.
-    /// @param keyOP The operands of the requested node.
-    /// @return The node if found, nullptr if not found.
-    static const LeafNode* walk(const TargetTree* root, const Type* keyType,
-                                InstructionType keyInstT, OperandType keyOP);
+    /// @param keySig The operand signature of the requested node.
+    /// @return The leaf if found, nullptr if not found.
+    static const LeafNode* walk(const TargetTree* root,
+                                InstructionType keyInstT,
+                                const OperandSignature& keySig);
 };
 
 /// @brief Used to make a flat array of instructions that are then converted to
 /// a tree.
 class TreeNodeInitializerObject {
-    const Type* type_; ///< Type of the instruction, as in integer, float, etc..
     sview name_; ///< The name of the instruction, as in add64rr, mov32rr, etc..
     InstructionType
         instType_; ///<  Type of the instruction, as in add, sub, mul, etc..
-    OperandType
+    OperandSignature
         ops_; ///< Operands of the instruction, as in Reg-Reg, Reg-Mem, etc..
     OpcodeType op_; ///< Opcode of the instruction, used by emitters.
 
 public:
     /// @brief Basic initialization of a node object.
-    /// @param type Type for the node.
+    /// @param name The name of the instruction.
     /// @param instType Instruction type for the node.
     /// @param ops Operands for the node.
     /// @param op Opcode for the leaf node.
-    constexpr TreeNodeInitializerObject(const Type* type, sview name,
-                                        InstructionType instType,
-                                        OperandType ops, OpcodeType op) noexcept
-        :
-        type_(type), name_(name), instType_(instType), ops_(ops), op_(op) {}
-
-    constexpr const Type* getType() const noexcept {
-        return type_;
-    }
+    constexpr TreeNodeInitializerObject(sview name, InstructionType instType,
+                                        OperandSignature ops,
+                                        OpcodeType op) noexcept :
+        name_(name), instType_(instType), ops_(std::move(ops)), op_(op) {}
 
     constexpr sview getName() const noexcept {
         return name_;
     }
-
     constexpr InstructionType getInstType() const noexcept {
         return instType_;
     }
-
-    constexpr OperandType getOperands() const noexcept {
+    constexpr const OperandSignature& getOperands() const noexcept {
         return ops_;
     }
-
     constexpr OpcodeType getOp() const noexcept {
         return op_;
     }

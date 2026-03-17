@@ -8,14 +8,6 @@
 
 namespace inr::x86 {
 
-/// @brief Follows the src-dest pattern.
-enum class Operand : OperandType {
-    R8,  ///< 8bit Register
-    R16, ///< 16bit Register
-    R32, ///< 32bit Register
-    R64  ///< 64bit Register
-};
-
 arrview<TreeNodeObjectFunc> getTargetTree();
 
 } // namespace inr::x86

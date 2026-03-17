@@ -148,7 +148,10 @@ public:
     template<typename T>
     requires std::integral<T> || std::floating_point<T>
     raw_stream& operator<<(T n) {
-        char buff[std::numeric_limits<T>::max_digits10 + 0x20];
+        char buff[(std::is_floating_point_v<T>
+                       ? std::numeric_limits<T>::max_digits10
+                       : std::numeric_limits<T>::digits10) +
+                  0x20];
 
         auto result = std::to_chars(buff, buff + sizeof(buff), n);
         if(result.ec == std::errc()) {

@@ -24,65 +24,73 @@ enum class EISAOpcodes : inr::OpcodeType {
 /// @brief Follow it up with operands.
 ///
 /// As the `inr::OperandType` says this enum SHOULD use it as the type.
-enum class EISAOperands : inr::OperandType { RR, RM };
+enum class EISAOperands : inr::OperandType { Reg, Mem };
 
 /// @brief Same thing here just for
 enum class EISAInstructionTypes : inr::InstructionType { ADD, MOV };
 
 /// If this is not a reason for why make a DSL, I don't know what is.
 inr::TreeNodeInitializerObject add64rr(const inr::InrContext& ctx) {
-    return {ctx.getI64(), "add64rr",
+    return {"add64rr",
             inr::InstructionType(EISAInstructionTypes::ADD),
-            inr::OperandType(EISAOperands::RR),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
+              {inr::OperandType(EISAOperands::Reg), ctx.getI64()}}},
             inr::OpcodeType(EISAOpcodes::ADD64RR)};
 }
 
 inr::TreeNodeInitializerObject add64rm(const inr::InrContext& ctx) {
-    return {ctx.getI64(), "add64rm",
+    return {"add64rm",
             inr::InstructionType(EISAInstructionTypes::ADD),
-            inr::OperandType(EISAOperands::RM),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
+              {inr::OperandType(EISAOperands::Mem), ctx.getI64()}}},
             inr::OpcodeType(EISAOpcodes::ADD64RM)};
 }
 
 inr::TreeNodeInitializerObject add32rr(const inr::InrContext& ctx) {
-    return {ctx.getI32(), "add32rr",
+    return {"add32rr",
             inr::InstructionType(EISAInstructionTypes::ADD),
-            inr::OperandType(EISAOperands::RR),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
+              {inr::OperandType(EISAOperands::Reg), ctx.getI32()}}},
             inr::OpcodeType(EISAOpcodes::ADD32RR)};
 }
 
 inr::TreeNodeInitializerObject add32rm(const inr::InrContext& ctx) {
-    return {ctx.getI32(), "add32rm",
+    return {"add32rm",
             inr::InstructionType(EISAInstructionTypes::ADD),
-            inr::OperandType(EISAOperands::RM),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
+              {inr::OperandType(EISAOperands::Mem), ctx.getI32()}}},
             inr::OpcodeType(EISAOpcodes::ADD32RM)};
 }
 
 inr::TreeNodeInitializerObject mov64rr(const inr::InrContext& ctx) {
-    return {ctx.getI64(), "mov64rr",
+    return {"mov64rr",
             inr::InstructionType(EISAInstructionTypes::MOV),
-            inr::OperandType(EISAOperands::RR),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
+              {inr::OperandType(EISAOperands::Reg), ctx.getI64()}}},
             inr::OpcodeType(EISAOpcodes::MOV64RR)};
 }
 
 inr::TreeNodeInitializerObject mov64rm(const inr::InrContext& ctx) {
-    return {ctx.getI64(), "mov64rm",
+    return {"mov64rm",
             inr::InstructionType(EISAInstructionTypes::MOV),
-            inr::OperandType(EISAOperands::RM),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
+              {inr::OperandType(EISAOperands::Mem), ctx.getI64()}}},
             inr::OpcodeType(EISAOpcodes::MOV64RM)};
 }
 
 inr::TreeNodeInitializerObject mov32rr(const inr::InrContext& ctx) {
-    return {ctx.getI32(), "mov32rr",
+    return {"mov32rr",
             inr::InstructionType(EISAInstructionTypes::MOV),
-            inr::OperandType(EISAOperands::RR),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
+              {inr::OperandType(EISAOperands::Reg), ctx.getI32()}}},
             inr::OpcodeType(EISAOpcodes::MOV32RR)};
 }
 
 inr::TreeNodeInitializerObject mov32rm(const inr::InrContext& ctx) {
-    return {ctx.getI32(), "mov32rm",
+    return {"mov32rm",
             inr::InstructionType(EISAInstructionTypes::MOV),
-            inr::OperandType(EISAOperands::RM),
+            {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
+              {inr::OperandType(EISAOperands::Mem), ctx.getI32()}}},
             inr::OpcodeType(EISAOpcodes::MOV32RM)};
 }
 
@@ -103,19 +111,20 @@ int main() {
     tree ? (inr::outs() << *tree)
          : (inr::outs() << "Making the tree was unsuccessful\n");
 
-    /// Now I want to add 2 32bit registers, well how do I do that?
+    /// Now I want to add register to memory, well how do I do that?
     /// Simple, use the walker like this:
     const inr::LeafNode* add = inr::Walker::walk(
-        tree, ctx.getI32(), inr::InstructionType(EISAInstructionTypes::ADD),
-        inr::OperandType(EISAOperands::RR));
+        tree, inr::InstructionType(EISAInstructionTypes::ADD),
+        {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
+          {inr::OperandType(EISAOperands::Mem), ctx.getI64()}}});
 
     /// Lets check if it found it.
-    add ? (inr::outs() << "Add i32 Reg, Reg was found!\n")
+    add ? (inr::outs() << "Add i64 Reg, Mem was found!\n")
         : (inr::outs() << "Add instruction was not found.\n");
 
     /// Last check is if the opcodes match or not.
     inr::outs() << "Does the opcode match: "
-                << (add->getOp() == inr::OpcodeType(EISAOpcodes::ADD32RR))
+                << (add->getOp() == inr::OpcodeType(EISAOpcodes::ADD64RM))
                 << '\n';
 
     return 0;

@@ -34,19 +34,28 @@ static inline void printLevel(raw_stream& os, Level lvl) {
     }
 }
 
-void send(raw_stream& os, Level lvl, sview author, sview msg) {
+void sendNoMsg(raw_stream& os, Level lvl, sview author) {
     if(!author.empty()) printAuthor(os, author);
 
     printLevel(os, lvl);
+}
+
+void send(raw_stream& os, Level lvl, sview author, sview msg) {
+    sendNoMsg(os, lvl, author);
 
     os << msg << '\n';
 }
 
-void sendpos(raw_stream& os, Level lvl, sview file, uint32_t line,
-             uint32_t column, sview msg) {
+void sendPosNoMsg(raw_stream& os, Level lvl, sview file, uint32_t line,
+                  uint32_t column) {
     if(!file.empty()) printFile(os, file, line, column);
 
     printLevel(os, lvl);
+}
+
+void sendpos(raw_stream& os, Level lvl, sview file, uint32_t line,
+             uint32_t column, sview msg) {
+    sendPosNoMsg(os, lvl, file, line, column);
 
     os << msg << '\n';
 }

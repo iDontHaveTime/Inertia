@@ -16,30 +16,31 @@ class token {
 public:
     /// @brief The type of the token.
     enum class ID {
-        IntegerLiteral,
-        FloatLiteral,
-        CharLiteral,
-        StringLiteral,
-        Identifier,
-        LeftArrow,
-        RightArrow,
-        Comma,
-        Semicolon,
-        LeftParen,
-        RightParen,
-        LeftBrace,
-        RightBrace,
-        Little,
-        Big,
-        New,
-        Instruction,
-        InstructionType,
-        Operand,
-        Integer,
-        Colon,
-        Endian,
-        Pointer,
-        End
+        IntegerLiteral,  ///< Integer literal (e.g. 42).
+        FloatLiteral,    ///< Float literal, unsupported.
+        CharLiteral,     ///< Char literal, unsupported.
+        StringLiteral,   ///< String literal (e.g. "world").
+        Identifier,      ///< Alphanumerical word.
+        LeftArrow,       ///< '<'
+        RightArrow,      ///< '>'
+        Comma,           ///< ','
+        Semicolon,       ///< ';'
+        LeftParen,       ///< '('
+        RightParen,      ///< ')'
+        LeftBrace,       ///< '{'
+        RightBrace,      ///< '}'
+        LeftSquare,      ///< '['
+        RightSquare,     ///< ']'
+        Little,          ///< little keyword.
+        Big,             ///< big keyword.
+        New,             ///< new keyword.
+        Instruction,     ///< Instruction keyword.
+        InstructionType, ///< InstructionType keyword.
+        Operand,         ///< Operand keyword.
+        Integer,         ///< integer keyword.
+        Colon,           ///< ':'
+        Slash,           ///< '/'
+        End              ///< Error token.
     };
 
 private:
@@ -53,15 +54,28 @@ private:
     ///
     /// Extra data can be one of the following:
     /// - Integer Base.
+    /// - Is double or float.
     uint8_t extra_;
 
 public:
+    token(const char* start, const char* end, ID id, uint8_t extra = 0) noexcept
+        :
+        start_(start), end_(end), id_(id), extra_(extra) {}
+
+    void setEnd(const char* end) {
+        end_ = end;
+    };
+
     const char* getStart() const noexcept {
         return start_;
     }
 
     bool isDouble() const noexcept {
         return extra_ != 0;
+    }
+
+    int getBase() const noexcept {
+        return extra_;
     }
 
     const char* getEnd() const noexcept {
@@ -78,7 +92,13 @@ public:
 
     uint64_t getAsInteger() const noexcept {
         uint64_t v;
-        std::from_chars(start_, end_, v, extra_);
+
+        unsigned offset = 0;
+
+        uint8_t base = getBase();
+        if(base == 16 || base == 2) offset += 2;
+
+        std::from_chars(start_ + offset, end_, v, extra_);
         return v;
     }
 
@@ -99,9 +119,55 @@ public:
     }
 };
 
+/// @brief Class that lexes a inrgen file.
 class lexer {
+    std::vector<token> tokens_;
+    sview fileName_;
+    const char* start_;
+    const char* end_;
+    unsigned long column_;
+    unsigned long line_;
+
+    void advance() noexcept;
+    void skipWhiteSpace() noexcept;
+    void skipLineComments() noexcept;
+    void skipAlnum() noexcept;
+    void advanceUntil(char c, bool escape) noexcept;
+    void lexAlpha();
+    void lexSymbol();
+    void lexNumber();
+    void lexString();
+    void uknownChar(bool adv = false);
+
+    token::ID classifySymbol() const noexcept;
+    token::ID classifyAlpha(sview sv);
+
+    bool isSymbol() const noexcept;
+    char peek() const noexcept;
+
+    char getChar() const noexcept {
+        return start_ != end_ ? *start_ : '\0';
+    }
+    bool expect(char c) const noexcept {
+        return getChar() == c;
+    }
+
+    void addToken(const char* from, const char* to, token::ID id,
+                  uint8_t extra = 0) {
+        tokens_.emplace_back(from, to, id, extra);
+    }
+
+    std::vector<token> internalLex();
+
 public:
-    static std::vector<token> lex(const char* start, const char* end);
+    lexer(sview fileName, const char* start, const char* end) noexcept :
+        fileName_(fileName), start_(start), end_(end), column_(0), line_(1) {}
+
+    /// @brief Lexes the file in the lexer.
+    /// @note Can only be used once.
+    std::vector<token> lex() {
+        return internalLex();
+    }
 };
 
 class raw_stream& operator<<(raw_stream&, const token&);

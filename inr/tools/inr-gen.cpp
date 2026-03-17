@@ -64,15 +64,28 @@ int main(int argc, char** argv) {
     if(input.empty() || output.empty()) return 1;
 
     FILE* inputFile = fopen(input.c_str(), "r");
+    if(!inputFile) {
+        inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
+                       "input file not found");
+        return 1;
+    }
 
     fseek(inputFile, 0, SEEK_END);
     long inputFileSize = ftell(inputFile);
     fseek(inputFile, 0, SEEK_SET);
 
-    char* inputFileStart = (char*)malloc(inputFileSize);
+    char* inputFileStart = (char*)malloc(inputFileSize + 1);
+    fread(inputFileStart, 1, inputFileSize, inputFile);
+    inputFileStart[inputFileSize] = '\n';
 
-    std::vector<inr::gen::token> tokens =
-        inr::gen::lexer::lex(inputFileStart, inputFileStart + inputFileSize);
+    inr::gen::lexer genLex(input, inputFileStart,
+                           inputFileStart + inputFileSize);
+
+    std::vector<inr::gen::token> tokens = genLex.lex();
+
+    for(const inr::gen::token& tok : tokens) {
+        inr::outs() << int(tok.getID()) << ": " << tok << '\n';
+    }
 
     free(inputFileStart);
 
