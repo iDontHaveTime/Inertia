@@ -8,7 +8,7 @@
 
 #include <charconv>
 #include <cstdint>
-#include <vector>
+#include <list>
 
 namespace inr::gen {
 
@@ -38,6 +38,8 @@ public:
         InstructionType, ///< InstructionType keyword.
         Operand,         ///< Operand keyword.
         Integer,         ///< integer keyword.
+        Define,          ///< define keyword.
+        Target,          ///< target keyword.
         Colon,           ///< ':'
         Slash,           ///< '/'
         End              ///< Error token.
@@ -121,7 +123,7 @@ public:
 
 /// @brief Class that lexes a inrgen file.
 class lexer {
-    std::vector<token> tokens_;
+    std::list<token> tokens_;
     sview fileName_;
     const char* start_;
     const char* end_;
@@ -157,7 +159,7 @@ class lexer {
         tokens_.emplace_back(from, to, id, extra);
     }
 
-    std::vector<token> internalLex();
+    std::list<token> internalLex();
 
 public:
     lexer(sview fileName, const char* start, const char* end) noexcept :
@@ -165,7 +167,7 @@ public:
 
     /// @brief Lexes the file in the lexer.
     /// @note Can only be used once.
-    std::vector<token> lex() {
+    std::list<token> lex() {
         return internalLex();
     }
 };

@@ -1,11 +1,10 @@
+#include <inr/ADT/StrView.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/Stream.h>
-#include <inr/ADT/StrView.h>
 
 #include <cctype>
 #include <utility>
-
 
 namespace inr::gen {
 
@@ -57,6 +56,10 @@ raw_stream& operator<<(raw_stream& os, const token& token) {
         case token::ID::Integer:
             [[fallthrough]];
         case token::ID::Identifier:
+            [[fallthrough]];
+        case token::ID::Target:
+            [[fallthrough]];
+        case token::ID::Define:
             return os << token.getAsString();
         case token::ID::End:
         case token::ID::Slash: // Used for comments
@@ -133,6 +136,8 @@ constexpr std::pair<sview, token::ID> keywords[] = {
     {"InstructionType", token::ID::InstructionType},
     {"Operand", token::ID::Operand},
     {"integer", token::ID::Integer},
+    {"define", token::ID::Define},
+    {"target", token::ID::Target},
 };
 
 token::ID lexer::classifyAlpha(sview sv) {
@@ -319,7 +324,7 @@ bool lexer::isSymbol() const noexcept {
     return classifySymbol() != token::ID::End;
 }
 
-std::vector<token> lexer::internalLex() {
+std::list<token> lexer::internalLex() {
     while(start_ != end_) {
         skipWhiteSpace();
 

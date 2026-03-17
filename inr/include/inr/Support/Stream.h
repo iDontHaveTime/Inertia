@@ -3,6 +3,7 @@
 
 /// @file Support/Stream.h
 /// @brief Contains classes relating to streams.
+///
 /// Only contains output streams, no input streams.
 
 #include <charconv>

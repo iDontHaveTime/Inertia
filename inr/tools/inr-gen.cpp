@@ -11,18 +11,58 @@
 #include <inr/Option/Option.h>
 #include <inr/Option/OptionTable.h>
 #include <inr/Support/Logger.h>
+#include <inr/Support/MemoryFile.h>
 #include <inr/Support/Stream.h>
+#include <inr/Gen/Record.h>
+#include <inr/Gen/Parser.h>
 
 #include <cstdio>
-#include <cstdlib>
 
 constexpr inr::sview TOOL_NAME("inr-gen");
+
+bool getInputAndOutputFiles(int argc, char** argv, std::string& input, std::string& output);
 
 int main(int argc, char** argv) {
     /// Should be replaced with inr-gen generated opts.
     std::string input;
     std::string output;
 
+    if(getInputAndOutputFiles(argc, argv, input, output)) return 1;
+
+    FILE* inputFile = fopen(input.c_str(), "r");
+    if(!inputFile) {
+        inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
+                       "input file not found");
+        return 1;
+    }
+
+    fseek(inputFile, 0, SEEK_END);
+    long inputFileSize = ftell(inputFile);
+    fseek(inputFile, 0, SEEK_SET);
+
+    inr::MemoryFile memInput(inputFile, inputFileSize, true);
+
+    inr::gen::lexer genLex(input, memInput.begin(), memInput.end());
+
+    std::list<inr::gen::token> tokens = genLex.lex();
+
+    auto rec = inr::gen::parser::parseTokens(tokens);
+
+    for(auto& node : rec->getNodes()){
+        if(node->getKind() == inr::gen::Node::NodeType::Target){
+            inr::gen::TargetNode* tn = (inr::gen::TargetNode*)node.get();
+            inr::outs() << "Found target: " << tn->getName() << '\n';
+            inr::outs() << "Target endian: " << tn->getEndian() << '\n';
+            inr::outs() << "Target pointer width: " << tn->getPtrWidth() << '\n';
+        }
+    }
+
+    fclose(inputFile);
+
+    return 0;
+}
+
+bool getInputAndOutputFiles(int argc, char** argv, std::string& input, std::string& output){
     int i = 1;
     while(i < argc) {
         inr::sview arg = inr::sview(argv[i]);
@@ -42,7 +82,7 @@ int main(int argc, char** argv) {
             if(!input.empty()) {
                 inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
                                "too many input files specified");
-                return 1;
+                return true;
             }
             else {
                 input = std::move(arg.str());
@@ -61,35 +101,6 @@ int main(int argc, char** argv) {
                        "no input file");
     }
 
-    if(input.empty() || output.empty()) return 1;
-
-    FILE* inputFile = fopen(input.c_str(), "r");
-    if(!inputFile) {
-        inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
-                       "input file not found");
-        return 1;
-    }
-
-    fseek(inputFile, 0, SEEK_END);
-    long inputFileSize = ftell(inputFile);
-    fseek(inputFile, 0, SEEK_SET);
-
-    char* inputFileStart = (char*)malloc(inputFileSize + 1);
-    fread(inputFileStart, 1, inputFileSize, inputFile);
-    inputFileStart[inputFileSize] = '\n';
-
-    inr::gen::lexer genLex(input, inputFileStart,
-                           inputFileStart + inputFileSize);
-
-    std::vector<inr::gen::token> tokens = genLex.lex();
-
-    for(const inr::gen::token& tok : tokens) {
-        inr::outs() << int(tok.getID()) << ": " << tok << '\n';
-    }
-
-    free(inputFileStart);
-
-    fclose(inputFile);
-
-    return 0;
+    if(input.empty() || output.empty()) return true;
+    return false;
 }

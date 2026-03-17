@@ -55,8 +55,13 @@ public:
 
     /// @brief Constructs a new string reference from an std::string.
     /// @param str The string to construct from.
-    sview(const std::string& str) noexcept :
+    constexpr sview(const std::string& str) noexcept :
         str_(str.data()), len_(str.size()) {}
+
+    /// @brief Constructs a new string reference from an std::string_view.
+    /// @param sv String view.
+    constexpr sview(std::string_view sv) noexcept :
+        str_(sv.data()), len_(sv.size()) {}
 
     constexpr sview(const sview&) = default;
     constexpr sview& operator=(const sview&) = default;
@@ -115,6 +120,10 @@ public:
         return std::string(str_, len_);
     }
 
+    constexpr std::string_view strv() const noexcept {
+        return std::string_view(str_, len_);
+    }
+
     /// @brief Access a certain character in the string.
     /// @param index Index of the character.
     /// @return Character in that index.
@@ -128,18 +137,18 @@ public:
     }
 
     /// @brief Be able to print this to a stream.
-    friend raw_stream& operator<<(raw_stream& os, const sview& sw) {
+    friend raw_stream& operator<<(raw_stream& os, sview sw) {
         return os.write(sw.data(), sw.size());
     }
 
     /// @brief Compares a string lexicographically.
-    constexpr std::strong_ordering operator<=>(const sview& other) const {
+    constexpr std::strong_ordering operator<=>(sview other) const {
         return std::lexicographical_compare_three_way(
             str_, str_ + len_, other.str_, other.str_ + other.len_);
     }
 
     /// @brief Compares two string views.
-    constexpr bool operator==(const sview& other) const {
+    constexpr bool operator==(sview other) const {
         return (*this <=> other) == 0;
     }
 
@@ -209,5 +218,16 @@ public:
 };
 
 } // namespace inr
+
+namespace std {
+
+template<>
+struct hash<inr::sview> {
+    size_t operator()(inr::sview sv) const noexcept {
+        return hash<string_view>{}(sv.strv());
+    }
+};
+
+} // namespace std
 
 #endif // INERTIA_ADT_STRVIEW_H

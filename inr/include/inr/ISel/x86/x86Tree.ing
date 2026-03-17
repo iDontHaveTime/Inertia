@@ -1,0 +1,50 @@
+// This files defines the x86 instruction tree.
+//
+// Instruction definitions use the `src, dest` order.
+//
+// Define target signature:
+// define target(name, endian, pointer width) {...}
+//
+// So for us here in x86 it would be this.
+define target(x86, little, integer<64>){
+    // Defining an operand is simple, its just one arg:
+    // new Operand(Name); 
+    // 
+    new Operand(Reg); // Register operand
+    new Operand(Mem); // Memory operand
+    new Operand(Imm); // Immediate operand
+
+    // Defining an instruction type is super similar to defining an operand.
+    // new InstructionType(Name);
+    //
+    new InstructionType(MOV);
+    new InstructionType(ADD);
+
+    // Defining an instruction takes more than defining operands or instruction types.
+    // The signature for it is:
+    // new Instruction(InstructionType, Array of operands);
+    // The operands is defined like this: [{Operand, Type}, {Operand, Type}, ...]
+    // More precisely called "Operand Description"
+
+    // MOV REGISTER TO REGISTER
+    //
+    // Mov64RR
+    new Instruction(MOV, [{Reg, integer<64>}, {Reg, integer<64>}]);
+    // Mov32RR
+    new Instruction(MOV, [{Reg, integer<32>}, {Reg, integer<32>}]);
+    // Mov16RR
+    new Instruction(MOV, [{Reg, integer<16>}, {Reg, integer<16>}]);
+    // Mov8RR
+    new Instruction(MOV, [{Reg, integer<8>}, {Reg, integer<8>}]);
+
+    // MOV REGISTER TO MEMORY
+    //
+    // Mov64RM
+    new Instruction(MOV, [{Reg, integer<64>}, {Mem, integer<64>}]);
+    // Mov32RM
+    new Instruction(MOV, [{Reg, integer<32>}, {Mem, integer<32>}]);
+    // Mov16RM
+    new Instruction(MOV, [{Reg, integer<16>}, {Mem, integer<16>}]);
+    // Mov8RM
+    new Instruction(MOV, [{Reg, integer<8>}, {Mem, integer<8>}]);
+}
