@@ -85,6 +85,9 @@ public:
         return arch_ != Arch::Unknown && os_ != OS::Unknown;
     }
 
+    unsigned getPointerWidth() const noexcept;
+    std::endian getEndian() const noexcept;
+
     /// @brief Returns the triple as a string.
     std::string str() const;
 };

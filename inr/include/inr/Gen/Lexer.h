@@ -12,7 +12,7 @@
 
 #include <charconv>
 #include <cstdint>
-#include <list>
+#include <vector>
 
 namespace inr::gen {
 
@@ -41,6 +41,7 @@ public:
         New,             ///< new keyword.
         Instruction,     ///< Instruction keyword.
         InstructionType, ///< InstructionType keyword.
+        Unfold,          ///< unfold keyword.
         Operand,         ///< Operand keyword.
         Integer,         ///< integer keyword.
         Define,          ///< define keyword.
@@ -158,7 +159,7 @@ public:
 /// @note Can only be used once.
 class lexer {
     /// @brief Container for the tokens.
-    std::list<token> tokens_;
+    std::vector<token> tokens_;
     /// @brief Name of the file that is being lexed.
     sview fileName_;
     /// @brief Iterator that is used internally.
@@ -231,7 +232,7 @@ class lexer {
 
     /// @brief Used internally.
     /// @see `lex()` to get more info.
-    std::list<token> internalLex();
+    std::vector<token> internalLex();
 
 public:
     /// @brief Creates a new lexer.
@@ -244,7 +245,7 @@ public:
     /// @brief Lexes the file in the lexer.
     /// @note Can only be used once.
     /// @return A list of the tokens.
-    std::list<token> lex() {
+    std::vector<token> lex() {
         return internalLex();
     }
 };

@@ -54,51 +54,51 @@ public:
     template<typename AT, size_t N>
     constexpr arrview(AT (&arr)[N]) noexcept : data_(arr), len_(N) {}
 
-    iterator begin() const noexcept {
+    constexpr iterator begin() const noexcept {
         return data_;
     }
-    iterator end() const noexcept {
+    constexpr iterator end() const noexcept {
         return data_ + len_;
     }
-    reverse_iterator rbegin() const noexcept {
+    constexpr reverse_iterator rbegin() const noexcept {
         return std::reverse_iterator<iterator>(data_ + len_);
     }
-    reverse_iterator rend() const noexcept {
+    constexpr reverse_iterator rend() const noexcept {
         return std::reverse_iterator<iterator>(data_);
     }
 
     /// @brief Checks whether the array is empty or not.
     /// @return True if empty, false if not.
-    bool empty() const noexcept {
+    constexpr bool empty() const noexcept {
         return !len_;
     }
 
     /// @brief Returns the pointer to the first element.
-    const_pointer data() const noexcept {
+    constexpr const_pointer data() const noexcept {
         return data_;
     }
 
     /// @brief Returns the size of the array.
     /// @return How many elements are in the array.
-    size_type size() const noexcept {
+    constexpr size_type size() const noexcept {
         return len_;
     }
 
     /// @brief Returns a reference to the first element.
     /// @return Const reference to the first element.
-    const_reference front() const noexcept {
+    constexpr const_reference front() const noexcept {
         return *data_;
     }
 
     /// @brief Returns a reference to the last element.
     /// @return Const reference to the last element.
-    const_reference back() const noexcept {
+    constexpr const_reference back() const noexcept {
         return *(data_ + (len_ - 1));
     }
 
     /// @brief Accesses the array without bounds checking.
     /// @return Const reference to the element.
-    const_reference operator[](difference_type index) const noexcept {
+    constexpr const_reference operator[](difference_type index) const noexcept {
         return data_[index];
     }
 
@@ -106,6 +106,11 @@ public:
     /// @return Vector with the elements copied from the array.
     std::vector<T> vec() const {
         return std::vector<T>(begin(), end());
+    }
+
+    constexpr bool operator==(arrview<T> other) const noexcept {
+        return std::equal(data_, data_ + len_, other.data_,
+                          other.data_ + other.len_);
     }
 };
 

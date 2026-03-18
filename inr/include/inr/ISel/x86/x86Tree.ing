@@ -23,6 +23,7 @@ define target(x86, little, integer<64>){
     //
     new InstructionType(MOV);
     new InstructionType(ADD);
+    new InstructionType(SUB);
 
     // Defining an instruction takes more than defining operands or instruction types.
     // The signature for it is:
@@ -30,25 +31,36 @@ define target(x86, little, integer<64>){
     // The operands is defined like this: [{Operand, Type}, {Operand, Type}, ...]
     // More precisely called "Operand Description"
 
-    // MOV REGISTER TO REGISTER
+    // Unfold:
+    // This does exactly what it says, it unfolds the "expression" provided.
+    // So you declare unfold as follows:
+    // unfold<Identifier>{...}(...);
+    // Then in the extension parsing it copies whatever is in the {...} and replaces
+    // the identifier inside unfold<Identifier> to whatever tokens are in (...).
+    //
+    // unfold<N>{
+    //    new Instruction(MOV, [{Reg, integer<N>}, {Reg, integer<N>}]);
+    // }(64, 32, 16, 8);
+    // Note: This is an extension, so its not in the base parser.
+    //
+    // The output of unfold should be these reg-reg MOVs:
     //
     // Mov64RR
-    new Instruction(MOV, [{Reg, integer<64>}, {Reg, integer<64>}]);
+    // new Instruction(MOV, [{Reg, integer<64>}, {Reg, integer<64>}]);
     // Mov32RR
-    new Instruction(MOV, [{Reg, integer<32>}, {Reg, integer<32>}]);
+    // new Instruction(MOV, [{Reg, integer<32>}, {Reg, integer<32>}]);
     // Mov16RR
-    new Instruction(MOV, [{Reg, integer<16>}, {Reg, integer<16>}]);
+    // new Instruction(MOV, [{Reg, integer<16>}, {Reg, integer<16>}]);
     // Mov8RR
-    new Instruction(MOV, [{Reg, integer<8>}, {Reg, integer<8>}]);
-
-    // MOV REGISTER TO MEMORY
+    // new Instruction(MOV, [{Reg, integer<8>}, {Reg, integer<8>}]);
     //
-    // Mov64RM
-    new Instruction(MOV, [{Reg, integer<64>}, {Mem, integer<64>}]);
-    // Mov32RM
-    new Instruction(MOV, [{Reg, integer<32>}, {Mem, integer<32>}]);
-    // Mov16RM
-    new Instruction(MOV, [{Reg, integer<16>}, {Mem, integer<16>}]);
-    // Mov8RM
-    new Instruction(MOV, [{Reg, integer<8>}, {Mem, integer<8>}]);
+    // But instead of writing what is above we could just write this:
+    unfold<N>{
+        unfold<Dest>{
+            unfold<Op>{
+                new Instruction(Op, [{Reg, integer<N>}, {Dest, integer<N>}]);
+            }(MOV, ADD, SUB);
+
+        }(Reg, Mem);
+    }(64, 32, 16, 8);
 }

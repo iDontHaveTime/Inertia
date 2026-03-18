@@ -10,12 +10,14 @@
 /// instructions, endian, pointer size, etc..
 
 #include <inr/ADT/StrView.h>
+#include <inr/Gen/CppEmitter.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
 #include <inr/Gen/Record.h>
 #include <inr/Option/ArgList.h>
 #include <inr/Option/Option.h>
 #include <inr/Option/OptionTable.h>
+#include <inr/Support/CFile.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/MemoryFile.h>
 #include <inr/Support/Stream.h>
@@ -34,36 +36,40 @@ int main(int argc, char** argv) {
 
     if(getInputAndOutputFiles(argc, argv, input, output)) return 1;
 
-    FILE* inputFile = fopen(input.c_str(), "r");
+    inr::CFile inputFile(input.c_str(), "r");
     if(!inputFile) {
         inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
                        "input file not found");
         return 1;
     }
 
-    fseek(inputFile, 0, SEEK_END);
-    long inputFileSize = ftell(inputFile);
-    fseek(inputFile, 0, SEEK_SET);
+    fseek(inputFile.getFile(), 0, SEEK_END);
+    long inputFileSize = ftell(inputFile.getFile());
+    fseek(inputFile.getFile(), 0, SEEK_SET);
 
-    inr::MemoryFile memInput(inputFile, inputFileSize, true);
+    inr::MemoryFile memInput(inputFile.getFile(), inputFileSize, true);
 
     inr::gen::lexer genLex(input, memInput.begin(), memInput.end());
 
-    std::list<inr::gen::token> tokens = genLex.lex();
+    std::vector<inr::gen::token> tokens = genLex.lex();
 
-    auto rec = inr::gen::parser::parseTokens(tokens);
-
-    for(auto& node : rec->getNodes()) {
-        if(node->getKind() == inr::gen::Node::NodeType::Target) {
-            inr::gen::TargetNode* tn = (inr::gen::TargetNode*)node.get();
-            inr::outs() << "Found target: " << tn->getName() << '\n'
-                        << "Target endian: " << tn->getEndian() << '\n'
-                        << "Target pointer width: " << tn->getPtrWidth()
-                        << '\n';
-        }
+    std::vector<inr::gen::token> extTokens =
+        inr::gen::parser::parseExtensions(tokens);
+    if(extTokens.empty() && !tokens.empty()) {
+        return 1;
     }
 
-    fclose(inputFile);
+    auto rec = inr::gen::parser::parseTokens(extTokens);
+
+    FILE* outputCFile = fopen(output.c_str(), "w");
+    if(!outputCFile) {
+        inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
+                       "output could not be opened");
+        return 1;
+    }
+    inr::standard_file_stream outputFile(outputCFile, true);
+
+    inr::gen::emitter::emit(outputFile, rec);
 
     return 0;
 }
@@ -98,14 +104,14 @@ bool getInputAndOutputFiles(int argc, char** argv, std::string& input,
         i++;
     }
 
-    if(output.empty()) {
-        inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
-                       "no output file");
-    }
-
     if(input.empty()) {
         inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
                        "no input file");
+    }
+
+    if(output.empty()) {
+        inr::log::send(inr::errs(), inr::log::Level::ERROR, TOOL_NAME,
+                       "no output file");
     }
 
     if(input.empty() || output.empty()) return true;

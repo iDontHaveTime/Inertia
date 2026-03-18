@@ -136,6 +136,22 @@ public:
             .get();
     }
 
+    /// @brief Returns type if possible based on query.
+    /// @param q Query of the type.
+    /// @return Type if succeeded, nullptr if failed.
+    const Type* getQuery(TypeQuery q) const {
+        switch(q.getID()) {
+            case Type::TypeID::Void:
+                return getVoid();
+            case Type::TypeID::Integer:
+                return getInt(q.getWidth());
+            case Type::TypeID::Pointer:
+                [[fallthrough]];
+            case Type::TypeID::Function:
+                return nullptr;
+        }
+    }
+
     /// @brief Shorcut for doing getInt(1).
     /// @return Integer with the width of 1 bits.
     const IntegerType* getI1() const {

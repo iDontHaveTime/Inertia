@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/ADT/ArrView.h>
 #include <inr/ADT/StrView.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
@@ -9,24 +10,24 @@
 #include <inr/Support/Logger.h>
 
 #include <format>
-#include <list>
 #include <memory>
 #include <unordered_map>
+#include <vector>
 
 namespace inr::gen {
 
 constexpr sview PARSER_NAME = "inr-gen-parser";
 
 class TokenStream {
-    std::list<token>::const_iterator current_;
-    std::list<token>::const_iterator end_;
+    const std::vector<token>& tokens_;
+    size_t current_;
 
 public:
-    TokenStream(const std::list<token>& tokens) :
-        current_(tokens.begin()), end_(tokens.end()) {}
+    TokenStream(const std::vector<token>& tokens) :
+        tokens_(tokens), current_(0) {}
 
     bool atEnd() const noexcept {
-        return current_ == end_;
+        return current_ == tokens_.size();
     }
 
     /// @brief Advances forward in the token vector.
@@ -45,7 +46,7 @@ public:
     }
 
     const token& current() const noexcept {
-        return *current_;
+        return tokens_[current_];
     }
 
     bool expect(token::ID id) const noexcept {
@@ -443,7 +444,145 @@ bool parseDefine(std::unique_ptr<Node>& root, TokenStream& ts) {
     else return parseTarget(root, ts);
 }
 
-std::unique_ptr<Node> parser::parseTokens(const std::list<token>& toks) {
+bool parseExtUnfold(std::vector<token>& ext, TokenStream& ts) {
+    if(!ts.consume(token::ID::LeftArrow)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected '<' after unfold");
+        return true;
+    }
+
+    if(!ts.expect(token::ID::Identifier)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected an identifier name in unfold");
+        return true;
+    }
+
+    sview idenName = ts.current().getAsString();
+
+    if(advanceIfNotError(ts, "unfold definition abruptly ended")) return true;
+
+    if(!ts.consume(token::ID::RightArrow)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected '>' after unfold identifier");
+        return true;
+    }
+
+    unsigned braceC = 1;
+    if(!ts.consume(token::ID::LeftBrace)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected '{' after unfold<>");
+    }
+
+    std::vector<token> toReplace;
+    while(true) {
+        if(ts.atEnd()) {
+            log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                      "no '}' was found to close unfold<>");
+            return true;
+        }
+        else if(ts.consume(token::ID::Unfold)) {
+            if(parseExtUnfold(toReplace, ts)) return true;
+            continue;
+        }
+        if(ts.expect(token::ID::LeftBrace)) {
+            braceC++;
+        }
+        else if(ts.expect(token::ID::RightBrace)) {
+            braceC--;
+            if(!braceC) {
+                ts.advance();
+                break;
+            }
+        }
+        toReplace.emplace_back(ts.current());
+        ts.advance();
+    }
+
+    if(!ts.consume(token::ID::LeftParen)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected '(' after unfold expression");
+        return true;
+    }
+
+    std::vector<arrview<const token>> replacements;
+    const token* cur = &ts.current();
+
+    unsigned parenC = 1;
+    while(true) {
+        if(ts.atEnd()) {
+            log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                      "no ')' was found to close unfold<>{...}");
+            return true;
+        }
+        if(ts.expect(token::ID::LeftParen)) {
+            parenC++;
+        }
+        else if(ts.expect(token::ID::RightParen)) {
+            parenC--;
+            if(!parenC) {
+                replacements.emplace_back(cur, &ts.current());
+                ts.advance();
+                break;
+            }
+        }
+        else if(ts.expect(token::ID::Comma)) {
+            replacements.emplace_back(cur, &ts.current());
+
+            ts.advance();
+            cur = &ts.current();
+            continue;
+        }
+        ts.advance();
+    }
+
+    if(!ts.consume(token::ID::Semicolon)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected semicolon to terminate unfold");
+        return true;
+    }
+
+    for(arrview<const token>& replacement : replacements) {
+        std::vector<token> replaced;
+
+        for(const token& tok : toReplace) {
+            if(tok.getAsString() == idenName) {
+                replaced.insert(replaced.end(), replacement.begin(),
+                                replacement.end());
+            }
+            else {
+                replaced.emplace_back(tok);
+            }
+        }
+
+        ext.insert(ext.end(), replaced.begin(), replaced.end());
+    }
+
+    return false;
+}
+
+std::vector<token> parser::parseExtensions(const std::vector<token>& tokens) {
+    std::vector<token> newTokens;
+
+    TokenStream ts(tokens);
+
+    while(!ts.atEnd()) {
+        if(ts.consume(token::ID::Unfold)) {
+            if(parseExtUnfold(newTokens, ts)) {
+                log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                          "failed to parse unfold");
+                return {};
+            }
+        }
+        else {
+            newTokens.emplace_back(ts.current());
+            ts.advance();
+        }
+    }
+
+    return newTokens;
+}
+
+std::unique_ptr<Node> parser::parseTokens(const std::vector<token>& toks) {
     std::unique_ptr<Node> root(new Node(Node::NodeType::Root));
     TokenStream ts(toks);
 

@@ -10,10 +10,7 @@
 
 #include <inr/ISel/TargetTree.h>
 
-namespace inr::x86 {
-
-arrview<TreeNodeObjectFunc> getTargetTree();
-
-} // namespace inr::x86
+#define TARGET_HEADER
+#include <inr/ISel/x86/x86Tree.inc>
 
 #endif // INERTIA_X86_TARGETTREE_H

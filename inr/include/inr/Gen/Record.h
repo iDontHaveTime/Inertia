@@ -12,12 +12,15 @@
 
 #include <bit>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace inr::gen {
 
+/// @brief Base class for every inr-gen node.
 class Node {
 public:
+    /// @brief Type of this
     enum class NodeType {
         Root,
         Target,
@@ -82,8 +85,28 @@ public:
         return id_;
     }
 
+    std::string toString() const {
+        std::string str;
+        switch(id_) {
+            case ID::Integer:
+                str += 'i';
+                str += std::to_string(width_);
+                break;
+        }
+        return str;
+    }
+
     unsigned getWidth() const noexcept {
         return width_;
+    }
+
+    bool operator==(const TypeNode& other) const noexcept {
+        if(id_ != other.id_) return false;
+
+        switch(id_) {
+            case ID::Integer:
+                return getWidth() == other.getWidth();
+        }
     }
 };
 

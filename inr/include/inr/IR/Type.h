@@ -82,6 +82,41 @@ public:
     }
 };
 
+/// @brief Type query used for querying a type before context exists.
+class TypeQuery {
+    Type::TypeID id_;
+    union {
+        unsigned width_;
+    };
+
+public:
+    constexpr TypeQuery(Type::TypeID id, unsigned width) noexcept :
+        id_(id), width_(width) {}
+
+    constexpr unsigned getWidth() const noexcept {
+        return width_;
+    }
+
+    constexpr Type::TypeID getID() const noexcept {
+        return id_;
+    }
+
+    constexpr bool operator==(const TypeQuery& other) const noexcept {
+        if(id_ != other.id_) return false;
+
+        switch(id_) {
+            case Type::TypeID::Void:
+                return true;
+            case Type::TypeID::Integer:
+                return width_ == other.width_;
+            case Type::TypeID::Pointer:
+                [[fallthrough]];
+            case Type::TypeID::Function:
+                return false;
+        }
+    }
+};
+
 /// @brief Be able to print out the type to a stream.
 class raw_stream& operator<<(raw_stream&, const Type&);
 

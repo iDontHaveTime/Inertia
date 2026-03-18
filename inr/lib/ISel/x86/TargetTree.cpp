@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/IR/Context.h>
 #include <inr/ISel/TargetTree.h>
 #include <inr/ISel/x86/TargetTree.h>
 
@@ -11,10 +12,5 @@
 /// This file contains the instructions for x86 using the target tree class
 /// found inside `inr/ISel/TargetTree.h`.
 
-namespace inr::x86 {
-
-arrview<TreeNodeObjectFunc> getTargetTree() {
-    return {};
-}
-
-} // namespace inr::x86
+#define TARGET_SOURCE
+#include <inr/ISel/x86/x86Tree.inc>

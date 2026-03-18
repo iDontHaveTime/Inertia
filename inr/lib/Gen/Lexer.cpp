@@ -61,6 +61,8 @@ raw_stream& operator<<(raw_stream& os, const token& token) {
             [[fallthrough]];
         case token::ID::Identifier:
             [[fallthrough]];
+        case token::ID::Unfold:
+            [[fallthrough]];
         case token::ID::Target:
             [[fallthrough]];
         case token::ID::Define:
@@ -142,6 +144,7 @@ constexpr std::pair<sview, token::ID> keywords[] = {
     {"integer", token::ID::Integer},
     {"define", token::ID::Define},
     {"target", token::ID::Target},
+    {"unfold", token::ID::Unfold},
 };
 
 token::ID lexer::classifyAlpha(sview sv) {
@@ -328,7 +331,7 @@ bool lexer::isSymbol() const noexcept {
     return classifySymbol() != token::ID::End;
 }
 
-std::list<token> lexer::internalLex() {
+std::vector<token> lexer::internalLex() {
     while(start_ != end_) {
         skipWhiteSpace();
 

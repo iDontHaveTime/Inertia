@@ -17,10 +17,14 @@ namespace inr::gen {
 
 class parser {
 public:
+    /// @brief Parses inr-gen extensions such as unfolding.
+    /// @param tokens The tokens to parse.
+    /// @return New token array after extensions.
+    static std::vector<token> parseExtensions(const std::vector<token>& tokens);
     /// @brief Parses tokens and returns the file tree.
     /// @param tokens The tokens to parse.
     /// @return Root node for the records.
-    static std::unique_ptr<Node> parseTokens(const std::list<token>& tokens);
+    static std::unique_ptr<Node> parseTokens(const std::vector<token>& tokens);
 };
 
 } // namespace inr::gen

@@ -19,6 +19,8 @@
 #include <type_traits>
 #include <unordered_map>
 
+#include "inr/IR/Context.h"
+
 namespace inr {
 
 /// @brief Result returned by the target tree related methods.
@@ -106,10 +108,31 @@ using OpcodeType = uint32_t;
 /// @brief A single operand descriptor.
 class OperandDesc {
     OperandType id_;
+    TypeQuery type_;
+
+public:
+    constexpr OperandDesc(OperandType id, TypeQuery type) noexcept :
+        id_(id), type_(type) {}
+
+    constexpr OperandType getID() const noexcept {
+        return id_;
+    }
+
+    constexpr const TypeQuery& getType() const noexcept {
+        return type_;
+    }
+
+    constexpr bool operator==(const OperandDesc& o) const noexcept {
+        return id_ == o.id_ && type_ == o.type_;
+    }
+};
+
+class OperandDescSolvedType {
+    OperandType id_;
     const Type* type_;
 
 public:
-    constexpr OperandDesc(OperandType id, const Type* type) noexcept :
+    constexpr OperandDescSolvedType(OperandType id, const Type* type) noexcept :
         id_(id), type_(type) {}
 
     constexpr OperandType getID() const noexcept {
@@ -120,21 +143,36 @@ public:
         return type_;
     }
 
-    constexpr bool operator==(const OperandDesc& o) const noexcept {
+    constexpr bool operator==(const OperandDescSolvedType& o) const noexcept {
         return id_ == o.id_ && type_ == o.type_;
     }
+};
+
+struct ContainerSizedAsOperandDesc {
+    alignas(
+        OperandDescSolvedType) uint8_t storage_[sizeof(OperandDescSolvedType)];
 };
 
 /// @brief Signature of all operands for an instruction.
 /// Used as the key in OperandTree.
 class OperandSignature {
-    std::vector<OperandDesc> operands_;
+    arrview<OperandDescSolvedType> operands_;
 
 public:
-    constexpr OperandSignature(std::vector<OperandDesc> operands) :
-        operands_(std::move(operands)) {}
+    constexpr OperandSignature(arrview<OperandDesc> operands,
+                               ContainerSizedAsOperandDesc* storage,
+                               const InrContext& ctx) :
+        operands_() {
+        for(size_t i = 0; i < operands.size(); i++) {
+            new(storage + i) OperandDescSolvedType(
+                operands[i].getID(), ctx.getQuery(operands[i].getType()));
+        }
 
-    constexpr const std::vector<OperandDesc>& getOperands() const noexcept {
+        operands_ = arrview<OperandDescSolvedType>(
+            (OperandDescSolvedType*)storage, operands.size());
+    }
+
+    constexpr arrview<OperandDescSolvedType> getOperands() const noexcept {
         return operands_;
     }
 
@@ -146,7 +184,7 @@ public:
 struct OperandSignatureHash {
     constexpr size_t operator()(const OperandSignature& sig) const noexcept {
         size_t hash = 0;
-        for(const OperandDesc& op : sig.getOperands())
+        for(const OperandDescSolvedType& op : sig.getOperands())
             hash ^= std::hash<uint16_t>{}(op.getID()) + 0x9e3779b9 +
                     (hash << 6) + (hash >> 2);
         return hash;

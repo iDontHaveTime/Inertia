@@ -2,9 +2,11 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/ISel/x86/TargetTree.h>
 #include <inr/Support/Stream.h>
 #include <inr/Target/Triple.h>
 
+#include <bit>
 #include <utility>
 
 namespace inr {
@@ -102,6 +104,23 @@ raw_stream& operator<<(raw_stream& os, const Triple& T) {
     return os << Triple::getArchStr(T.getArch()) << '-'
               << Triple::getOSStr(T.getOS()) << '-'
               << Triple::getABIStr(T.getABI());
+}
+
+unsigned Triple::getPointerWidth() const noexcept {
+    switch(arch_) {
+        case Arch::Unknown:
+            return 0;
+        case Arch::x86_64:
+            return x86::targetPointerWidth;
+    }
+}
+std::endian Triple::getEndian() const noexcept {
+    switch(arch_) {
+        case Arch::Unknown:
+            return std::endian::native;
+        case Arch::x86_64:
+            return x86::targetEndian;
+    }
 }
 
 } // namespace inr
