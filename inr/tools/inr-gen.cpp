@@ -7,20 +7,21 @@
 
 #include <inr/ADT/StrView.h>
 #include <inr/Gen/Lexer.h>
+#include <inr/Gen/Parser.h>
+#include <inr/Gen/Record.h>
 #include <inr/Option/ArgList.h>
 #include <inr/Option/Option.h>
 #include <inr/Option/OptionTable.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/MemoryFile.h>
 #include <inr/Support/Stream.h>
-#include <inr/Gen/Record.h>
-#include <inr/Gen/Parser.h>
 
 #include <cstdio>
 
 constexpr inr::sview TOOL_NAME("inr-gen");
 
-bool getInputAndOutputFiles(int argc, char** argv, std::string& input, std::string& output);
+bool getInputAndOutputFiles(int argc, char** argv, std::string& input,
+                            std::string& output);
 
 int main(int argc, char** argv) {
     /// Should be replaced with inr-gen generated opts.
@@ -48,12 +49,13 @@ int main(int argc, char** argv) {
 
     auto rec = inr::gen::parser::parseTokens(tokens);
 
-    for(auto& node : rec->getNodes()){
-        if(node->getKind() == inr::gen::Node::NodeType::Target){
+    for(auto& node : rec->getNodes()) {
+        if(node->getKind() == inr::gen::Node::NodeType::Target) {
             inr::gen::TargetNode* tn = (inr::gen::TargetNode*)node.get();
-            inr::outs() << "Found target: " << tn->getName() << '\n';
-            inr::outs() << "Target endian: " << tn->getEndian() << '\n';
-            inr::outs() << "Target pointer width: " << tn->getPtrWidth() << '\n';
+            inr::outs() << "Found target: " << tn->getName() << '\n'
+                        << "Target endian: " << tn->getEndian() << '\n'
+                        << "Target pointer width: " << tn->getPtrWidth()
+                        << '\n';
         }
     }
 
@@ -62,7 +64,8 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-bool getInputAndOutputFiles(int argc, char** argv, std::string& input, std::string& output){
+bool getInputAndOutputFiles(int argc, char** argv, std::string& input,
+                            std::string& output) {
     int i = 1;
     while(i < argc) {
         inr::sview arg = inr::sview(argv[i]);

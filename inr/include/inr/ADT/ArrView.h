@@ -9,6 +9,7 @@
 
 namespace inr {
 
+/// @brief A non-owning array type.
 template<typename T>
 class arrview {
 public:
@@ -44,6 +45,11 @@ public:
     constexpr arrview(const_pointer ptr1, const_pointer ptr2) noexcept :
         data_(ptr1), len_(ptr2 > ptr1 ? ptr2 - ptr1 : 0) {}
 
+    /// @brief Creates a new array view from T[] arrays.
+    /// @param arr Array.
+    template<typename AT, size_t N>
+    constexpr arrview(AT (&arr)[N]) noexcept : data_(arr), len_(N) {}
+
     iterator begin() const noexcept {
         return data_;
     }
@@ -63,26 +69,37 @@ public:
         return !len_;
     }
 
+    /// @brief Returns the pointer to the first element.
     const_pointer data() const noexcept {
         return data_;
     }
 
+    /// @brief Returns the size of the array.
+    /// @return How many elements are in the array.
     size_type size() const noexcept {
         return len_;
     }
 
+    /// @brief Returns a reference to the first element.
+    /// @return Const reference to the first element.
     const_reference front() const noexcept {
         return *data_;
     }
 
+    /// @brief Returns a reference to the last element.
+    /// @return Const reference to the last element.
     const_reference back() const noexcept {
         return *(data_ + (len_ - 1));
     }
 
+    /// @brief Accesses the array without bounds checking.
+    /// @return Const reference to the element.
     const_reference operator[](difference_type index) const noexcept {
         return data_[index];
     }
 
+    /// @brief Creates a vector from the array.
+    /// @return Vector with the elements copied from the array.
     std::vector<T> vec() const {
         return std::vector<T>(begin(), end());
     }

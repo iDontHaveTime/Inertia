@@ -14,7 +14,9 @@ namespace inr::gen {
 class parser {
 public:
     /// @brief Parses tokens and returns the file tree.
-    static std::unique_ptr<Node> parseTokens(const std::list<token>&);
+    /// @param tokens The tokens to parse.
+    /// @return Root node for the records.
+    static std::unique_ptr<Node> parseTokens(const std::list<token>& tokens);
 };
 
 } // namespace inr::gen

@@ -45,6 +45,7 @@ class InrContext {
     /// @brief Modules that exist under this context.
     std::vector<std::unique_ptr<Module>> modules_;
     /// @brief Void type.
+    ///
     /// This is here because void type is not dynamic, there can only be one.
     std::unique_ptr<VoidType> voidType_ = std::make_unique<VoidType>();
     /// @brief Storage of pointers to different types.

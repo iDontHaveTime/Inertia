@@ -221,8 +221,10 @@ public:
 
 namespace std {
 
+/// @brief Make the `inr::sview` hash same as `std::string_view`.
 template<>
 struct hash<inr::sview> {
+    /// @brief Casts the `inr::sview` to `std::string_view`.
     size_t operator()(inr::sview sv) const noexcept {
         return hash<string_view>{}(sv.strv());
     }

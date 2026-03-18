@@ -41,7 +41,10 @@ constexpr sview none() noexcept {
 void send(raw_stream& os, Level lvl, sview author, sview msg);
 
 /// @brief Works exactly like send but without the message.
+/// @see send(raw_stream&, Level, sview, sview) for more info.
 void sendNoMsg(raw_stream& os, Level lvl, sview author);
+/// @brief Same thing here but for sendpos.
+/// @see sendPosNoMsg(raw_stream&, Level, sview, sview) for more info.
 void sendPosNoMsg(raw_stream& os, Level lvl, sview file, uint32_t line,
                   uint32_t column);
 

@@ -7,14 +7,13 @@
 #include <inr/ADT/ArrView.h>
 #include <inr/ADT/StrView.h>
 #include <inr/IR/Type.h>
+#include <inr/Target/Triple.h>
 
 #include <cstdint>
 #include <initializer_list>
 #include <memory>
 #include <type_traits>
 #include <unordered_map>
-
-#include "inr/Target/Triple.h"
 
 namespace inr {
 

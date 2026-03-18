@@ -18,8 +18,8 @@ class TokenStream {
     std::list<token>::const_iterator end_;
 
 public:
-    TokenStream(const std::list<token>& tokens)
-        : current_(tokens.begin()), end_(tokens.end()) {}
+    TokenStream(const std::list<token>& tokens) :
+        current_(tokens.begin()), end_(tokens.end()) {}
 
     bool atEnd() const noexcept {
         return current_ == end_;
