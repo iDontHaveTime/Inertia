@@ -10,11 +10,14 @@
 #include <inr/ISel/LinearISel.h>
 #include <inr/PassManager.h>
 #include <inr/Support/Stream.h>
+#include <inr/Support/Version.h>
 #include <inr/Target/Triple.h>
 
 #include <cstdio>
 
 int main() {
+    (inr::outs() << inr::reportInertiaVersion << '\n').flush();
+
     inr::InrContext ctx;
 
     inr::Module* mod = ctx.newModule("main_module");

@@ -43,6 +43,10 @@ enum class Colors {
 
 using col = Colors;
 
+class raw_stream;
+
+using stream_manipulator = raw_stream&(*)(raw_stream&);
+
 /// @brief An abstract output stream class.
 class raw_stream {
 protected:
@@ -249,6 +253,13 @@ public:
             *this << code << "m";
         }
         return *this;
+    }
+
+    /// @brief Call stream manipulator on this stream.
+    /// @param sm Stream manipulator.
+    /// @return *this
+    raw_stream& operator<<(stream_manipulator sm){
+        return sm(*this);
     }
 };
 

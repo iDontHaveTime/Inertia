@@ -4,6 +4,12 @@ file(GLOB SupportSources "Support/*.cpp")
 
 add_inertia_library(Core ${SupportSources})
 
+target_compile_definitions(InrCore PRIVATE
+    INERTIA_VERSION_MAJOR=${INERTIA_VERSION_MAJOR}
+    INERTIA_VERSION_MINOR=${INERTIA_VERSION_MINOR}
+    INERTIA_VERSION_PATCH=${INERTIA_VERSION_PATCH}
+)
+
 # IR Library
 file(GLOB IRSources "IR/*.cpp")
 
