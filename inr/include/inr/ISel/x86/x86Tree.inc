@@ -18,8 +18,6 @@ enum class InstructionTypes : InstructionType {
 	MOV,
 	ADD,
 	SUB,
-	POP,
-	PUSH,
 };
 // Target's opcodes
 enum class Opcodes : OpcodeType {
@@ -51,331 +49,243 @@ enum class Opcodes : OpcodeType {
 #undef TARGET_HEADER
 #endif
 #ifdef TARGET_SOURCE
-constexpr OperandDesc i8RegMemUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 8}},
-	{OperandType(Operands::Mem), {Type::TypeID::Integer, 8}}
-};
-ContainerSizedAsOperandDesc i8RegMemStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i8RegRegUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 8}},
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 8}}
-};
-ContainerSizedAsOperandDesc i8RegRegStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i16RegMemUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 16}},
-	{OperandType(Operands::Mem), {Type::TypeID::Integer, 16}}
-};
-ContainerSizedAsOperandDesc i16RegMemStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i16RegRegUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 16}},
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 16}}
-};
-ContainerSizedAsOperandDesc i16RegRegStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i32RegMemUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 32}},
-	{OperandType(Operands::Mem), {Type::TypeID::Integer, 32}}
-};
-ContainerSizedAsOperandDesc i32RegMemStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i32RegRegUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 32}},
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 32}}
-};
-ContainerSizedAsOperandDesc i32RegRegStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i64RegMemUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 64}},
-	{OperandType(Operands::Mem), {Type::TypeID::Integer, 64}}
-};
-ContainerSizedAsOperandDesc i64RegMemStorage[] = {
-	{},
-	{},
-};
-constexpr OperandDesc i64RegRegUniqueArray[] = {
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 64}},
-	{OperandType(Operands::Reg), {Type::TypeID::Integer, 64}}
-};
-ContainerSizedAsOperandDesc i64RegRegStorage[] = {
-	{},
-	{},
-};
 TreeNodeInitializerObject MOVi64RegReg(const inr::InrContext& ctx) {
 	return {"MOVi64RegReg",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i64RegRegUniqueArray,
-			i64RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
 		OpcodeType(Opcodes::MOVi64RegReg)
 	};
 }
 TreeNodeInitializerObject ADDi64RegReg(const inr::InrContext& ctx) {
 	return {"ADDi64RegReg",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i64RegRegUniqueArray,
-			i64RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
 		OpcodeType(Opcodes::ADDi64RegReg)
 	};
 }
 TreeNodeInitializerObject SUBi64RegReg(const inr::InrContext& ctx) {
 	return {"SUBi64RegReg",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i64RegRegUniqueArray,
-			i64RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
 		OpcodeType(Opcodes::SUBi64RegReg)
 	};
 }
 TreeNodeInitializerObject MOVi64RegMem(const inr::InrContext& ctx) {
 	return {"MOVi64RegMem",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i64RegMemUniqueArray,
-			i64RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
 		OpcodeType(Opcodes::MOVi64RegMem)
 	};
 }
 TreeNodeInitializerObject ADDi64RegMem(const inr::InrContext& ctx) {
 	return {"ADDi64RegMem",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i64RegMemUniqueArray,
-			i64RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
 		OpcodeType(Opcodes::ADDi64RegMem)
 	};
 }
 TreeNodeInitializerObject SUBi64RegMem(const inr::InrContext& ctx) {
 	return {"SUBi64RegMem",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i64RegMemUniqueArray,
-			i64RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
 		OpcodeType(Opcodes::SUBi64RegMem)
 	};
 }
 TreeNodeInitializerObject MOVi32RegReg(const inr::InrContext& ctx) {
 	return {"MOVi32RegReg",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i32RegRegUniqueArray,
-			i32RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
 		OpcodeType(Opcodes::MOVi32RegReg)
 	};
 }
 TreeNodeInitializerObject ADDi32RegReg(const inr::InrContext& ctx) {
 	return {"ADDi32RegReg",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i32RegRegUniqueArray,
-			i32RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
 		OpcodeType(Opcodes::ADDi32RegReg)
 	};
 }
 TreeNodeInitializerObject SUBi32RegReg(const inr::InrContext& ctx) {
 	return {"SUBi32RegReg",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i32RegRegUniqueArray,
-			i32RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
 		OpcodeType(Opcodes::SUBi32RegReg)
 	};
 }
 TreeNodeInitializerObject MOVi32RegMem(const inr::InrContext& ctx) {
 	return {"MOVi32RegMem",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i32RegMemUniqueArray,
-			i32RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
 		OpcodeType(Opcodes::MOVi32RegMem)
 	};
 }
 TreeNodeInitializerObject ADDi32RegMem(const inr::InrContext& ctx) {
 	return {"ADDi32RegMem",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i32RegMemUniqueArray,
-			i32RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
 		OpcodeType(Opcodes::ADDi32RegMem)
 	};
 }
 TreeNodeInitializerObject SUBi32RegMem(const inr::InrContext& ctx) {
 	return {"SUBi32RegMem",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i32RegMemUniqueArray,
-			i32RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
 		OpcodeType(Opcodes::SUBi32RegMem)
 	};
 }
 TreeNodeInitializerObject MOVi16RegReg(const inr::InrContext& ctx) {
 	return {"MOVi16RegReg",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i16RegRegUniqueArray,
-			i16RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
 		OpcodeType(Opcodes::MOVi16RegReg)
 	};
 }
 TreeNodeInitializerObject ADDi16RegReg(const inr::InrContext& ctx) {
 	return {"ADDi16RegReg",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i16RegRegUniqueArray,
-			i16RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
 		OpcodeType(Opcodes::ADDi16RegReg)
 	};
 }
 TreeNodeInitializerObject SUBi16RegReg(const inr::InrContext& ctx) {
 	return {"SUBi16RegReg",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i16RegRegUniqueArray,
-			i16RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
 		OpcodeType(Opcodes::SUBi16RegReg)
 	};
 }
 TreeNodeInitializerObject MOVi16RegMem(const inr::InrContext& ctx) {
 	return {"MOVi16RegMem",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i16RegMemUniqueArray,
-			i16RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
 		OpcodeType(Opcodes::MOVi16RegMem)
 	};
 }
 TreeNodeInitializerObject ADDi16RegMem(const inr::InrContext& ctx) {
 	return {"ADDi16RegMem",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i16RegMemUniqueArray,
-			i16RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
 		OpcodeType(Opcodes::ADDi16RegMem)
 	};
 }
 TreeNodeInitializerObject SUBi16RegMem(const inr::InrContext& ctx) {
 	return {"SUBi16RegMem",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i16RegMemUniqueArray,
-			i16RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
 		OpcodeType(Opcodes::SUBi16RegMem)
 	};
 }
 TreeNodeInitializerObject MOVi8RegReg(const inr::InrContext& ctx) {
 	return {"MOVi8RegReg",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i8RegRegUniqueArray,
-			i8RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(8)},
+			{OperandType(Operands::Reg), ctx.getInt(8)}
+		}},
 		OpcodeType(Opcodes::MOVi8RegReg)
 	};
 }
 TreeNodeInitializerObject ADDi8RegReg(const inr::InrContext& ctx) {
 	return {"ADDi8RegReg",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i8RegRegUniqueArray,
-			i8RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(8)},
+			{OperandType(Operands::Reg), ctx.getInt(8)}
+		}},
 		OpcodeType(Opcodes::ADDi8RegReg)
 	};
 }
 TreeNodeInitializerObject SUBi8RegReg(const inr::InrContext& ctx) {
 	return {"SUBi8RegReg",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i8RegRegUniqueArray,
-			i8RegRegStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(8)},
+			{OperandType(Operands::Reg), ctx.getInt(8)}
+		}},
 		OpcodeType(Opcodes::SUBi8RegReg)
 	};
 }
 TreeNodeInitializerObject MOVi8RegMem(const inr::InrContext& ctx) {
 	return {"MOVi8RegMem",
 		InstructionType(InstructionTypes::MOV),
-		{
-			i8RegMemUniqueArray,
-			i8RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(8)},
+			{OperandType(Operands::Mem), ctx.getInt(8)}
+		}},
 		OpcodeType(Opcodes::MOVi8RegMem)
 	};
 }
 TreeNodeInitializerObject ADDi8RegMem(const inr::InrContext& ctx) {
 	return {"ADDi8RegMem",
 		InstructionType(InstructionTypes::ADD),
-		{
-			i8RegMemUniqueArray,
-			i8RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(8)},
+			{OperandType(Operands::Mem), ctx.getInt(8)}
+		}},
 		OpcodeType(Opcodes::ADDi8RegMem)
 	};
 }
 TreeNodeInitializerObject SUBi8RegMem(const inr::InrContext& ctx) {
 	return {"SUBi8RegMem",
 		InstructionType(InstructionTypes::SUB),
-		{
-			i8RegMemUniqueArray,
-			i8RegMemStorage,
-			ctx
-		},
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(8)},
+			{OperandType(Operands::Mem), ctx.getInt(8)}
+		}},
 		OpcodeType(Opcodes::SUBi8RegMem)
 	};
 }

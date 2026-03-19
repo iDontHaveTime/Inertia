@@ -9,7 +9,6 @@
 #include <inr/Support/Stream.h>
 
 #include <memory>
-#include <unordered_map>
 
 namespace inr::gen {
 
@@ -163,7 +162,7 @@ std::string createStringFromOperandDesc(const InstructionNode* ins) {
     bool typesSame = true;
 
     for(const std::unique_ptr<Node>& descNode : ins->getNodes()) {
-        const OperandDesc* desc = (const OperandDesc*)descNode.get();
+        const OperandDescNode* desc = (const OperandDescNode*)descNode.get();
         if(!tn) {
             tn = desc->getType();
         }
@@ -177,7 +176,7 @@ std::string createStringFromOperandDesc(const InstructionNode* ins) {
     std::string typeStr;
 
     for(const std::unique_ptr<Node>& descNode : ins->getNodes()) {
-        const OperandDesc* desc = (const OperandDesc*)descNode.get();
+        const OperandDescNode* desc = (const OperandDescNode*)descNode.get();
 
         if(!typesSame) {
             typeStr += desc->getType()->toString();
@@ -243,8 +242,6 @@ void emitTarget(CPPEmitter& os, const TargetNode* tn) {
     // Opcodes, names made on the fly.
     std::vector<std::string> opcodes;
 
-    std::unordered_map<std::string, const InstructionNode*> operandDescSet;
-
     os.addLineComment("Target's opcodes");
     CPPBody opcEnum = os.addEnumClass("Opcodes", "OpcodeType");
 
@@ -258,7 +255,6 @@ void emitTarget(CPPEmitter& os, const TargetNode* tn) {
             std::string typeStr = createStringFromOperandDesc(ins);
 
             str += typeStr;
-            operandDescSet[std::move(typeStr)] = ins;
 
             os.emit('\t') << str << ",\n";
         }
@@ -272,45 +268,6 @@ void emitTarget(CPPEmitter& os, const TargetNode* tn) {
 
     // Target's C++
     CPPDefine ts = os.addIfDef("TARGET_SOURCE");
-
-    for(const auto& p : operandDescSet) {
-        os.emit("constexpr OperandDesc ") << p.first << "UniqueArray[] = {\n";
-        CPPBody operandDescBody(os.emit(), true);
-
-        for(const std::unique_ptr<Node>& descNode : p.second->getNodes()) {
-            if(&descNode != p.second->getNodes().data()) os.emit(",\n");
-            const OperandDesc* desc = (const OperandDesc*)descNode.get();
-
-            os.emit("\t{");
-            CPPBody descInitList(os.emit(), false, false);
-
-            os.emit("OperandType(Operands::")
-                << desc->getOperand()->getName() << "), {";
-
-            CPPBody typeQBody(os.emit(), false, false);
-            switch(desc->getType()->getID()) {
-                case TypeNode::ID::Integer:
-                    os.emit("Type::TypeID::Integer, ")
-                        << desc->getType()->getWidth();
-                    break;
-            }
-            typeQBody.close();
-
-            descInitList.close();
-        }
-        os.emit('\n');
-
-        operandDescBody.close();
-
-        os.emit("ContainerSizedAsOperandDesc ") << p.first << "Storage[] = {\n";
-        CPPBody operandDescSBody(os.emit(), true);
-
-        for(size_t i = 0; i < p.second->getNodes().size(); i++) {
-            os.emit("\t{},\n");
-        }
-
-        operandDescSBody.close();
-    }
 
     size_t idx = 0;
     for(const std::unique_ptr<Node>& node : tn->getNodes()) {
@@ -326,15 +283,35 @@ void emitTarget(CPPEmitter& os, const TargetNode* tn) {
 
             os.emit(name) << "\",\n"
                           << "\t\tInstructionType(InstructionTypes::"
-                          << ins->getInstType()->getName() << "),\n\t\t{\n";
+                          << ins->getInstType()->getName()
+                          << "),\n\t\t{{\n\t\t\t";
 
             CPPBody descInit(os.emit(), false, false);
 
-            std::string arr = createStringFromOperandDesc(ins);
-            os.emit("\t\t\t") << arr << "UniqueArray,\n";
-            os.emit("\t\t\t") << arr << "Storage,\n";
-            os.emit("\t\t\tctx\n\t\t");
+            for(const std::unique_ptr<Node>& descNode : ins->getNodes()) {
+                if(&descNode != ins->getNodes().data()) {
+                    os.emit(",\n\t\t\t");
+                }
+                const OperandDescNode* desc =
+                    (const OperandDescNode*)descNode.get();
+                os.emit("{");
+                CPPBody descB(os.emit(), false, false);
 
+                os.emit("OperandType(Operands::")
+                    << desc->getOperand()->getName() << "), ctx.";
+
+                switch(desc->getType()->getID()) {
+                    case TypeNode::ID::Integer:
+                        os.emit("getInt(")
+                            << desc->getType()->getWidth() << ")";
+                        break;
+                }
+
+                descB.close();
+            }
+
+            os.emit("\n\t\t");
+            descInit.close();
             descInit.close();
 
             os.emit(",\n\t\t") << "OpcodeType(Opcodes::" << name << ")\n";

@@ -9,6 +9,7 @@
 /// @brief Contains the target tree base class.
 
 #include <inr/ADT/ArrView.h>
+#include <inr/ADT/IVector.h>
 #include <inr/ADT/StrView.h>
 #include <inr/IR/Type.h>
 #include <inr/Target/Triple.h>
@@ -18,8 +19,6 @@
 #include <memory>
 #include <type_traits>
 #include <unordered_map>
-
-#include "inr/IR/Context.h"
 
 namespace inr {
 
@@ -108,31 +107,10 @@ using OpcodeType = uint32_t;
 /// @brief A single operand descriptor.
 class OperandDesc {
     OperandType id_;
-    TypeQuery type_;
-
-public:
-    constexpr OperandDesc(OperandType id, TypeQuery type) noexcept :
-        id_(id), type_(type) {}
-
-    constexpr OperandType getID() const noexcept {
-        return id_;
-    }
-
-    constexpr const TypeQuery& getType() const noexcept {
-        return type_;
-    }
-
-    constexpr bool operator==(const OperandDesc& o) const noexcept {
-        return id_ == o.id_ && type_ == o.type_;
-    }
-};
-
-class OperandDescSolvedType {
-    OperandType id_;
     const Type* type_;
 
 public:
-    constexpr OperandDescSolvedType(OperandType id, const Type* type) noexcept :
+    constexpr OperandDesc(OperandType id, const Type* type) noexcept :
         id_(id), type_(type) {}
 
     constexpr OperandType getID() const noexcept {
@@ -143,36 +121,21 @@ public:
         return type_;
     }
 
-    constexpr bool operator==(const OperandDescSolvedType& o) const noexcept {
+    constexpr bool operator==(const OperandDesc& o) const noexcept {
         return id_ == o.id_ && type_ == o.type_;
     }
-};
-
-struct ContainerSizedAsOperandDesc {
-    alignas(
-        OperandDescSolvedType) uint8_t storage_[sizeof(OperandDescSolvedType)];
 };
 
 /// @brief Signature of all operands for an instruction.
 /// Used as the key in OperandTree.
 class OperandSignature {
-    arrview<OperandDescSolvedType> operands_;
+    ivec<OperandDesc, 4> operands_;
 
 public:
-    constexpr OperandSignature(arrview<OperandDesc> operands,
-                               ContainerSizedAsOperandDesc* storage,
-                               const InrContext& ctx) :
-        operands_() {
-        for(size_t i = 0; i < operands.size(); i++) {
-            new(storage + i) OperandDescSolvedType(
-                operands[i].getID(), ctx.getQuery(operands[i].getType()));
-        }
+    OperandSignature(ivec<OperandDesc, 4> operands) :
+        operands_(std::move(operands)) {}
 
-        operands_ = arrview<OperandDescSolvedType>(
-            (OperandDescSolvedType*)storage, operands.size());
-    }
-
-    constexpr arrview<OperandDescSolvedType> getOperands() const noexcept {
+    const ivec<OperandDesc, 4>& getOperands() const noexcept {
         return operands_;
     }
 
@@ -184,7 +147,7 @@ public:
 struct OperandSignatureHash {
     constexpr size_t operator()(const OperandSignature& sig) const noexcept {
         size_t hash = 0;
-        for(const OperandDescSolvedType& op : sig.getOperands())
+        for(const OperandDesc& op : sig.getOperands())
             hash ^= std::hash<uint16_t>{}(op.getID()) + 0x9e3779b9 +
                     (hash << 6) + (hash >> 2);
         return hash;
@@ -245,21 +208,20 @@ public:
     /// @param instType Instruction type for the node.
     /// @param ops Operands for the node.
     /// @param op Opcode for the leaf node.
-    constexpr TreeNodeInitializerObject(sview name, InstructionType instType,
-                                        OperandSignature ops,
-                                        OpcodeType op) noexcept :
+    TreeNodeInitializerObject(sview name, InstructionType instType,
+                              OperandSignature ops, OpcodeType op) noexcept :
         name_(name), instType_(instType), ops_(std::move(ops)), op_(op) {}
 
-    constexpr sview getName() const noexcept {
+    sview getName() const noexcept {
         return name_;
     }
-    constexpr InstructionType getInstType() const noexcept {
+    InstructionType getInstType() const noexcept {
         return instType_;
     }
-    constexpr const OperandSignature& getOperands() const noexcept {
+    const OperandSignature& getOperands() const noexcept {
         return ops_;
     }
-    constexpr OpcodeType getOp() const noexcept {
+    OpcodeType getOp() const noexcept {
         return op_;
     }
 };

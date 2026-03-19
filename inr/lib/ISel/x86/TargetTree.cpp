@@ -14,3 +14,10 @@
 
 #define TARGET_SOURCE
 #include <inr/ISel/x86/x86Tree.inc>
+
+// PUT THIS IF IT ERRORS!
+// namespace inr::x86{
+//     arrview<TreeNodeObjectFunc> getTargetTree() {
+//         return {};
+//     }
+// }

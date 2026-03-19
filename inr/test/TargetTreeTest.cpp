@@ -1,104 +1,40 @@
-// // Copyright (c) 2026 Inertia Project
-// // Distributed under the Boost Software License, Version 1.0.
-// // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
-// #include <inr/ADT/ArrView.h>
-// #include <inr/IR/Context.h>
-// #include <inr/ISel/TargetTree.h>
+/// @file test/TargetTreeTest.cpp
+/// @brief This file is for testing a simple target tree.
+///
+/// This test uses the x86 target tree for the example.
 
-// /// @brief This file is for testing a simple target tree.
-// ///
-// /// This test contains no target instructions as this is just for testing.
-// /// This test has an imaginary architecture called E-ISA.
+#include <inr/IR/Context.h>
+#include <inr/ISel/TargetTree.h>
+#include <inr/ISel/x86/TargetTree.h>
+#include <inr/Target/Triple.h>
 
-// /// @brief Lets define an opcode enum for the example.
-// ///
-// /// As the `inr::OpcodeType` says this enum SHOULD use it as the type.
-// enum class EISAOpcodes : inr::OpcodeType {
-//     ADD32RR,
-//     ADD32RM,
-//     ADD64RR,
-//     ADD64RM,
-//     MOV32RR,
-//     MOV32RM,
-//     MOV64RR,
-//     MOV64RM
-// };
+int main() {
+    // Needed for types
+    inr::InrContext ctx;
 
-// /// @brief Follow it up with operands.
-// ///
-// /// As the `inr::OperandType` says this enum SHOULD use it as the type.
-// enum class EISAOperands : inr::OperandType { Reg, Mem };
+    // Get the tree
+    inr::TreeNodeBuilder x86Tree(
+        ctx, inr::getTargetTreeInit(inr::Triple("x86_64-linux-gnu")));
 
-// /// @brief Same thing here just for
-// enum class EISAInstructionTypes : inr::InstructionType { ADD, MOV };
+    const inr::LeafNode* add32rr = inr::Walker::walk(
+        x86Tree.buildTree(),
+        inr::InstructionType(inr::x86::InstructionTypes::ADD),
+        {{{inr::OperandType(inr::x86::Operands::Reg), ctx.getInt(32)},
+          {inr::OperandType(inr::x86::Operands::Reg), ctx.getInt(32)}}});
 
-// /// If this is not a reason for why make a DSL, I don't know what is.
-// inr::TreeNodeInitializerObject add64rr(const inr::InrContext& ctx) {
-//     return {"add64rr",
-//             inr::InstructionType(EISAInstructionTypes::ADD),
-//             {},
-//             inr::OpcodeType(EISAOpcodes::ADD64RR)};
-// }
+    if(!add32rr){
+        inr::outs() << "Instruction not found.\n";
+    }
+    else{
+        inr::outs() << "Instruction found: " << add32rr->getName() << '\n';
+    }
 
-// inr::TreeNodeInitializerObject add64rm(const inr::InrContext& ctx) {
-//     return {"add64rm",
-//             inr::InstructionType(EISAInstructionTypes::ADD),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
-//               {inr::OperandType(EISAOperands::Mem), ctx.getI64()}}},
-//             inr::OpcodeType(EISAOpcodes::ADD64RM)};
-// }
-
-// inr::TreeNodeInitializerObject add32rr(const inr::InrContext& ctx) {
-//     return {"add32rr",
-//             inr::InstructionType(EISAInstructionTypes::ADD),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
-//               {inr::OperandType(EISAOperands::Reg), ctx.getI32()}}},
-//             inr::OpcodeType(EISAOpcodes::ADD32RR)};
-// }
-
-// inr::TreeNodeInitializerObject add32rm(const inr::InrContext& ctx) {
-//     return {"add32rm",
-//             inr::InstructionType(EISAInstructionTypes::ADD),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
-//               {inr::OperandType(EISAOperands::Mem), ctx.getI32()}}},
-//             inr::OpcodeType(EISAOpcodes::ADD32RM)};
-// }
-
-// inr::TreeNodeInitializerObject mov64rr(const inr::InrContext& ctx) {
-//     return {"mov64rr",
-//             inr::InstructionType(EISAInstructionTypes::MOV),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
-//               {inr::OperandType(EISAOperands::Reg), ctx.getI64()}}},
-//             inr::OpcodeType(EISAOpcodes::MOV64RR)};
-// }
-
-// inr::TreeNodeInitializerObject mov64rm(const inr::InrContext& ctx) {
-//     return {"mov64rm",
-//             inr::InstructionType(EISAInstructionTypes::MOV),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI64()},
-//               {inr::OperandType(EISAOperands::Mem), ctx.getI64()}}},
-//             inr::OpcodeType(EISAOpcodes::MOV64RM)};
-// }
-
-// inr::TreeNodeInitializerObject mov32rr(const inr::InrContext& ctx) {
-//     return {"mov32rr",
-//             inr::InstructionType(EISAInstructionTypes::MOV),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
-//               {inr::OperandType(EISAOperands::Reg), ctx.getI32()}}},
-//             inr::OpcodeType(EISAOpcodes::MOV32RR)};
-// }
-
-// inr::TreeNodeInitializerObject mov32rm(const inr::InrContext& ctx) {
-//     return {"mov32rm",
-//             inr::InstructionType(EISAInstructionTypes::MOV),
-//             {{{inr::OperandType(EISAOperands::Reg), ctx.getI32()},
-//               {inr::OperandType(EISAOperands::Mem), ctx.getI32()}}},
-//             inr::OpcodeType(EISAOpcodes::MOV32RM)};
-// }
-
-// inr::TreeNodeObjectFunc funcs[] = {add64rr, add64rm, add32rr, add32rm,
-//                                    mov64rr, mov64rm, mov32rr, mov32rm};
+    return 0;
+}
 
 // int main() {
 //     /// For types.
@@ -133,6 +69,6 @@
 //     return 0;
 // }
 
-int main() {
-    return 0;
-}
+// int main() {
+//     return 0;
+// }

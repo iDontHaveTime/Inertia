@@ -110,11 +110,11 @@ public:
     }
 };
 
-class OperandDesc : public Node {
+class OperandDescNode : public Node {
     const OperandNode* operand_;
 
 public:
-    OperandDesc(const OperandNode* operand) noexcept :
+    OperandDescNode(const OperandNode* operand) noexcept :
         Node(NodeType::OperandDesc), operand_(operand) {}
 
     const OperandNode* getOperand() const noexcept {

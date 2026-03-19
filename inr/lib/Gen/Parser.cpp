@@ -243,9 +243,9 @@ bool parseOpDesc(std::unique_ptr<Node>& root, TokenStream& ts,
 
         if(commaIfNotError(ts, "expected a comma after operand")) return true;
 
-        if(parseType(
-               root->addNode(new OperandDesc((const OperandNode*)it->second)),
-               ts))
+        if(parseType(root->addNode(
+                         new OperandDescNode((const OperandNode*)it->second)),
+                     ts))
             return true;
 
         if(!ts.consume(token::ID::RightBrace)) {
