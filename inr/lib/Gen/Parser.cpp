@@ -93,15 +93,18 @@ const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
         return result.newInit<ArgInit>(it->second);
     }
 
-    if(expectedType->getKind() == RecordType::Kind::Def){
+    if(expectedType->getKind() == RecordType::Kind::Def) {
         const Record* def = result.findDef(symbol);
-        if(!def){
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ", symbol, " was not found");
+        if(!def) {
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ",
+                          symbol, " was not found");
             return nullptr;
         }
         const RecordDef* rdef = (const RecordDef*)expectedType;
-        if(!def->isDerived(rdef->getRecord())){
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ", symbol, " must be derived from ", rdef->getRecord()->getName());
+        if(!def->isDerived(rdef->getRecord())) {
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ",
+                          symbol, " must be derived from ",
+                          rdef->getRecord()->getName());
             return nullptr;
         }
         return result.newInit<DefInit>(result, def);
@@ -124,8 +127,9 @@ const Init* parseListInit(TokenStream& ts, RecordStorage& result,
                           std::unordered_map<sview, size_t>& symbolMap,
                           const RecordType* expectedType) {
     if(advanceIfNotUnexpected(ts)) return nullptr;
-    if(expectedType->getKind() != RecordType::Kind::List){
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, "to initialize a list a list must be init");
+    if(expectedType->getKind() != RecordType::Kind::List) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "to initialize a list a list must be init");
         return nullptr;
     }
     ListInit* linit = (ListInit*)result.newInit<ListInit>(expectedType);
@@ -134,7 +138,8 @@ const Init* parseListInit(TokenStream& ts, RecordStorage& result,
     }
 another_list:
     const Init* candidate =
-        parseInit(ts, result, false, symbolMap, ((const RecordList*)expectedType)->getElementTy());
+        parseInit(ts, result, false, symbolMap,
+                  ((const RecordList*)expectedType)->getElementTy());
     if(candidate) {
         linit->addInit(candidate);
     }

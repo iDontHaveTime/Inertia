@@ -306,8 +306,7 @@ class ListInit : public TypeInit {
     std::vector<const Init*> inits_;
 
 public:
-    ListInit(const RecordType* type) :
-        TypeInit(Kind::List, type) {}
+    ListInit(const RecordType* type) : TypeInit(Kind::List, type) {}
 
     void addInit(const Init* i) {
         inits_.emplace_back(i);
