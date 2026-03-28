@@ -51,7 +51,7 @@ class InrContext {
     /// @brief Void type.
     ///
     /// This is here because void type is not dynamic, there can only be one.
-    std::unique_ptr<VoidType> voidType_ = std::make_unique<VoidType>();
+    VoidType voidType_;
     /// @brief Storage of pointers to different types.
     mutable std::vector<std::unique_ptr<Type>> storage_;
     /// @brief Storage of pointers to constant types.
@@ -67,6 +67,11 @@ class InrContext {
                                ConstantInt*, PairHash>
         intConstants_;
 
+    const IntegerType* i1_ = getInt(1);   ///< Cache i1 (common for bool type).
+    const IntegerType* i8_ = getInt(8);   ///< Cache i8 (common integer type).
+    const IntegerType* i16_ = getInt(16); ///< Cache i16 (common integer type).
+    const IntegerType* i32_ = getInt(32); ///< Cache i32 (common integer type).
+    const IntegerType* i64_ = getInt(64); ///< Cache i64 (common integer type).
 public:
     InrContext() = default;
 
@@ -85,7 +90,7 @@ public:
     /// @brief Returns the void type.
     /// @return Pointer to the void type.
     const VoidType* getVoid() const noexcept {
-        return voidType_.get();
+        return &voidType_;
     }
 
     /// @brief Creates a new integer type.
@@ -136,50 +141,34 @@ public:
             .get();
     }
 
-    /// @brief Returns type if possible based on query.
-    /// @param q Query of the type.
-    /// @return Type if succeeded, nullptr if failed.
-    const Type* getQuery(TypeQuery q) const {
-        switch(q.getID()) {
-            case Type::TypeID::Void:
-                return getVoid();
-            case Type::TypeID::Integer:
-                return getInt(q.getWidth());
-            case Type::TypeID::Pointer:
-                [[fallthrough]];
-            case Type::TypeID::Function:
-                return nullptr;
-        }
-    }
-
     /// @brief Shorcut for doing getInt(1).
     /// @return Integer with the width of 1 bits.
-    const IntegerType* getI1() const {
-        return getInt(1);
+    inline const IntegerType* getI1() const {
+        return i1_;
     }
 
     /// @brief Shorcut for doing getInt(8).
     /// @return Integer with the width of 8 bits.
-    const IntegerType* getI8() const {
-        return getInt(8);
+    inline const IntegerType* getI8() const {
+        return i8_;
     }
 
     /// @brief Shorcut for doing getInt(16).
     /// @return Integer with the width of 16 bits.
-    const IntegerType* getI16() const {
-        return getInt(16);
+    inline const IntegerType* getI16() const {
+        return i16_;
     }
 
     /// @brief Shorcut for doing getInt(32).
     /// @return Integer with the width of 32 bits.
-    const IntegerType* getI32() const {
-        return getInt(32);
+    inline const IntegerType* getI32() const {
+        return i32_;
     }
 
     /// @brief Shorcut for doing getInt(64).
     /// @return Integer with the width of 64 bits.
-    const IntegerType* getI64() const {
-        return getInt(64);
+    inline const IntegerType* getI64() const {
+        return i64_;
     }
 
     ConstantInt* getIntConstant(const IntegerType* type, uint64_t value) const {

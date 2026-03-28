@@ -52,7 +52,7 @@ protected:
         }
     }
 
-    ~Instruction() {
+    ~Instruction() noexcept override {
         for(Value* op : operands_) op->removeUser(this);
     }
 
@@ -91,6 +91,10 @@ public:
         return operands_.size();
     }
 
+    virtual bool isTerminator() const noexcept {
+        return false;
+    }
+
     friend class Block;
 };
 
@@ -107,6 +111,10 @@ public:
     /// @return The instruction.
     static ReturnInst* create(Value* retVal, Block* parent) {
         return new ReturnInst(retVal, parent);
+    }
+
+    bool isTerminator() const noexcept override {
+        return true;
     }
 };
 

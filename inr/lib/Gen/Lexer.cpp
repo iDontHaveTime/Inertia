@@ -41,31 +41,11 @@ raw_stream& operator<<(raw_stream& os, const token& token) {
             [[fallthrough]];
         case token::ID::LeftSquare:
             [[fallthrough]];
+        case token::ID::Equals:
+            [[fallthrough]];
         case token::ID::RightSquare:
             return os << token.getAsChar();
-        case token::ID::StringLiteral:
-            [[fallthrough]];
-        case token::ID::Little:
-            [[fallthrough]];
-        case token::ID::Big:
-            [[fallthrough]];
-        case token::ID::New:
-            [[fallthrough]];
-        case token::ID::Instruction:
-            [[fallthrough]];
-        case token::ID::InstructionType:
-            [[fallthrough]];
-        case token::ID::Operand:
-            [[fallthrough]];
-        case token::ID::Integer:
-            [[fallthrough]];
-        case token::ID::Identifier:
-            [[fallthrough]];
-        case token::ID::Unfold:
-            [[fallthrough]];
-        case token::ID::Target:
-            [[fallthrough]];
-        case token::ID::Define:
+        default:
             return os << token.getAsString();
         case token::ID::End:
         case token::ID::Slash: // Used for comments
@@ -135,17 +115,11 @@ void lexer::advanceUntil(char c, bool escape) noexcept {
 }
 
 constexpr std::pair<sview, token::ID> keywords[] = {
-    {"little", token::ID::Little},
-    {"big", token::ID::Big},
-    {"new", token::ID::New},
-    {"Instruction", token::ID::Instruction},
-    {"InstructionType", token::ID::InstructionType},
-    {"Operand", token::ID::Operand},
-    {"integer", token::ID::Integer},
-    {"define", token::ID::Define},
-    {"target", token::ID::Target},
-    {"unfold", token::ID::Unfold},
-};
+    {"little", token::ID::Little}, {"big", token::ID::Big},
+    {"def", token::ID::Def},       {"class", token::ID::Class},
+    {"int", token::ID::Int},       {"string", token::ID::String},
+    {"endian", token::ID::Endian}, {"include", token::ID::Include},
+    {"list", token::ID::List}};
 
 token::ID lexer::classifyAlpha(sview sv) {
     for(const auto& p : keywords) {
@@ -322,6 +296,8 @@ token::ID lexer::classifySymbol() const noexcept {
             return token::ID::StringLiteral;
         case '/':
             return token::ID::Slash;
+        case '=':
+            return token::ID::Equals;
         default:
             return token::ID::End;
     }

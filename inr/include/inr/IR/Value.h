@@ -30,7 +30,7 @@ public:
     /// @brief Flags for a value.
     enum class ValueFlags : uint32_t {
         None = 0x0,    ///< No flags.
-        Volatile = 0x1 ///< Value may have side effects,  cannot be optimized
+        Volatile = 0x1 ///< Value may have side effects, cannot be optimized
                        ///< away (DCE).
     };
 
@@ -101,9 +101,12 @@ public:
     const std::vector<Value*>& getUsers() const noexcept {
         return users_;
     }
+
     bool hasUsers() const noexcept {
         return !users_.empty();
     }
+
+    virtual ~Value() noexcept = default;
 };
 
 raw_stream& operator<<(raw_stream&, const Value&);

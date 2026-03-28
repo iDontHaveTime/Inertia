@@ -30,6 +30,16 @@ const LeafNode* Walker::walk(const TargetTree* root, InstructionType keyInstT,
     return (const LeafNode*)current;
 }
 
+const LeafNode* Walker::getFromOpcode(const TreeNodeBuilder& b, OpcodeType op) {
+    for(const auto& node : b.storage_) {
+        if(node->getNodeType() == TargetTree::NodeType::Leaf) {
+            const LeafNode* candidate = (const LeafNode*)node.get();
+            if(candidate->getOp() == op) return candidate;
+        }
+    }
+    return nullptr;
+}
+
 TargetTree* TreeNodeBuilder::buildTree() {
     if(!exists_) {
         InstructionTree* root =

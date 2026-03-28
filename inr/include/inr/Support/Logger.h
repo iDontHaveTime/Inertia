@@ -65,6 +65,14 @@ void sendPosNoMsg(raw_stream& os, Level lvl, sview file, uint32_t line,
 void sendpos(raw_stream& os, Level lvl, sview file, uint32_t line,
              uint32_t column, sview msg);
 
+/// @brief Works like send() but with variadic args.
+template<typename... Args>
+void sendargs(raw_stream& os, Level lvl, sview author, Args&&... args) {
+    sendNoMsg(os, lvl, author);
+    ((os << args), ...);
+    os << '\n';
+}
+
 } // namespace inr::log
 
 #endif // INERTIA_SUPPORT_LOGGER_H

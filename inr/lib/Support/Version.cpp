@@ -16,7 +16,7 @@ Version getInertiaVersion() noexcept {
                    INERTIA_VERSION_PATCH);
 }
 
-raw_stream& reportInertiaVersion(raw_stream& os){
+raw_stream& reportInertiaVersion(raw_stream& os) {
     return os << "Inertia version " << getInertiaVersion();
 }
 

@@ -38,7 +38,7 @@ concept IRPassC = std::derived_from<T, IRPass>;
 class ISelPass {
 public:
     virtual void run(const InrContext& ctx, Module& mod, MachineModule& mmod,
-                     TargetTree* tt) = 0;
+                     const TargetTree* tt) = 0;
     virtual ~ISelPass() = default;
 };
 
@@ -151,6 +151,10 @@ public:
     /// @brief Returns the target tree.
     TargetTree* getTargetTree() noexcept {
         return treeBuilder_.buildTree();
+    }
+
+    const TreeNodeBuilder& getBuilder() const noexcept {
+        return treeBuilder_;
     }
 
     /// @brief Returns the target triple.

@@ -18,33 +18,60 @@ enum class InstructionTypes : InstructionType {
 	MOV,
 	ADD,
 	SUB,
+	RET,
 };
 // Target's opcodes
 enum class Opcodes : OpcodeType {
 	MOVi64RegReg,
-	ADDi64RegReg,
-	SUBi64RegReg,
-	MOVi64RegMem,
-	ADDi64RegMem,
-	SUBi64RegMem,
 	MOVi32RegReg,
-	ADDi32RegReg,
-	SUBi32RegReg,
-	MOVi32RegMem,
-	ADDi32RegMem,
-	SUBi32RegMem,
 	MOVi16RegReg,
-	ADDi16RegReg,
-	SUBi16RegReg,
-	MOVi16RegMem,
-	ADDi16RegMem,
-	SUBi16RegMem,
 	MOVi8RegReg,
+	MOVi32ImmReg,
+	MOVi16ImmReg,
+	MOVi8ImmReg,
+	MOVi32Immi64Reg,
+	ADDi64RegReg,
+	ADDi32RegReg,
+	ADDi16RegReg,
 	ADDi8RegReg,
+	ADDi32ImmReg,
+	ADDi16ImmReg,
+	ADDi8ImmReg,
+	ADDi32Immi64Reg,
+	SUBi64RegReg,
+	SUBi32RegReg,
+	SUBi16RegReg,
 	SUBi8RegReg,
+	SUBi32ImmReg,
+	SUBi16ImmReg,
+	SUBi8ImmReg,
+	SUBi32Immi64Reg,
+	MOVi64RegMem,
+	MOVi32RegMem,
+	MOVi16RegMem,
 	MOVi8RegMem,
+	MOVi32ImmMem,
+	MOVi16ImmMem,
+	MOVi8ImmMem,
+	MOVi32Immi64Mem,
+	ADDi64RegMem,
+	ADDi32RegMem,
+	ADDi16RegMem,
 	ADDi8RegMem,
+	ADDi32ImmMem,
+	ADDi16ImmMem,
+	ADDi8ImmMem,
+	ADDi32Immi64Mem,
+	SUBi64RegMem,
+	SUBi32RegMem,
+	SUBi16RegMem,
 	SUBi8RegMem,
+	SUBi32ImmMem,
+	SUBi16ImmMem,
+	SUBi8ImmMem,
+	SUBi32Immi64Mem,
+	MOVi64ImmReg,
+	RET,
 };
 #undef TARGET_HEADER
 #endif
@@ -59,56 +86,6 @@ TreeNodeInitializerObject MOVi64RegReg(const inr::InrContext& ctx) {
 		OpcodeType(Opcodes::MOVi64RegReg)
 	};
 }
-TreeNodeInitializerObject ADDi64RegReg(const inr::InrContext& ctx) {
-	return {"ADDi64RegReg",
-		InstructionType(InstructionTypes::ADD),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(64)},
-			{OperandType(Operands::Reg), ctx.getInt(64)}
-		}},
-		OpcodeType(Opcodes::ADDi64RegReg)
-	};
-}
-TreeNodeInitializerObject SUBi64RegReg(const inr::InrContext& ctx) {
-	return {"SUBi64RegReg",
-		InstructionType(InstructionTypes::SUB),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(64)},
-			{OperandType(Operands::Reg), ctx.getInt(64)}
-		}},
-		OpcodeType(Opcodes::SUBi64RegReg)
-	};
-}
-TreeNodeInitializerObject MOVi64RegMem(const inr::InrContext& ctx) {
-	return {"MOVi64RegMem",
-		InstructionType(InstructionTypes::MOV),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(64)},
-			{OperandType(Operands::Mem), ctx.getInt(64)}
-		}},
-		OpcodeType(Opcodes::MOVi64RegMem)
-	};
-}
-TreeNodeInitializerObject ADDi64RegMem(const inr::InrContext& ctx) {
-	return {"ADDi64RegMem",
-		InstructionType(InstructionTypes::ADD),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(64)},
-			{OperandType(Operands::Mem), ctx.getInt(64)}
-		}},
-		OpcodeType(Opcodes::ADDi64RegMem)
-	};
-}
-TreeNodeInitializerObject SUBi64RegMem(const inr::InrContext& ctx) {
-	return {"SUBi64RegMem",
-		InstructionType(InstructionTypes::SUB),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(64)},
-			{OperandType(Operands::Mem), ctx.getInt(64)}
-		}},
-		OpcodeType(Opcodes::SUBi64RegMem)
-	};
-}
 TreeNodeInitializerObject MOVi32RegReg(const inr::InrContext& ctx) {
 	return {"MOVi32RegReg",
 		InstructionType(InstructionTypes::MOV),
@@ -117,56 +94,6 @@ TreeNodeInitializerObject MOVi32RegReg(const inr::InrContext& ctx) {
 			{OperandType(Operands::Reg), ctx.getInt(32)}
 		}},
 		OpcodeType(Opcodes::MOVi32RegReg)
-	};
-}
-TreeNodeInitializerObject ADDi32RegReg(const inr::InrContext& ctx) {
-	return {"ADDi32RegReg",
-		InstructionType(InstructionTypes::ADD),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(32)},
-			{OperandType(Operands::Reg), ctx.getInt(32)}
-		}},
-		OpcodeType(Opcodes::ADDi32RegReg)
-	};
-}
-TreeNodeInitializerObject SUBi32RegReg(const inr::InrContext& ctx) {
-	return {"SUBi32RegReg",
-		InstructionType(InstructionTypes::SUB),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(32)},
-			{OperandType(Operands::Reg), ctx.getInt(32)}
-		}},
-		OpcodeType(Opcodes::SUBi32RegReg)
-	};
-}
-TreeNodeInitializerObject MOVi32RegMem(const inr::InrContext& ctx) {
-	return {"MOVi32RegMem",
-		InstructionType(InstructionTypes::MOV),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(32)},
-			{OperandType(Operands::Mem), ctx.getInt(32)}
-		}},
-		OpcodeType(Opcodes::MOVi32RegMem)
-	};
-}
-TreeNodeInitializerObject ADDi32RegMem(const inr::InrContext& ctx) {
-	return {"ADDi32RegMem",
-		InstructionType(InstructionTypes::ADD),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(32)},
-			{OperandType(Operands::Mem), ctx.getInt(32)}
-		}},
-		OpcodeType(Opcodes::ADDi32RegMem)
-	};
-}
-TreeNodeInitializerObject SUBi32RegMem(const inr::InrContext& ctx) {
-	return {"SUBi32RegMem",
-		InstructionType(InstructionTypes::SUB),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(32)},
-			{OperandType(Operands::Mem), ctx.getInt(32)}
-		}},
-		OpcodeType(Opcodes::SUBi32RegMem)
 	};
 }
 TreeNodeInitializerObject MOVi16RegReg(const inr::InrContext& ctx) {
@@ -179,56 +106,6 @@ TreeNodeInitializerObject MOVi16RegReg(const inr::InrContext& ctx) {
 		OpcodeType(Opcodes::MOVi16RegReg)
 	};
 }
-TreeNodeInitializerObject ADDi16RegReg(const inr::InrContext& ctx) {
-	return {"ADDi16RegReg",
-		InstructionType(InstructionTypes::ADD),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(16)},
-			{OperandType(Operands::Reg), ctx.getInt(16)}
-		}},
-		OpcodeType(Opcodes::ADDi16RegReg)
-	};
-}
-TreeNodeInitializerObject SUBi16RegReg(const inr::InrContext& ctx) {
-	return {"SUBi16RegReg",
-		InstructionType(InstructionTypes::SUB),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(16)},
-			{OperandType(Operands::Reg), ctx.getInt(16)}
-		}},
-		OpcodeType(Opcodes::SUBi16RegReg)
-	};
-}
-TreeNodeInitializerObject MOVi16RegMem(const inr::InrContext& ctx) {
-	return {"MOVi16RegMem",
-		InstructionType(InstructionTypes::MOV),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(16)},
-			{OperandType(Operands::Mem), ctx.getInt(16)}
-		}},
-		OpcodeType(Opcodes::MOVi16RegMem)
-	};
-}
-TreeNodeInitializerObject ADDi16RegMem(const inr::InrContext& ctx) {
-	return {"ADDi16RegMem",
-		InstructionType(InstructionTypes::ADD),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(16)},
-			{OperandType(Operands::Mem), ctx.getInt(16)}
-		}},
-		OpcodeType(Opcodes::ADDi16RegMem)
-	};
-}
-TreeNodeInitializerObject SUBi16RegMem(const inr::InrContext& ctx) {
-	return {"SUBi16RegMem",
-		InstructionType(InstructionTypes::SUB),
-		{{
-			{OperandType(Operands::Reg), ctx.getInt(16)},
-			{OperandType(Operands::Mem), ctx.getInt(16)}
-		}},
-		OpcodeType(Opcodes::SUBi16RegMem)
-	};
-}
 TreeNodeInitializerObject MOVi8RegReg(const inr::InrContext& ctx) {
 	return {"MOVi8RegReg",
 		InstructionType(InstructionTypes::MOV),
@@ -237,6 +114,76 @@ TreeNodeInitializerObject MOVi8RegReg(const inr::InrContext& ctx) {
 			{OperandType(Operands::Reg), ctx.getInt(8)}
 		}},
 		OpcodeType(Opcodes::MOVi8RegReg)
+	};
+}
+TreeNodeInitializerObject MOVi32ImmReg(const inr::InrContext& ctx) {
+	return {"MOVi32ImmReg",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::MOVi32ImmReg)
+	};
+}
+TreeNodeInitializerObject MOVi16ImmReg(const inr::InrContext& ctx) {
+	return {"MOVi16ImmReg",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::MOVi16ImmReg)
+	};
+}
+TreeNodeInitializerObject MOVi8ImmReg(const inr::InrContext& ctx) {
+	return {"MOVi8ImmReg",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(8)},
+			{OperandType(Operands::Reg), ctx.getInt(8)}
+		}},
+		OpcodeType(Opcodes::MOVi8ImmReg)
+	};
+}
+TreeNodeInitializerObject MOVi32Immi64Reg(const inr::InrContext& ctx) {
+	return {"MOVi32Immi64Reg",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::MOVi32Immi64Reg)
+	};
+}
+TreeNodeInitializerObject ADDi64RegReg(const inr::InrContext& ctx) {
+	return {"ADDi64RegReg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::ADDi64RegReg)
+	};
+}
+TreeNodeInitializerObject ADDi32RegReg(const inr::InrContext& ctx) {
+	return {"ADDi32RegReg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::ADDi32RegReg)
+	};
+}
+TreeNodeInitializerObject ADDi16RegReg(const inr::InrContext& ctx) {
+	return {"ADDi16RegReg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::ADDi16RegReg)
 	};
 }
 TreeNodeInitializerObject ADDi8RegReg(const inr::InrContext& ctx) {
@@ -249,6 +196,76 @@ TreeNodeInitializerObject ADDi8RegReg(const inr::InrContext& ctx) {
 		OpcodeType(Opcodes::ADDi8RegReg)
 	};
 }
+TreeNodeInitializerObject ADDi32ImmReg(const inr::InrContext& ctx) {
+	return {"ADDi32ImmReg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::ADDi32ImmReg)
+	};
+}
+TreeNodeInitializerObject ADDi16ImmReg(const inr::InrContext& ctx) {
+	return {"ADDi16ImmReg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::ADDi16ImmReg)
+	};
+}
+TreeNodeInitializerObject ADDi8ImmReg(const inr::InrContext& ctx) {
+	return {"ADDi8ImmReg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(8)},
+			{OperandType(Operands::Reg), ctx.getInt(8)}
+		}},
+		OpcodeType(Opcodes::ADDi8ImmReg)
+	};
+}
+TreeNodeInitializerObject ADDi32Immi64Reg(const inr::InrContext& ctx) {
+	return {"ADDi32Immi64Reg",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::ADDi32Immi64Reg)
+	};
+}
+TreeNodeInitializerObject SUBi64RegReg(const inr::InrContext& ctx) {
+	return {"SUBi64RegReg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::SUBi64RegReg)
+	};
+}
+TreeNodeInitializerObject SUBi32RegReg(const inr::InrContext& ctx) {
+	return {"SUBi32RegReg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::SUBi32RegReg)
+	};
+}
+TreeNodeInitializerObject SUBi16RegReg(const inr::InrContext& ctx) {
+	return {"SUBi16RegReg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::SUBi16RegReg)
+	};
+}
 TreeNodeInitializerObject SUBi8RegReg(const inr::InrContext& ctx) {
 	return {"SUBi8RegReg",
 		InstructionType(InstructionTypes::SUB),
@@ -257,6 +274,76 @@ TreeNodeInitializerObject SUBi8RegReg(const inr::InrContext& ctx) {
 			{OperandType(Operands::Reg), ctx.getInt(8)}
 		}},
 		OpcodeType(Opcodes::SUBi8RegReg)
+	};
+}
+TreeNodeInitializerObject SUBi32ImmReg(const inr::InrContext& ctx) {
+	return {"SUBi32ImmReg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::SUBi32ImmReg)
+	};
+}
+TreeNodeInitializerObject SUBi16ImmReg(const inr::InrContext& ctx) {
+	return {"SUBi16ImmReg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(16)},
+			{OperandType(Operands::Reg), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::SUBi16ImmReg)
+	};
+}
+TreeNodeInitializerObject SUBi8ImmReg(const inr::InrContext& ctx) {
+	return {"SUBi8ImmReg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(8)},
+			{OperandType(Operands::Reg), ctx.getInt(8)}
+		}},
+		OpcodeType(Opcodes::SUBi8ImmReg)
+	};
+}
+TreeNodeInitializerObject SUBi32Immi64Reg(const inr::InrContext& ctx) {
+	return {"SUBi32Immi64Reg",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::SUBi32Immi64Reg)
+	};
+}
+TreeNodeInitializerObject MOVi64RegMem(const inr::InrContext& ctx) {
+	return {"MOVi64RegMem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::MOVi64RegMem)
+	};
+}
+TreeNodeInitializerObject MOVi32RegMem(const inr::InrContext& ctx) {
+	return {"MOVi32RegMem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::MOVi32RegMem)
+	};
+}
+TreeNodeInitializerObject MOVi16RegMem(const inr::InrContext& ctx) {
+	return {"MOVi16RegMem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::MOVi16RegMem)
 	};
 }
 TreeNodeInitializerObject MOVi8RegMem(const inr::InrContext& ctx) {
@@ -269,6 +356,76 @@ TreeNodeInitializerObject MOVi8RegMem(const inr::InrContext& ctx) {
 		OpcodeType(Opcodes::MOVi8RegMem)
 	};
 }
+TreeNodeInitializerObject MOVi32ImmMem(const inr::InrContext& ctx) {
+	return {"MOVi32ImmMem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::MOVi32ImmMem)
+	};
+}
+TreeNodeInitializerObject MOVi16ImmMem(const inr::InrContext& ctx) {
+	return {"MOVi16ImmMem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::MOVi16ImmMem)
+	};
+}
+TreeNodeInitializerObject MOVi8ImmMem(const inr::InrContext& ctx) {
+	return {"MOVi8ImmMem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(8)},
+			{OperandType(Operands::Mem), ctx.getInt(8)}
+		}},
+		OpcodeType(Opcodes::MOVi8ImmMem)
+	};
+}
+TreeNodeInitializerObject MOVi32Immi64Mem(const inr::InrContext& ctx) {
+	return {"MOVi32Immi64Mem",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::MOVi32Immi64Mem)
+	};
+}
+TreeNodeInitializerObject ADDi64RegMem(const inr::InrContext& ctx) {
+	return {"ADDi64RegMem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::ADDi64RegMem)
+	};
+}
+TreeNodeInitializerObject ADDi32RegMem(const inr::InrContext& ctx) {
+	return {"ADDi32RegMem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::ADDi32RegMem)
+	};
+}
+TreeNodeInitializerObject ADDi16RegMem(const inr::InrContext& ctx) {
+	return {"ADDi16RegMem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::ADDi16RegMem)
+	};
+}
 TreeNodeInitializerObject ADDi8RegMem(const inr::InrContext& ctx) {
 	return {"ADDi8RegMem",
 		InstructionType(InstructionTypes::ADD),
@@ -277,6 +434,76 @@ TreeNodeInitializerObject ADDi8RegMem(const inr::InrContext& ctx) {
 			{OperandType(Operands::Mem), ctx.getInt(8)}
 		}},
 		OpcodeType(Opcodes::ADDi8RegMem)
+	};
+}
+TreeNodeInitializerObject ADDi32ImmMem(const inr::InrContext& ctx) {
+	return {"ADDi32ImmMem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::ADDi32ImmMem)
+	};
+}
+TreeNodeInitializerObject ADDi16ImmMem(const inr::InrContext& ctx) {
+	return {"ADDi16ImmMem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::ADDi16ImmMem)
+	};
+}
+TreeNodeInitializerObject ADDi8ImmMem(const inr::InrContext& ctx) {
+	return {"ADDi8ImmMem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(8)},
+			{OperandType(Operands::Mem), ctx.getInt(8)}
+		}},
+		OpcodeType(Opcodes::ADDi8ImmMem)
+	};
+}
+TreeNodeInitializerObject ADDi32Immi64Mem(const inr::InrContext& ctx) {
+	return {"ADDi32Immi64Mem",
+		InstructionType(InstructionTypes::ADD),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::ADDi32Immi64Mem)
+	};
+}
+TreeNodeInitializerObject SUBi64RegMem(const inr::InrContext& ctx) {
+	return {"SUBi64RegMem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(64)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::SUBi64RegMem)
+	};
+}
+TreeNodeInitializerObject SUBi32RegMem(const inr::InrContext& ctx) {
+	return {"SUBi32RegMem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::SUBi32RegMem)
+	};
+}
+TreeNodeInitializerObject SUBi16RegMem(const inr::InrContext& ctx) {
+	return {"SUBi16RegMem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Reg), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::SUBi16RegMem)
 	};
 }
 TreeNodeInitializerObject SUBi8RegMem(const inr::InrContext& ctx) {
@@ -289,31 +516,116 @@ TreeNodeInitializerObject SUBi8RegMem(const inr::InrContext& ctx) {
 		OpcodeType(Opcodes::SUBi8RegMem)
 	};
 }
+TreeNodeInitializerObject SUBi32ImmMem(const inr::InrContext& ctx) {
+	return {"SUBi32ImmMem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(32)}
+		}},
+		OpcodeType(Opcodes::SUBi32ImmMem)
+	};
+}
+TreeNodeInitializerObject SUBi16ImmMem(const inr::InrContext& ctx) {
+	return {"SUBi16ImmMem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(16)},
+			{OperandType(Operands::Mem), ctx.getInt(16)}
+		}},
+		OpcodeType(Opcodes::SUBi16ImmMem)
+	};
+}
+TreeNodeInitializerObject SUBi8ImmMem(const inr::InrContext& ctx) {
+	return {"SUBi8ImmMem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(8)},
+			{OperandType(Operands::Mem), ctx.getInt(8)}
+		}},
+		OpcodeType(Opcodes::SUBi8ImmMem)
+	};
+}
+TreeNodeInitializerObject SUBi32Immi64Mem(const inr::InrContext& ctx) {
+	return {"SUBi32Immi64Mem",
+		InstructionType(InstructionTypes::SUB),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(32)},
+			{OperandType(Operands::Mem), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::SUBi32Immi64Mem)
+	};
+}
+TreeNodeInitializerObject MOVi64ImmReg(const inr::InrContext& ctx) {
+	return {"MOVi64ImmReg",
+		InstructionType(InstructionTypes::MOV),
+		{{
+			{OperandType(Operands::Imm), ctx.getInt(64)},
+			{OperandType(Operands::Reg), ctx.getInt(64)}
+		}},
+		OpcodeType(Opcodes::MOVi64ImmReg)
+	};
+}
+TreeNodeInitializerObject RET(const inr::InrContext& ctx) {
+	return {"RET",
+		InstructionType(InstructionTypes::RET),
+		{{
+			
+		}},
+		OpcodeType(Opcodes::RET)
+	};
+}
 TreeNodeObjectFunc targetTreeArray[] = {
 	MOVi64RegReg,
-	ADDi64RegReg,
-	SUBi64RegReg,
-	MOVi64RegMem,
-	ADDi64RegMem,
-	SUBi64RegMem,
 	MOVi32RegReg,
-	ADDi32RegReg,
-	SUBi32RegReg,
-	MOVi32RegMem,
-	ADDi32RegMem,
-	SUBi32RegMem,
 	MOVi16RegReg,
-	ADDi16RegReg,
-	SUBi16RegReg,
-	MOVi16RegMem,
-	ADDi16RegMem,
-	SUBi16RegMem,
 	MOVi8RegReg,
+	MOVi32ImmReg,
+	MOVi16ImmReg,
+	MOVi8ImmReg,
+	MOVi32Immi64Reg,
+	ADDi64RegReg,
+	ADDi32RegReg,
+	ADDi16RegReg,
 	ADDi8RegReg,
+	ADDi32ImmReg,
+	ADDi16ImmReg,
+	ADDi8ImmReg,
+	ADDi32Immi64Reg,
+	SUBi64RegReg,
+	SUBi32RegReg,
+	SUBi16RegReg,
 	SUBi8RegReg,
+	SUBi32ImmReg,
+	SUBi16ImmReg,
+	SUBi8ImmReg,
+	SUBi32Immi64Reg,
+	MOVi64RegMem,
+	MOVi32RegMem,
+	MOVi16RegMem,
 	MOVi8RegMem,
+	MOVi32ImmMem,
+	MOVi16ImmMem,
+	MOVi8ImmMem,
+	MOVi32Immi64Mem,
+	ADDi64RegMem,
+	ADDi32RegMem,
+	ADDi16RegMem,
 	ADDi8RegMem,
+	ADDi32ImmMem,
+	ADDi16ImmMem,
+	ADDi8ImmMem,
+	ADDi32Immi64Mem,
+	SUBi64RegMem,
+	SUBi32RegMem,
+	SUBi16RegMem,
 	SUBi8RegMem,
+	SUBi32ImmMem,
+	SUBi16ImmMem,
+	SUBi8ImmMem,
+	SUBi32Immi64Mem,
+	MOVi64ImmReg,
+	RET,
 };
 arrview<TreeNodeObjectFunc> getTargetTree() {
 	return {targetTreeArray};

@@ -31,7 +31,7 @@ private:
     union {
         Register reg_; ///< Register operand.
         uint64_t imm_; ///< Immediate operand.
-        uint32_t idx_; ///< Can be either block index, or
+        uint32_t idx_; ///< Can be either block index, or stack slot
     };
 
     explicit MachineOperand(Register reg) noexcept :

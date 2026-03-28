@@ -9,10 +9,11 @@
 /// @brief Contains the machine instruction class.
 
 #include <inr/ADT/IList.h>
+#include <inr/ADT/IVector.h>
 #include <inr/MIR/MachineOperand.h>
+#include <inr/MIR/Register.h>
 
 #include <cstdint>
-#include <vector>
 
 namespace inr {
 
@@ -24,17 +25,15 @@ namespace inr {
 class MachineInst : public ilist_node<MachineInst> {
     uint32_t op_;
     class MachineBlock* parent_;
-    std::vector<MachineOperand> operands_;
+    ivec<MachineOperand, 3> operands_;
 
     MachineInst(uint32_t op, MachineBlock* parent,
-                std::vector<MachineOperand> operands) noexcept :
+                ivec<MachineOperand, 3> operands) noexcept :
         op_(op), parent_(parent), operands_(std::move(operands)) {}
 
 public:
     static MachineInst* create(uint32_t op, MachineBlock* parent,
-                               std::vector<MachineOperand> operands = {}) {
-        return new MachineInst(op, parent, std::move(operands));
-    }
+                               ivec<MachineOperand, 3> operands = {});
 
     MachineBlock* getParent() const noexcept {
         return parent_;
@@ -48,7 +47,7 @@ public:
         return op_;
     }
 
-    const std::vector<MachineOperand>& getOperands() const noexcept {
+    const ivec<MachineOperand, 3>& getOperands() const noexcept {
         return operands_;
     }
 

@@ -394,10 +394,6 @@ public:
     }
 };
 
-static inline void testVec() {
-    ivec<int, 4> intVec;
-}
-
 } // namespace inr
 
 #endif // INERTIA_ADT_IVECTOR_H

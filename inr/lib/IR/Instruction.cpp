@@ -12,7 +12,8 @@ raw_stream& operator<<(raw_stream& os, const Instruction& ins) {
     switch(ins.getID()) {
         case Instruction::InstructionID::RETURN:
             if(ins.getNumOperands()) {
-                return os << "ret " << *ins.getOperand(0);
+                return os << "ret " << *ins.getType() << ' '
+                          << *ins.getOperand(0);
             }
             else {
                 return os << "ret void";
@@ -31,7 +32,7 @@ void Instruction::append(Block* to, Instruction* ins) {
 }
 
 ReturnInst::ReturnInst(Value* retVal, Block* parent) :
-    Instruction(Instruction::InstructionID::RETURN,
+    Instruction(InstructionID::RETURN,
                 retVal ? retVal->getType()
                        : parent->getParent()->getType()->getReturn(),
                 parent,

@@ -104,6 +104,9 @@ using InstructionType = uint32_t;
 /// @brief This should be used when making an enum for opcodes.
 using OpcodeType = uint32_t;
 
+/// @brief Alias a register to vreg.
+constexpr OpcodeType COPY = ~0;
+
 /// @brief A single operand descriptor.
 class OperandDesc {
     OperandType id_;
@@ -179,6 +182,8 @@ public:
     }
 };
 
+class TreeNodeBuilder;
+
 /// @brief Walks the tree based on the conditions given.
 class Walker {
 public:
@@ -190,6 +195,8 @@ public:
     static const LeafNode* walk(const TargetTree* root,
                                 InstructionType keyInstT,
                                 const OperandSignature& keySig);
+
+    static const LeafNode* getFromOpcode(const TreeNodeBuilder&, OpcodeType);
 };
 
 /// @brief Used to make a flat array of instructions that are then converted to
@@ -251,6 +258,8 @@ public:
         ctx_(ctx), nodes_(nodes.vec()), storage_(), exists_(false) {}
 
     TargetTree* buildTree();
+
+    friend class Walker;
 };
 
 arrview<TreeNodeObjectFunc> getTargetTreeInit(Triple);

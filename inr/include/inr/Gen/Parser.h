@@ -8,23 +8,19 @@
 /// @file Gen/Parser.h
 /// @brief Contains the parser for inr-gen.
 
+#include <inr/ADT/StrView.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Record.h>
-
-#include <memory>
 
 namespace inr::gen {
 
 class parser {
 public:
-    /// @brief Parses inr-gen extensions such as unfolding.
-    /// @param tokens The tokens to parse.
-    /// @return New token array after extensions.
-    static std::vector<token> parseExtensions(const std::vector<token>& tokens);
-    /// @brief Parses tokens and returns the file tree.
-    /// @param tokens The tokens to parse.
-    /// @return Root node for the records.
-    static std::unique_ptr<Node> parseTokens(const std::vector<token>& tokens);
+    /// @brief Parses the provided tokens.
+    /// @param tokens Result from the lexer.
+    /// @param result Destination of the parser.
+    static bool parse(class GenDriver& driver, const std::vector<token>& tokens,
+                      RecordStorage& result);
 };
 
 } // namespace inr::gen

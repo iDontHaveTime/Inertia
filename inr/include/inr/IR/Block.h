@@ -23,6 +23,10 @@ class Block : public ilist_node<Block> {
         parent_(parent), name_(name) {}
 
 public:
+    ilist<Instruction>& getInstructions() noexcept {
+        return instructions_;
+    }
+
     const Function* getParent() const noexcept {
         return parent_;
     }

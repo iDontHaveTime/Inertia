@@ -4,13 +4,12 @@
 
 #include <inr/ADT/ArrView.h>
 #include <inr/ADT/StrView.h>
+#include <inr/Gen/Driver.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
 #include <inr/Gen/Record.h>
 #include <inr/Support/Logger.h>
 
-#include <format>
-#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -19,591 +18,510 @@ namespace inr::gen {
 constexpr sview PARSER_NAME = "inr-gen-parser";
 
 class TokenStream {
-    const std::vector<token>& tokens_;
-    size_t current_;
+    std::vector<token>::const_iterator it_;
+    decltype(it_) end_;
 
 public:
-    TokenStream(const std::vector<token>& tokens) :
-        tokens_(tokens), current_(0) {}
+    TokenStream(const std::vector<token>& tokens) noexcept :
+        it_(tokens.begin()), end_(tokens.end()) {}
 
     bool atEnd() const noexcept {
-        return current_ == tokens_.size();
-    }
-
-    /// @brief Advances forward in the token vector.
-    /// @return True if advanced.
-    bool advance() noexcept {
-        if(atEnd()) return false;
-        ++current_;
-        return true;
-    }
-
-    /// @brief Advances forward if the expected type is met.
-    /// @return True if moved forward.
-    bool consume(token::ID id) noexcept {
-        if(expect(id)) return advance();
-        return false;
+        return it_ == end_;
     }
 
     const token& current() const noexcept {
-        return tokens_[current_];
+        return *it_;
     }
 
-    bool expect(token::ID id) const noexcept {
-        if(atEnd()) return false;
-        return current().getID() == id;
+    bool advance() {
+        if(!atEnd()) {
+            ++it_;
+            return true;
+        }
+        return false;
+    }
+
+    const token& currentAdvance() noexcept {
+        const token& c = current();
+        advance();
+        return c;
+    }
+
+    token::ID getID() const noexcept {
+        return current().getID();
+    }
+
+    bool expect(token::ID id) {
+        return getID() == id;
+    }
+
+    bool consume(token::ID id) {
+        if(expect(id)) {
+            return advance();
+        }
+        return false;
     }
 };
 
-bool advanceIfNotError(TokenStream& ts, sview msg) {
-    if(!ts.advance()) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, msg);
-        return true;
+/// Advance forward, if unsuccessful log unexpected.
+bool advanceIfNotUnexpected(TokenStream& ts) {
+    bool fail = !ts.advance();
+
+    if(fail) {
+        inr::log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                       "token stream ended abruptly");
     }
-    return false;
+
+    return fail;
 }
 
-bool commaIfNotError(TokenStream& ts, sview msg) {
-    if(!ts.consume(token::ID::Comma)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, msg);
-        return true;
-    }
-    return false;
+const Init* parseIntInit(TokenStream& ts, RecordStorage& result) {
+    return result.newInit<IntegerInit>(result, ts.current().getAsInteger());
 }
 
-/// @brief Assumes you are after integer token type.
-std::optional<unsigned> parseIntegerWidth(TokenStream& ts) {
-    if(!ts.consume(token::ID::LeftArrow)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '<' after 'integer'");
-        return std::nullopt;
-    }
-    if(!ts.expect(token::ID::IntegerLiteral)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected an integer literal after '<'");
-        return std::nullopt;
-    }
-
-    unsigned res = ts.current().getAsInteger();
-    ts.advance();
-
-    if(!ts.consume(token::ID::RightArrow)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '>' after an integer literal");
-        return std::nullopt;
-    }
-    return res;
+const Init* parseStringInit(TokenStream& ts, RecordStorage& result) {
+    return result.newInit<StringInit>(result, ts.current().getAsString());
 }
 
-using SymbolMap = std::unordered_map<sview, Node*>;
+const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
+                                std::unordered_map<sview, size_t>& symbolMap,
+                                const RecordType* expectedType) {
+    sview symbol = ts.current().getAsString();
 
-bool parseNewOperand(std::unique_ptr<Node>& root, TokenStream& ts,
-                     SymbolMap& symbols) {
-    // new Operand(Reg);
-    if(!ts.consume(token::ID::LeftParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '(' after 'Operand'");
-        return true;
+    auto it = symbolMap.find(symbol);
+    if(it != symbolMap.end()) {
+        return result.newInit<ArgInit>(it->second);
     }
 
-    if(!ts.expect(token::ID::Identifier)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected an identifier");
-        return true;
+    if(expectedType->getKind() == RecordType::Kind::Def){
+        const Record* def = result.findDef(symbol);
+        if(!def){
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ", symbol, " was not found");
+            return nullptr;
+        }
+        const RecordDef* rdef = (const RecordDef*)expectedType;
+        if(!def->isDerived(rdef->getRecord())){
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ", symbol, " must be derived from ", rdef->getRecord()->getName());
+            return nullptr;
+        }
+        return result.newInit<DefInit>(result, def);
     }
 
-    sview operandName = ts.current().getAsString();
-
-    if(symbols.find(operandName) != symbols.end()) {
-        std::string fmt =
-            std::format("the symbol {} already exists", operandName.strv());
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-        return true;
-    }
-
-    ts.advance();
-
-    if(!ts.consume(token::ID::RightParen)) {
-        std::string fmt =
-            std::format("expected ')' after {}", operandName.strv());
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-        return true;
-    }
-
-    if(!ts.consume(token::ID::Semicolon)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ';' after Operand(...)");
-        return true;
-    }
-
-    symbols[operandName] = root->addNode(new OperandNode(operandName)).get();
-
-    return false;
+    return nullptr;
 }
 
-bool parseNewInstructionType(std::unique_ptr<Node>& root, TokenStream& ts,
-                             SymbolMap& symbols) {
-    // new InstructionType(MOV);
-    if(!ts.consume(token::ID::LeftParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '(' after 'InstructionType'");
-        return true;
-    }
-
-    if(!ts.expect(token::ID::Identifier)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected an identifier");
-        return true;
-    }
-
-    sview instTName = ts.current().getAsString();
-
-    if(symbols.find(instTName) != symbols.end()) {
-        std::string fmt =
-            std::format("the symbol {} already exists", instTName.strv());
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-        return true;
-    }
-
-    ts.advance();
-
-    if(!ts.consume(token::ID::RightParen)) {
-        std::string fmt =
-            std::format("expected ')' after {}", instTName.strv());
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-        return true;
-    }
-
-    if(!ts.consume(token::ID::Semicolon)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ';' after InstructionType(...)");
-        return true;
-    }
-
-    symbols[instTName] =
-        root->addNode(new InstructionTypeNode(instTName)).get();
-
-    return false;
+const Init* parseEndianInit(TokenStream& ts, RecordStorage& result) {
+    return result.newInit<EndianInit>(
+        result, ts.current().getID() == token::ID::Little ? std::endian::little
+                                                          : std::endian::big);
 }
 
-bool parseType(std::unique_ptr<Node>& root, TokenStream& ts) {
-    if(ts.consume(token::ID::Integer)) {
-        std::optional<unsigned> width = parseIntegerWidth(ts);
-        if(width.has_value()) {
-            root->addNode(new TypeNode(TypeNode::ID::Integer, width.value()));
-        }
-        else return true;
+const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
+                      std::unordered_map<sview, size_t>& symbolMap,
+                      const RecordType* expectedType);
+
+const Init* parseListInit(TokenStream& ts, RecordStorage& result,
+                          std::unordered_map<sview, size_t>& symbolMap,
+                          const RecordType* expectedType) {
+    if(advanceIfNotUnexpected(ts)) return nullptr;
+    if(expectedType->getKind() != RecordType::Kind::List){
+        log::send(errs(), log::Level::ERROR, PARSER_NAME, "to initialize a list a list must be init");
+        return nullptr;
     }
-    else return true;
-    return false;
+    ListInit* linit = (ListInit*)result.newInit<ListInit>(expectedType);
+    if(ts.expect(token::ID::RightSquare)) {
+        return linit;
+    }
+another_list:
+    const Init* candidate =
+        parseInit(ts, result, false, symbolMap, ((const RecordList*)expectedType)->getElementTy());
+    if(candidate) {
+        linit->addInit(candidate);
+    }
+    else return nullptr;
+
+    if(ts.consume(token::ID::Comma)) goto another_list;
+
+    if(ts.expect(token::ID::RightSquare)) {
+        return linit;
+    }
+    else return nullptr;
 }
 
-bool parseOpDesc(std::unique_ptr<Node>& root, TokenStream& ts,
-                 SymbolMap& symbols) {
-    // [{Reg, integer<64>}, {Reg, integer<64>}]
-    if(!ts.consume(token::ID::LeftSquare)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '[' in operand array");
-        return true;
-    }
-
-    // {Reg, integer<64>}, {Reg, integer<64>}, ...
-
-    while(!ts.atEnd()) {
-        if(!ts.consume(token::ID::LeftBrace)) {
-            log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected '{' to create a new operand description");
-            return true;
-        }
-
-        if(!ts.expect(token::ID::Identifier)) {
-            log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected an identifier");
-            return true;
-        }
-
-        sview operandName = ts.current().getAsString();
-
-        auto it = symbols.find(operandName);
-        if(it == symbols.end()) {
-            std::string fmt =
-                std::format("symbol {} not found", operandName.strv());
-            log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-            return true;
-        }
-
-        if(it->second->getKind() != Node::NodeType::Operand) {
-            std::string fmt = std::format("the symbol {} is not an operand",
-                                          operandName.strv());
-            log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-            return true;
-        }
-
-        ts.advance();
-
-        if(commaIfNotError(ts, "expected a comma after operand")) return true;
-
-        if(parseType(root->addNode(
-                         new OperandDescNode((const OperandNode*)it->second)),
-                     ts))
-            return true;
-
-        if(!ts.consume(token::ID::RightBrace)) {
-            log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected '{' to create a new operand description");
-            return true;
-        }
-
-        if(!ts.consume(token::ID::Comma)) {
+/// @brief Parses an init from the current token.
+/// @param ts Token stream.
+/// @param result Required for storage.
+/// @param allowIdent Should identifier be allowed (as a string).
+const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
+                      std::unordered_map<sview, size_t>& symbolMap,
+                      const RecordType* expectedType) {
+    const Init* init = nullptr;
+    switch(ts.getID()) {
+        case token::ID::IntegerLiteral:
+            init = parseIntInit(ts, result);
             break;
-        }
-    }
-
-    if(!ts.consume(token::ID::RightSquare)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ')' in Instruction(...)");
-        return true;
-    }
-    return false;
-}
-
-bool parseNewInstruction(std::unique_ptr<Node>& root, TokenStream& ts,
-                         SymbolMap& symbols) {
-    // new Instruction(MOV, [{Reg, integer<64>}, {Reg, integer<64>}]);
-    if(!ts.consume(token::ID::LeftParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '(' after 'Instruction'");
-        return true;
-    }
-
-    if(!ts.expect(token::ID::Identifier)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected an identifier");
-        return true;
-    }
-
-    sview instTName = ts.current().getAsString();
-
-    auto it = symbols.find(instTName);
-    if(it == symbols.end()) {
-        std::string fmt = std::format("symbol {} not found", instTName.strv());
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-        return true;
-    }
-
-    if(it->second->getKind() != Node::NodeType::InstructionType) {
-        std::string fmt = std::format("the symbol {} is not instruction type",
-                                      instTName.strv());
-        log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-        return true;
-    }
-
-    ts.advance();
-
-    if(commaIfNotError(ts, "expected a comma after instruction type"))
-        return true;
-
-    if(parseOpDesc(root->addNode(new InstructionNode(
-                       (const InstructionTypeNode*)it->second)),
-                   ts, symbols))
-        return true;
-
-    if(!ts.consume(token::ID::RightParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ')' in Instruction(...)");
-        return true;
-    }
-
-    if(!ts.consume(token::ID::Semicolon)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ';' after Instruction(...)");
-        return true;
-    }
-
-    return false;
-}
-
-bool parseNew(std::unique_ptr<Node>& root, TokenStream& ts,
-              SymbolMap& symbols) {
-    if(ts.atEnd()) return true;
-
-    switch(ts.current().getID()) {
-        case token::ID::Operand:
-            ts.advance();
-            return parseNewOperand(root, ts, symbols);
-        case token::ID::InstructionType:
-            ts.advance();
-            return parseNewInstructionType(root, ts, symbols);
-        case token::ID::Instruction:
-            ts.advance();
-            return parseNewInstruction(root, ts, symbols);
+        case token::ID::Identifier:
+            if(allowIdent) init = parseStringInit(ts, result);
+            else
+                init = parseIdentifierInit(ts, result, symbolMap, expectedType);
+            break;
+        case token::ID::StringLiteral:
+            if(!allowIdent) init = parseStringInit(ts, result);
+            break;
+        case token::ID::Little:
+            [[fallthrough]];
+        case token::ID::Big:
+            init = parseEndianInit(ts, result);
+            break;
+        case token::ID::LeftSquare:
+            init = parseListInit(ts, result, symbolMap, expectedType);
+            break;
         default:
-            return true;
+            break;
     }
+
+    if(advanceIfNotUnexpected(ts)) return nullptr;
+    return init;
 }
 
-bool parseTargetBody(std::unique_ptr<Node>& root, TokenStream& ts) {
-    SymbolMap symbols;
+const RecordType* parseRecordType(TokenStream& ts, RecordStorage& result);
 
-    while(!ts.consume(token::ID::RightBrace)) {
-        if(!ts.consume(token::ID::New)) {
-            std::string fmt = std::format("expected 'new' but got {} instead",
-                                          ts.current().getAsString().strv());
-            log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-            return true;
-        }
-        else {
-            if(parseNew(root, ts, symbols)) return true;
-        }
-    }
-
-    return false;
-}
-
-bool parseTarget(std::unique_ptr<Node>& root, TokenStream& ts) {
-    // For reference it should look like this for target:
-    // define target(x86, little, integer<64>)
-    if(!ts.consume(token::ID::LeftParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '(' after 'target'");
-        return true;
-    }
-
-    if(!ts.expect(token::ID::Identifier)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected a target name");
-        return true;
-    }
-
-    sview targetName = ts.current().getAsString();
-
-    if(advanceIfNotError(ts, "target definition abruptly ended")) return true;
-    if(commaIfNotError(ts, "expected a comma after target name")) return true;
-
-    if(!ts.expect(token::ID::Little) && !ts.expect(token::ID::Big)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected endian after target name");
-        return true;
-    }
-
-    std::endian targetEndian = ts.current().getID() == token::ID::Little
-                                   ? std::endian::little
-                                   : std::endian::big;
-
-    if(advanceIfNotError(ts, "target definition abruptly ended")) return true;
-    if(commaIfNotError(ts, "expected a comma after target endian")) return true;
-
-    unsigned targetPtrWidth = 0;
-
-    if(!ts.consume(token::ID::Integer)) {
-        if(!ts.expect(token::ID::IntegerLiteral)) {
-            log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected the integer keyword after target endian for "
-                      "pointer width");
-            return true;
-        }
-        else {
-            log::send(errs(), log::Level::WARN, PARSER_NAME,
-                      "it's preferred to use integer<N> rather than N for "
-                      "pointer width");
-            targetPtrWidth = ts.current().getAsInteger();
-            ts.advance();
-        }
-    }
-    else {
-        std::optional<unsigned> opt = parseIntegerWidth(ts);
-        if(opt.has_value()) {
-            targetPtrWidth = opt.value();
-        }
-        else return true;
-    }
-
-    if(!ts.consume(token::ID::RightParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ')' in target(...)");
-        return true;
-    }
-
-    if(!ts.consume(token::ID::LeftBrace)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '{' after target(...)");
-        return true;
-    }
-
-    return parseTargetBody(
-        root->addNode(new TargetNode(targetName, targetEndian, targetPtrWidth)),
-        ts);
-}
-
-bool parseDefine(std::unique_ptr<Node>& root, TokenStream& ts) {
-    if(!ts.consume(token::ID::Target)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "unexpected token after 'define'");
-        return true;
-    }
-    else return parseTarget(root, ts);
-}
-
-bool parseExtUnfold(std::vector<token>& ext, TokenStream& ts) {
+const RecordType* parseListType(TokenStream& ts, RecordStorage& result) {
     if(!ts.consume(token::ID::LeftArrow)) {
         log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '<' after unfold");
-        return true;
+                  "expected '<' after list");
+        return nullptr;
     }
 
-    if(!ts.expect(token::ID::Identifier)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected an identifier name in unfold");
-        return true;
-    }
-
-    sview idenName = ts.current().getAsString();
-
-    if(advanceIfNotError(ts, "unfold definition abruptly ended")) return true;
+    const RecordType* ty = parseRecordType(ts, result);
 
     if(!ts.consume(token::ID::RightArrow)) {
         log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '>' after unfold identifier");
-        return true;
+                  "expected '>' to close list");
+        return nullptr;
     }
 
-    unsigned braceC = 1;
-    if(!ts.consume(token::ID::LeftBrace)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '{' after unfold<>");
+    return result.getListTy(ty);
+}
+
+const RecordType* parseIdentifierType(sview tok, RecordStorage& result) {
+    const Record* rec = result.findClass(tok);
+    if(!rec) return nullptr;
+    return result.getDefTy(rec);
+}
+
+const RecordType* parseRecordType(TokenStream& ts, RecordStorage& result) {
+    sview tokAsView = ts.current().getAsString();
+    switch(ts.currentAdvance().getID()) {
+        case token::ID::Endian:
+            return result.getEndianTy();
+        case token::ID::Int:
+            return result.getIntTy();
+        case token::ID::String:
+            return result.getStringTy();
+        case token::ID::List:
+            return parseListType(ts, result);
+        case token::ID::Identifier:
+            return parseIdentifierType(tokAsView, result);
+        default:
+            return nullptr;
+    }
+}
+
+RecordField* parseRecordField(TokenStream& ts, RecordStorage& result,
+                              Record* record, RecordField::Kind kind,
+                              std::unordered_map<sview, size_t>& symbolMap) {
+    const RecordType* ty = parseRecordType(ts, result);
+
+    const Init* name = parseInit(ts, result, true, symbolMap, ty);
+
+    if(!name || !name->matches(RecordType::Kind::String)) {
+        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                      "field name must be an identifier in record ",
+                      record->getName());
+        return nullptr;
     }
 
-    std::vector<token> toReplace;
-    while(true) {
-        if(ts.atEnd()) {
-            log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                      "no '}' was found to close unfold<>");
-            return true;
-        }
-        else if(ts.consume(token::ID::Unfold)) {
-            if(parseExtUnfold(toReplace, ts)) return true;
-            continue;
-        }
-        if(ts.expect(token::ID::LeftBrace)) {
-            braceC++;
-        }
-        else if(ts.expect(token::ID::RightBrace)) {
-            braceC--;
-            if(!braceC) {
-                ts.advance();
-                break;
+    std::pair<RecordField*, size_t> field = record->newField(name, ty, kind);
+
+    if(ts.consume(token::ID::Equals)) {
+        const Init* init = parseInit(ts, result, false, symbolMap, ty);
+        if(init && !init->matches(ty)) {
+            bool err = true;
+            sview errType = Init::kindAsString(init->getKind());
+
+            if(init->getKind() == Init::Kind::Arg) {
+                const ArgInit* arg = (const ArgInit*)init;
+                const RecordField* argField = arg->getArg(record);
+                if(!argField) {
+                    return field.first;
+                }
+
+                if(argField->getType()->getKind() == ty->getKind()) {
+                    err = false;
+                }
+                else {
+                    errType = argField->getType()->getAsString();
+                }
+            }
+            if(err) {
+                log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                              "expected type '", ty->getAsString(),
+                              "' but got '", errType, "' instead in field ",
+                              field.first->getName());
+                init = nullptr;
             }
         }
-        toReplace.emplace_back(ts.current());
-        ts.advance();
+        else if(!init) {
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                          "expected type '", ty->getAsString(),
+                          "' but got 'unknown' instead in field ",
+                          field.first->getName());
+        }
+        field.first->setValue(init);
     }
+    symbolMap[field.first->getName()] = field.second;
+    return field.first;
+}
 
-    if(!ts.consume(token::ID::LeftParen)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '(' after unfold expression");
+bool parseFieldsArgs(TokenStream& ts, RecordStorage& result, Record* record,
+                     std::unordered_map<sview, size_t>& symbolMap) {
+another_arg:
+    if(parseRecordField(ts, result, record, RecordField::Kind::Arg,
+                        symbolMap) == nullptr)
         return true;
-    }
+    if(ts.consume(token::ID::Comma)) goto another_arg;
+    return false;
+}
 
-    std::vector<arrview<const token>> replacements;
-    const token* cur = &ts.current();
-
-    unsigned parenC = 1;
-    while(true) {
-        if(ts.atEnd()) {
-            log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                      "no ')' was found to close unfold<>{...}");
-            return true;
-        }
-        if(ts.expect(token::ID::LeftParen)) {
-            parenC++;
-        }
-        else if(ts.expect(token::ID::RightParen)) {
-            parenC--;
-            if(!parenC) {
-                replacements.emplace_back(cur, &ts.current());
-                ts.advance();
-                break;
-            }
-        }
-        else if(ts.expect(token::ID::Comma)) {
-            replacements.emplace_back(cur, &ts.current());
-
-            ts.advance();
-            cur = &ts.current();
-            continue;
-        }
-        ts.advance();
-    }
+bool parseFieldsClass(TokenStream& ts, RecordStorage& result, Record* record,
+                      std::unordered_map<sview, size_t>& symbolMap) {
+another_field:
+    if(parseRecordField(ts, result, record, RecordField::Kind::Normal,
+                        symbolMap) == nullptr)
+        return true;
 
     if(!ts.consume(token::ID::Semicolon)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected semicolon to terminate unfold");
+        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                      "expected ';' after field declaration in record ",
+                      record->getName());
         return true;
     }
 
-    for(arrview<const token>& replacement : replacements) {
-        std::vector<token> replaced;
+    if(!ts.consume(token::ID::RightBrace)) goto another_field;
 
-        for(const token& tok : toReplace) {
-            if(tok.getAsString() == idenName) {
-                replaced.insert(replaced.end(), replacement.begin(),
-                                replacement.end());
-            }
-            else {
-                replaced.emplace_back(tok);
-            }
-        }
+    return false;
+}
 
-        ext.insert(ext.end(), replaced.begin(), replaced.end());
+bool parseFields(TokenStream& ts, RecordStorage& result, Record* record,
+                 RecordField::Kind fieldK,
+                 std::unordered_map<sview, size_t>& symbolMap) {
+    if(fieldK == RecordField::Kind::Arg && !ts.consume(token::ID::LeftArrow)) {
+        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                      "expected '<' but got '",
+                      ts.currentAdvance().getAsString(), '\'');
+        return true;
+    }
+
+    switch(fieldK) {
+        case RecordField::Kind::Normal:
+            if(parseFieldsClass(ts, result, record, symbolMap)) return true;
+            break;
+        case RecordField::Kind::Arg:
+            if(parseFieldsArgs(ts, result, record, symbolMap)) return true;
+            if(!ts.consume(token::ID::RightArrow)) {
+                log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                              "expected '>' after args in record ",
+                              record->getName());
+                return true;
+            }
+            break;
     }
 
     return false;
 }
 
-std::vector<token> parser::parseExtensions(const std::vector<token>& tokens) {
-    std::vector<token> newTokens;
-
-    TokenStream ts(tokens);
-
-    while(!ts.atEnd()) {
-        if(ts.consume(token::ID::Unfold)) {
-            if(parseExtUnfold(newTokens, ts)) {
-                log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                          "failed to parse unfold");
-                return {};
-            }
+const RecordType* nextArgType(std::vector<RecordField>::const_iterator& it,
+                              std::vector<RecordField>::const_iterator end) {
+    while(it != end) {
+        const RecordField& rf = *it++;
+        if(rf.getKind() == RecordField::Kind::Arg) {
+            return rf.getType();
         }
-        else {
-            newTokens.emplace_back(ts.current());
-            ts.advance();
+    }
+    return nullptr;
+}
+
+bool parseArgsInit(TokenStream& ts, RecordStorage& result,
+                   std::unordered_map<sview, size_t>& symbolMap,
+                   std::vector<const Init*>& args,
+                   std::vector<RecordField>::const_iterator& it,
+                   std::vector<RecordField>::const_iterator end) {
+another_init:
+    const Init* init =
+        parseInit(ts, result, false, symbolMap, nextArgType(it, end));
+    if(!init) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "couldn't parse args");
+        return true;
+    }
+    args.emplace_back(init);
+    if(ts.consume(token::ID::Comma)) goto another_init;
+    return false;
+}
+
+bool parseInheritanceImpl(TokenStream& ts, RecordStorage& result,
+                          Record* record,
+                          std::unordered_map<sview, size_t>& symbolMap) {
+    const Init* className = parseInit(ts, result, true, symbolMap, nullptr);
+
+    if(!className || !className->matches(RecordType::Kind::String)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected identifier for record name");
+        return true;
+    }
+
+    const Record* super =
+        result.findClass(((const StringInit*)className)->getValue());
+    if(!super) {
+        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "record name '",
+                      ((const StringInit*)className)->getValue(),
+                      "' not found");
+        return true;
+    }
+
+    std::vector<const Init*> args;
+
+    auto currentArg = super->getFields().begin();
+
+    if(ts.consume(token::ID::LeftArrow)) {
+        parseArgsInit(ts, result, symbolMap, args, currentArg,
+                      super->getFields().end());
+
+        if(!ts.consume(token::ID::RightArrow)) {
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                          "expected '>' when inheriting ", super->getName(),
+                          " in record ", record->getName());
+            return true;
         }
     }
 
-    return newTokens;
+    record->addSuperclass(super, args);
+
+    return false;
 }
 
-std::unique_ptr<Node> parser::parseTokens(const std::vector<token>& toks) {
-    std::unique_ptr<Node> root(new Node(Node::NodeType::Root));
+bool parseInheritance(TokenStream& ts, RecordStorage& result, Record* record,
+                      std::unordered_map<sview, size_t>& symbolMap) {
+another_inheritance:
+    if(parseInheritanceImpl(ts, result, record, symbolMap)) return true;
+    if(ts.consume(token::ID::Comma)) goto another_inheritance;
+    return false;
+}
+
+bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
+    if(advanceIfNotUnexpected(ts)) return true;
+    std::unordered_map<sview, size_t> symbolMap;
+    const Init* className = parseInit(ts, result, true, symbolMap, nullptr);
+
+    if(!className || !className->matches(RecordType::Kind::String)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected identifier for record name");
+        return true;
+    }
+
+    Record* record = Record::newRecord(result, className, kind);
+
+    if(ts.expect(token::ID::LeftArrow)) {
+        if(kind == Record::Kind::Def) {
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                          "args are not allowed in defs, found in ",
+                          record->getName());
+        }
+        if(parseFields(ts, result, record, RecordField::Kind::Arg, symbolMap))
+            return true;
+    }
+
+    if(ts.consume(token::ID::Colon)) {
+        if(parseInheritance(ts, result, record, symbolMap)) return true;
+    }
+
+    if(ts.consume(token::ID::Semicolon)) return false;
+
+    if(!ts.consume(token::ID::LeftBrace)) {
+        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                      "expected '{' to open record ",
+                      ((const StringInit*)className)->getValue());
+        return true;
+    }
+
+    if(parseFields(ts, result, record, RecordField::Kind::Normal, symbolMap))
+        return true;
+
+    return false;
+}
+
+bool parseClass(TokenStream& ts, RecordStorage& result) {
+    return parseRecord(ts, result, Record::Kind::Class);
+}
+
+bool parseDef(TokenStream& ts, RecordStorage& result) {
+    return parseRecord(ts, result, Record::Kind::Def);
+}
+
+bool parseInclude(GenDriver& driver, TokenStream& ts, RecordStorage& result) {
+    if(advanceIfNotUnexpected(ts)) return true;
+
+    if(!ts.expect(token::ID::StringLiteral)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected string literal for include");
+        return true;
+    }
+
+    sview file = ts.currentAdvance().getAsString();
+    if(!ts.consume(token::ID::Semicolon)) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "expected ';' after include");
+        return true;
+    }
+
+    if(driver.driveFileSpecific(file, result, true) ==
+       GenDriver::RequestErr::Internal) {
+        log::send(errs(), log::Level::ERROR, PARSER_NAME,
+                  "error driving include");
+        return true;
+    }
+
+    return false;
+}
+
+bool parseStatements(GenDriver& driver, TokenStream& ts,
+                     RecordStorage& result) {
+    switch(ts.getID()) {
+        case token::ID::Class:
+            return parseClass(ts, result);
+        case token::ID::Def:
+            return parseDef(ts, result);
+        case token::ID::Include:
+            return parseInclude(driver, ts, result);
+        default:
+            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
+                          "unexpected token '",
+                          ts.currentAdvance().getAsString(), '\'');
+            return true;
+    }
+}
+
+bool parser::parse(GenDriver& driver, const std::vector<token>& toks,
+                   RecordStorage& result) {
     TokenStream ts(toks);
 
+    bool err = false;
     while(!ts.atEnd()) {
-        if(ts.consume(token::ID::Define)) {
-            if(parseDefine(root, ts)) {
-                log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                          "parsing failed");
-                break;
-            }
-        }
-        else {
-            std::string fmt =
-                std::format("expected 'define' but got {} instead",
-                            ts.current().getAsString().strv());
-            log::send(errs(), log::Level::ERROR, PARSER_NAME, fmt);
-            break;
-        }
+        if(parseStatements(driver, ts, result)) err = true;
     }
 
-    return root;
+    return err;
 }
 
 } // namespace inr::gen
@@ -611,7 +529,9 @@ std::unique_ptr<Node> parser::parseTokens(const std::vector<token>& toks) {
 namespace inr {
 
 raw_stream& operator<<(raw_stream& os, std::endian e) {
-    return os << (e == std::endian::little ? "little" : "big");
+    constexpr sview endianStrLittle = "little";
+    constexpr sview endianStrBig = "big";
+    return os << (e == std::endian::little ? endianStrLittle : endianStrBig);
 }
 
 } // namespace inr

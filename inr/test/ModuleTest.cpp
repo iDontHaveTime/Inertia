@@ -51,5 +51,9 @@ int main() {
 
     pm.runISel();
 
+    inr::standard_file_stream mirOS(
+        fopen("inr/example/module_example.mir", "w"), true, 0);
+    pm.getMachineModule()->print(mirOS, pm.getBuilder());
+
     return 0;
 }

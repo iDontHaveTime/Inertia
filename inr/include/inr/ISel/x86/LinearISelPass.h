@@ -14,7 +14,7 @@ namespace inr::x86 {
 
 class LinearISelPass : public ISelPass {
     void run(const InrContext& ctx, Module& mod, MachineModule& mmod,
-             TargetTree* tt) override;
+             const TargetTree* tt) override;
 };
 
 } // namespace inr::x86

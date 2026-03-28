@@ -7,11 +7,11 @@
 ///
 /// This test uses the x86 target tree for the example.
 
-#include <inr/Support/Version.h>
-#include <inr/Support/Stream.h>
 #include <inr/IR/Context.h>
 #include <inr/ISel/TargetTree.h>
 #include <inr/ISel/x86/TargetTree.h>
+#include <inr/Support/Stream.h>
+#include <inr/Support/Version.h>
 #include <inr/Target/Triple.h>
 
 int main() {

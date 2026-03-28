@@ -21,34 +21,34 @@ class token {
 public:
     /// @brief The type of the token.
     enum class ID {
-        IntegerLiteral,  ///< Integer literal (e.g. 42).
-        FloatLiteral,    ///< Float literal, unsupported.
-        CharLiteral,     ///< Char literal, unsupported.
-        StringLiteral,   ///< String literal (e.g. "world").
-        Identifier,      ///< Alphanumerical word.
-        LeftArrow,       ///< '<'
-        RightArrow,      ///< '>'
-        Comma,           ///< ','
-        Semicolon,       ///< ';'
-        LeftParen,       ///< '('
-        RightParen,      ///< ')'
-        LeftBrace,       ///< '{'
-        RightBrace,      ///< '}'
-        LeftSquare,      ///< '['
-        RightSquare,     ///< ']'
-        Little,          ///< little keyword.
-        Big,             ///< big keyword.
-        New,             ///< new keyword.
-        Instruction,     ///< Instruction keyword.
-        InstructionType, ///< InstructionType keyword.
-        Unfold,          ///< unfold keyword.
-        Operand,         ///< Operand keyword.
-        Integer,         ///< integer keyword.
-        Define,          ///< define keyword.
-        Target,          ///< target keyword.
-        Colon,           ///< ':'
-        Slash,           ///< '/'
-        End              ///< Error token.
+        IntegerLiteral, ///< Integer literal (e.g. 42).
+        FloatLiteral,   ///< Float literal, unsupported.
+        CharLiteral,    ///< Char literal, unsupported.
+        StringLiteral,  ///< String literal (e.g. "world").
+        Identifier,     ///< Alphanumerical word.
+        LeftArrow,      ///< '<'
+        RightArrow,     ///< '>'
+        Comma,          ///< ','
+        Semicolon,      ///< ';'
+        LeftParen,      ///< '('
+        RightParen,     ///< ')'
+        LeftBrace,      ///< '{'
+        RightBrace,     ///< '}'
+        LeftSquare,     ///< '['
+        RightSquare,    ///< ']'
+        Equals,         ///< '='
+        Little,         ///< little keyword.
+        Big,            ///< big keyword.
+        Class,          ///< class keyword.
+        Def,            ///< def keyword.
+        Endian,         ///< def keyword.
+        Int,            ///< int keyword.
+        String,         ///< string keyword.
+        Include,        ///< include keyword.
+        List,           ///< list keyword.
+        Colon,          ///< ':'
+        Slash,          ///< '/'
+        End             ///< Error token.
     };
 
 private:

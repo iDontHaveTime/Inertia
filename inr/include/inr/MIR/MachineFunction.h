@@ -9,9 +9,14 @@
 /// @brief Contains the machine function class.
 
 #include <inr/ADT/IList.h>
+#include <inr/ADT/IVector.h>
 #include <inr/ADT/StrView.h>
+#include <inr/IR/Value.h>
 #include <inr/MIR/MachineBlock.h>
+#include <inr/MIR/Register.h>
 
+#include <optional>
+#include <unordered_map>
 #include <vector>
 
 namespace inr {
@@ -24,6 +29,7 @@ class MachineFunction : public ilist_node<MachineFunction> {
     sview name_;
     class MachineModule* parent_;
     ilist<MachineBlock> blocks_;
+    std::unordered_map<const Value*, uint32_t> vregMap_;
 
     /// @brief Frame slot sizes in bytes, indexed by frame index.
     std::vector<uint32_t> frameSlots_;
@@ -45,6 +51,31 @@ public:
 
     static MachineFunction* create(sview name, MachineModule* parent) {
         return new MachineFunction(name, parent);
+    }
+
+    const auto& getVregMap() const noexcept {
+        return vregMap_;
+    }
+
+    auto& getVregMap() noexcept {
+        return vregMap_;
+    }
+
+    std::optional<uint32_t> getVregFromValue(const Value* val) {
+        auto it = vregMap_.find(val);
+        if(it != vregMap_.end()) {
+            return it->second;
+        }
+        return std::nullopt;
+    }
+
+    /// @brief Allocates a new virtual register and puts the value into the map.
+    /// @param val Value to map.
+    /// @return The new vreg.
+    uint32_t newVregValue(const Value* val) {
+        uint32_t vreg = allocateVReg();
+        vregMap_[val] = vreg;
+        return vreg;
     }
 
     /// @brief Allocates a new frame slot of the given size.

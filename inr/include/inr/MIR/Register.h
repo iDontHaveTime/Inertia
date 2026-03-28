@@ -22,23 +22,30 @@ private:
     Kind kind_;
 
 public:
-    Kind getKind() const noexcept {
+    constexpr Kind getKind() const noexcept {
         return kind_;
     }
 
-    bool isVirtual() const noexcept {
+    constexpr bool isVirtual() const noexcept {
         return kind_ == Kind::Virtual;
     }
 
-    bool isPhysical() const noexcept {
+    constexpr bool isPhysical() const noexcept {
         return kind_ == Kind::Physical;
     }
 
-    uint32_t getIndex() const noexcept {
+    constexpr uint32_t getIndex() const noexcept {
         return index_;
     }
 
-    Register(uint32_t index, Kind kind) noexcept : index_(index), kind_(kind) {}
+    constexpr Register(uint32_t index, Kind kind) noexcept :
+        index_(index), kind_(kind) {}
+
+    constexpr Register(const Register&) noexcept = default;
+    constexpr Register& operator=(const Register&) noexcept = default;
+
+    constexpr Register(Register&&) noexcept = default;
+    constexpr Register& operator=(Register&&) noexcept = default;
 };
 
 } // namespace inr

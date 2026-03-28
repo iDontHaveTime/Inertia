@@ -37,6 +37,18 @@ public:
     /// @brief Creates an empty array view.
     constexpr arrview() noexcept = default;
 
+    constexpr arrview(const arrview&) noexcept = default;
+    constexpr arrview& operator=(const arrview&) noexcept = default;
+
+    constexpr arrview(arrview&&) noexcept = default;
+    constexpr arrview& operator=(arrview&&) noexcept = default;
+
+    /// @brief Creates a new array view from a vector.
+    /// @param vec Vector to create it from.
+    /// @note This does not update with the vector.
+    arrview(const std::vector<T>& vec) noexcept :
+        data_(vec.data()), len_(vec.size()) {}
+
     /// @brief Creates a new array view from pointer and length.
     /// @param data Pointer to the start of the array.
     /// @param length How many elements in the array.

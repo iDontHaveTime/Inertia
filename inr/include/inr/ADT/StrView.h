@@ -219,6 +219,10 @@ public:
         if(from >= to) return sview();
         return sview(str_ + from, str_ + to);
     }
+
+    size_t hash() const noexcept {
+        return std::hash<std::string_view>{}(strv());
+    }
 };
 
 } // namespace inr
@@ -230,7 +234,7 @@ template<>
 struct hash<inr::sview> {
     /// @brief Casts the `inr::sview` to `std::string_view`.
     size_t operator()(inr::sview sv) const noexcept {
-        return hash<string_view>{}(sv.strv());
+        return sv.hash();
     }
 };
 

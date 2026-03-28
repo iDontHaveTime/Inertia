@@ -9,6 +9,7 @@
 /// @brief Provides a way to open a file in memory.
 
 #include <inr/ADT/StrView.h>
+#include <inr/Support/CFile.h>
 
 #include <cstdio>
 
@@ -37,6 +38,28 @@ public:
     MemoryFile(FILE* f, long len, bool insertNL = false) {
         openFromFILE(f, len, insertNL);
     }
+
+    MemoryFile(const MemoryFile&) = delete;
+    MemoryFile& operator=(const MemoryFile&) = delete;
+
+    MemoryFile(MemoryFile&& other) noexcept :
+        start_(other.start_), end_(other.end_) {
+        other.start_ = other.end_ = nullptr;
+    }
+
+    MemoryFile& operator=(MemoryFile&& other) noexcept {
+        if(this != &other) {
+            start_ = other.start_;
+            end_ = other.end_;
+
+            other.start_ = other.end_ = nullptr;
+        }
+        return *this;
+    }
+
+    /// @brief Same as the one with FILE*.
+    MemoryFile(CFile& f, long len, bool insertNL = false) :
+        MemoryFile(f.getFile(), len, insertNL) {}
 
     /// @see `MemoryFile(FILE*, long, bool)` for more info.
     void openFromFILE(FILE* f, long len, bool insertNL = false) {

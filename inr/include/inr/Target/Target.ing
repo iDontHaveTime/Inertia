@@ -1,0 +1,15 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+// This file is for anything target generic, used by other inr-gen files.
+
+// Base class for all target definitions.
+// First parameter is the target name, ideally without spaces.
+// Second parameter is the pointer size of the target.
+// Third being the endian, has two options: little, big.
+class Target<string name, int pointerSize, endian tEndian>{
+    string Name = name;
+    int PointerSize = pointerSize;
+    endian Endian = tEndian;
+}
