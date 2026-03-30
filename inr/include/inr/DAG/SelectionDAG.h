@@ -9,9 +9,9 @@
 /// @brief Provides the Selection DAG class.
 
 #include <inr/DAG/DAGNode.h>
+#include <inr/IR/Constant.h>
 
 #include <vector>
-#include <inr/IR/Constant.h>
 
 namespace inr {
 

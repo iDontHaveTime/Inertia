@@ -11,7 +11,7 @@ def SystemV : CallingConv<
     [RDI, RSI, RDX, RCX, R8, R9],                // Arg regs.
     [RAX, RDX],                                  // Return regs.
     [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11], // Caller saved regs.
-    [RBX, R12, R13, R14, R15],                   // Callee saved regs.
+    [RBX, R12, R13, R14, R15, RBP],              // Callee saved regs.
     RSP,                                         // Stack pointer register.
     RBP                                          // Frame pointer register.
 >;

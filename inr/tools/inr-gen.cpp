@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if(driver.emit(result)){
+    if(driver.emit(result)) {
         driver.error("failed to emit via backend");
         return 1;
     }

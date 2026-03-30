@@ -2,7 +2,6 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
-#include <inr/ISel/x86/TargetTree.h>
 #include <inr/Support/Stream.h>
 #include <inr/Target/Triple.h>
 
@@ -111,7 +110,7 @@ unsigned Triple::getPointerWidth() const noexcept {
         case Arch::Unknown:
             return 0;
         case Arch::x86_64:
-            return x86::targetPointerWidth;
+            return 64;
     }
 }
 std::endian Triple::getEndian() const noexcept {
@@ -119,7 +118,7 @@ std::endian Triple::getEndian() const noexcept {
         case Arch::Unknown:
             return std::endian::native;
         case Arch::x86_64:
-            return x86::targetEndian;
+            return std::endian::little;
     }
 }
 

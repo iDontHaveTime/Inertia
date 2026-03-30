@@ -265,6 +265,10 @@ public:
     const Record* getValue() const noexcept {
         return def_;
     }
+
+    static const Record* get(const Init* init) {
+        return ((const DefInit*)init)->getValue();
+    }
 };
 
 class IntegerInit : public TypeInit {
@@ -568,7 +572,8 @@ public:
     }
 };
 
-inline std::vector<const Record*> RecordStorage::getDefsDerivedFrom(const Record* record) const {
+inline std::vector<const Record*> RecordStorage::getDefsDerivedFrom(
+    const Record* record) const {
     std::vector<const Record*> recs;
 
     for(const std::unique_ptr<Record>& def : defs_) {

@@ -40,8 +40,6 @@ public:
         return functions_;
     }
 
-    void print(raw_stream&, const class TreeNodeBuilder&) const;
-
     ~MachineModule() noexcept {
         for(MachineFunction* f = functions_.front(); f != nullptr;) {
             MachineFunction* next = f->getNext();

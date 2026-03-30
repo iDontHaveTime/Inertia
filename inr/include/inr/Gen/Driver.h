@@ -9,14 +9,14 @@
 /// @brief The driver for the inr-gen tool.
 
 #include <inr/ADT/StrView.h>
-#include <inr/Support/Stream.h>
+#include <inr/Gen/CppEmitter.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
 #include <inr/Gen/Record.h>
 #include <inr/Support/CFile.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/MemoryFile.h>
-#include <inr/Gen/CppEmitter.h>
+#include <inr/Support/Stream.h>
 
 #include <filesystem>
 #include <tuple>
@@ -44,12 +44,13 @@ class GenDriver {
     sview input_;
     sview output_;
 
-    enum class Backends{
-        None, Register
+    enum class Backends {
+        None,
+        Register,
+        CallingConv
     } selectedBackend_ = Backends::None;
 
 public:
-
     ~GenDriver() noexcept {
         if(emitter) delete emitter;
     }
@@ -73,15 +74,20 @@ private:
             case Backends::Register:
                 newEmitter = new RegisterBackend(os);
                 break;
+            case Backends::CallingConv:
+                newEmitter = new CallingConvBackend(os);
+                break;
         }
 
         emitter = newEmitter;
         return emitter == nullptr;
     }
-public:
 
+public:
     bool emit(const RecordStorage& result) {
-        inr::standard_file_stream sfs(fopen(std::string(output_.begin(), output_.end()).c_str(), "w"), true, 0);
+        inr::standard_file_stream sfs(
+            fopen(std::string(output_.begin(), output_.end()).c_str(), "w"),
+            true, 0);
         if(!emitter) {
             if(getEmitter(sfs)) return true;
         }
@@ -207,8 +213,11 @@ private:
         }
         sview arg = getArgv()[i];
 
-        if(arg == "--backend-register"){
+        if(arg == "--backend-register") {
             selectedBackend_ = Backends::Register;
+        }
+        else if(arg == "--backend-calling-conv") {
+            selectedBackend_ = Backends::CallingConv;
         }
         else return true;
 
@@ -249,7 +258,7 @@ private:
             includes_.emplace_back(std::move(Ipath));
             return false;
         }
-        else if(flagSep == '-'){
+        else if(flagSep == '-') {
             if(!parseBackend(i)) return false;
         }
 
