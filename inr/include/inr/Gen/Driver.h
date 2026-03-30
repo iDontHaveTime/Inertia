@@ -9,12 +9,14 @@
 /// @brief The driver for the inr-gen tool.
 
 #include <inr/ADT/StrView.h>
+#include <inr/Support/Stream.h>
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
 #include <inr/Gen/Record.h>
 #include <inr/Support/CFile.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/MemoryFile.h>
+#include <inr/Gen/CppEmitter.h>
 
 #include <filesystem>
 #include <tuple>
@@ -27,6 +29,7 @@ namespace inr::gen {
 class GenDriver {
     int argc_;
     char** argv_;
+    CppEmitter* emitter = nullptr;
 
     std::vector<std::filesystem::path> includes_;
     /// @brief Holds a map based on open files
@@ -41,7 +44,16 @@ class GenDriver {
     sview input_;
     sview output_;
 
+    enum class Backends{
+        None, Register
+    } selectedBackend_ = Backends::None;
+
 public:
+
+    ~GenDriver() noexcept {
+        if(emitter) delete emitter;
+    }
+
     GenDriver(int argc, char** argv) noexcept : argc_(argc), argv_(argv) {}
 
     int getArgc() const noexcept {
@@ -50,6 +62,31 @@ public:
 
     char** getArgv() const noexcept {
         return argv_;
+    }
+
+private:
+    bool getEmitter(raw_stream& os) {
+        CppEmitter* newEmitter = nullptr;
+        switch(selectedBackend_) {
+            case Backends::None:
+                break;
+            case Backends::Register:
+                newEmitter = new RegisterBackend(os);
+                break;
+        }
+
+        emitter = newEmitter;
+        return emitter == nullptr;
+    }
+public:
+
+    bool emit(const RecordStorage& result) {
+        inr::standard_file_stream sfs(fopen(std::string(output_.begin(), output_.end()).c_str(), "w"), true, 0);
+        if(!emitter) {
+            if(getEmitter(sfs)) return true;
+        }
+
+        return emitter->emit(result);
     }
 
     template<typename... Args>
@@ -133,7 +170,7 @@ public:
 
         std::vector<inr::gen::token> tokens = lexr.lex();
 
-        if(gen::parser::parse(*this, tokens, result)) {
+        if(gen::parser::parse(*this, name, tokens, result)) {
             error("parsing failed");
             return RequestErr::Internal;
         }
@@ -163,6 +200,21 @@ private:
         }
     }
 
+    bool parseBackend(int& i) {
+        if(selectedBackend_ != Backends::None) {
+            error("more than one backend flag is present");
+            return true;
+        }
+        sview arg = getArgv()[i];
+
+        if(arg == "--backend-register"){
+            selectedBackend_ = Backends::Register;
+        }
+        else return true;
+
+        return false;
+    }
+
     bool parseFlag(int& i) {
         sview arg = getArgv()[i];
 
@@ -181,6 +233,7 @@ private:
                 error("more than one output file specified");
                 return {};
             }
+            return false;
         }
         else if(flagSep == 'I') {
             sview out = joinedOrSeparateFlag(i);
@@ -194,9 +247,14 @@ private:
             }
 
             includes_.emplace_back(std::move(Ipath));
+            return false;
+        }
+        else if(flagSep == '-'){
+            if(!parseBackend(i)) return false;
         }
 
-        return false;
+        error("unknown flag '", arg, '\'');
+        return true;
     }
 
 public:

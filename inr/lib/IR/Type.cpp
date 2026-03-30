@@ -14,7 +14,7 @@ raw_stream& operator<<(raw_stream& os, const Type& type) {
         case Type::TypeID::Integer:
             return os << 'i' << ((const IntegerType&)type).getWidth();
         case Type::TypeID::Pointer:
-            return os << *((const PointerType&)type).getPointee() << '*';
+            return os << "ptr";
         case Type::TypeID::Function: {
             const auto& fn = (const FunctionType&)type;
             os << '(' << *fn.getReturn() << ")(";
@@ -26,7 +26,7 @@ raw_stream& operator<<(raw_stream& os, const Type& type) {
             return os << ')';
         }
         default:
-            return os << "<unknown type>";
+            return os << "unknown";
     }
 }
 

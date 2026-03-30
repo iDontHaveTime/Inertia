@@ -8,19 +8,29 @@
 
 namespace inr {
 
+sview Instruction::getInstructionIDStr(InstructionID id) {
+    switch(id) {
+        case InstructionID::RETURN:
+            return "ret";
+        case InstructionID::ADD:
+            return "add";
+    }
+}
+
 raw_stream& operator<<(raw_stream& os, const Instruction& ins) {
     switch(ins.getID()) {
         case Instruction::InstructionID::RETURN:
+            os << Instruction::getInstructionIDStr(ins.getID());
             if(ins.getNumOperands()) {
-                return os << "ret " << *ins.getType() << ' '
-                          << *ins.getOperand(0);
+                return os << *ins.getType() << ' ' << *ins.getOperand(0);
             }
             else {
-                return os << "ret void";
+                return os << "void";
             }
         case Instruction::InstructionID::ADD:
-            return os << '%' << ins.getName() << " = add " << *ins.getType()
-                      << ' ' << *ins.getOperand(0) << ", "
+            return os << '%' << ins.getName() << " = "
+                      << Instruction::getInstructionIDStr(ins.getID()) << ' '
+                      << *ins.getType() << ' ' << *ins.getOperand(0) << ", "
                       << *ins.getOperand(1);
         default:
             return os;
@@ -32,11 +42,10 @@ void Instruction::append(Block* to, Instruction* ins) {
 }
 
 ReturnInst::ReturnInst(Value* retVal, Block* parent) :
-    Instruction(InstructionID::RETURN,
-                retVal ? retVal->getType()
-                       : parent->getParent()->getType()->getReturn(),
-                parent,
-                retVal ? std::vector<Value*>{retVal} : std::vector<Value*>{},
-                "ret") {}
+    TermInst(InstructionID::RETURN,
+             retVal ? retVal->getType()
+                    : parent->getParent()->getType()->getReturn(),
+             parent, retVal ? ivec<Value*, 3>{retVal} : ivec<Value*, 3>{},
+             "ret") {}
 
 } // namespace inr

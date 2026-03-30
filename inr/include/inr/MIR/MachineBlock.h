@@ -48,8 +48,8 @@ public:
     }
 
     ~MachineBlock() noexcept {
-        for(MachineInst* i = instructions_.head; i != nullptr;) {
-            MachineInst* next = i->next;
+        for(MachineInst* i = instructions_.front(); i != nullptr;) {
+            MachineInst* next = i->getNext();
             delete i;
             i = next;
         }

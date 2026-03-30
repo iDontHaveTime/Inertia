@@ -120,8 +120,8 @@ public:
     }
 
     ~MachineFunction() noexcept {
-        for(MachineBlock* b = blocks_.head; b != nullptr;) {
-            MachineBlock* next = b->next;
+        for(MachineBlock* b = blocks_.front(); b != nullptr;) {
+            MachineBlock* next = b->getNext();
             delete b;
             b = next;
         }

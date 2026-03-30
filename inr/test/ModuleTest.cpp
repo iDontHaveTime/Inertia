@@ -7,13 +7,13 @@
 #include <inr/IR/Function.h>
 #include <inr/IR/Instruction.h>
 #include <inr/IR/Module.h>
-#include <inr/ISel/LinearISel.h>
-#include <inr/PassManager.h>
 #include <inr/Support/Stream.h>
 #include <inr/Support/Version.h>
 #include <inr/Target/Triple.h>
 
 #include <cstdio>
+
+#include "inr/IR/Verifier.h"
 
 int main() {
     (inr::outs() << inr::reportInertiaVersion << '\n').flush();
@@ -23,9 +23,8 @@ int main() {
     inr::Module* mod = ctx.newModule("main_module");
 
     inr::Function* func = mod->newFunction(
-        "main", ctx.getFunction(ctx.getI32(),
-                                {ctx.getI32(),
-                                 ctx.getPointer(ctx.getPointer(ctx.getI8()))}));
+        "main",
+        ctx.getFunction(ctx.getI32(), {ctx.getI32(), ctx.getPointer()}));
 
     func->setArgName(0, "argc");
     func->setArgName(1, "argv");
@@ -40,20 +39,16 @@ int main() {
 
     inr::ReturnInst::create(add, entry);
 
+    inr::ModuleErrors errs = inr::verifyModule(mod);
+    if(errs.hasErrors()) {
+        errs.printAll(inr::errs());
+        return 1;
+    }
+
     mod->print(exampleStream);
 
     inr::outs() << "Default triple: " << inr::Triple::getDefaultTriple()
                 << '\n';
-
-    inr::PassManager pm(inr::Triple::getDefaultTriple(), ctx, *mod);
-
-    pm.setISel(inr::TripleLinearISel::get(pm.getTriple()));
-
-    pm.runISel();
-
-    inr::standard_file_stream mirOS(
-        fopen("inr/example/module_example.mir", "w"), true, 0);
-    pm.getMachineModule()->print(mirOS, pm.getBuilder());
 
     return 0;
 }

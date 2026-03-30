@@ -3,5 +3,10 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
 include "inr/Target/Target.ing";
+include "inr/Target/x86/x86Registers.ing";
+include "inr/Target/x86/x86CallingConv.ing";
 
+// Main x86 file.
+
+// x86 Target description.
 def x86 : Target<"x86", 64, little>;

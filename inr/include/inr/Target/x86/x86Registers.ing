@@ -1,0 +1,116 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+include "inr/Target/Target.ing";
+
+// This file defines registers for x86.
+
+// RAX
+def AL   : Register<"al",   8>;
+def AX   : Register<"ax",   16> { list<Register> SubRegs = [AL]; }
+def EAX  : Register<"eax",  32> { list<Register> SubRegs = [AX, AL]; }
+def RAX  : Register<"rax",  64> { list<Register> SubRegs = [EAX, AX, AL]; }
+
+// RBX
+def BL   : Register<"bl",   8>;
+def BX   : Register<"bx",   16> { list<Register> SubRegs = [BL]; }
+def EBX  : Register<"ebx",  32> { list<Register> SubRegs = [BX, BL]; }
+def RBX  : Register<"rbx",  64> { list<Register> SubRegs = [EBX, BX, BL]; }
+
+// RCX
+def CL   : Register<"cl",   8>;
+def CX   : Register<"cx",   16> { list<Register> SubRegs = [CL]; }
+def ECX  : Register<"ecx",  32> { list<Register> SubRegs = [CX, CL]; }
+def RCX  : Register<"rcx",  64> { list<Register> SubRegs = [ECX, CX, CL]; }
+
+// RDX
+def DL   : Register<"dl",   8>;
+def DX   : Register<"dx",   16> { list<Register> SubRegs = [DL]; }
+def EDX  : Register<"edx",  32> { list<Register> SubRegs = [DX, DL]; }
+def RDX  : Register<"rdx",  64> { list<Register> SubRegs = [EDX, DX, DL]; }
+
+// RSI
+def SIL  : Register<"sil",  8>;
+def SI   : Register<"si",   16> { list<Register> SubRegs = [SIL]; }
+def ESI  : Register<"esi",  32> { list<Register> SubRegs = [SI, SIL]; }
+def RSI  : Register<"rsi",  64> { list<Register> SubRegs = [ESI, SI, SIL]; }
+
+// RDI
+def DIL  : Register<"dil",  8>;
+def DI   : Register<"di",   16> { list<Register> SubRegs = [DIL]; }
+def EDI  : Register<"edi",  32> { list<Register> SubRegs = [DI, DIL]; }
+def RDI  : Register<"rdi",  64> { list<Register> SubRegs = [EDI, DI, DIL]; }
+
+// RSP
+def SPL  : Register<"spl",  8>;
+def SP   : Register<"sp",   16> { list<Register> SubRegs = [SPL]; }
+def ESP  : Register<"esp",  32> { list<Register> SubRegs = [SP, SPL]; }
+def RSP  : Register<"rsp",  64> { list<Register> SubRegs = [ESP, SP, SPL]; }
+
+// RBP
+def BPL  : Register<"bpl",  8>;
+def BP   : Register<"bp",   16> { list<Register> SubRegs = [BPL]; }
+def EBP  : Register<"ebp",  32> { list<Register> SubRegs = [BP, BPL]; }
+def RBP  : Register<"rbp",  64> { list<Register> SubRegs = [EBP, BP, BPL]; }
+
+// R8
+def R8B  : Register<"r8b",  8>;
+def R8W  : Register<"r8w",  16> { list<Register> SubRegs = [R8B]; }
+def R8D  : Register<"r8d",  32> { list<Register> SubRegs = [R8W, R8B]; }
+def R8   : Register<"r8",   64> { list<Register> SubRegs = [R8D, R8W, R8B]; }
+
+// R9
+def R9B  : Register<"r9b",  8>;
+def R9W  : Register<"r9w",  16> { list<Register> SubRegs = [R9B]; }
+def R9D  : Register<"r9d",  32> { list<Register> SubRegs = [R9W, R9B]; }
+def R9   : Register<"r9",   64> { list<Register> SubRegs = [R9D, R9W, R9B]; }
+
+// R10
+def R10B : Register<"r10b", 8>;
+def R10W : Register<"r10w", 16> { list<Register> SubRegs = [R10B]; }
+def R10D : Register<"r10d", 32> { list<Register> SubRegs = [R10W, R10B]; }
+def R10  : Register<"r10",  64> { list<Register> SubRegs = [R10D, R10W, R10B]; }
+
+// R11
+def R11B : Register<"r11b", 8>;
+def R11W : Register<"r11w", 16> { list<Register> SubRegs = [R11B]; }
+def R11D : Register<"r11d", 32> { list<Register> SubRegs = [R11W, R11B]; }
+def R11  : Register<"r11",  64> { list<Register> SubRegs = [R11D, R11W, R11B]; }
+
+// R12
+def R12B : Register<"r12b", 8>;
+def R12W : Register<"r12w", 16> { list<Register> SubRegs = [R12B]; }
+def R12D : Register<"r12d", 32> { list<Register> SubRegs = [R12W, R12B]; }
+def R12  : Register<"r12",  64> { list<Register> SubRegs = [R12D, R12W, R12B]; }
+
+// R13
+def R13B : Register<"r13b", 8>;
+def R13W : Register<"r13w", 16> { list<Register> SubRegs = [R13B]; }
+def R13D : Register<"r13d", 32> { list<Register> SubRegs = [R13W, R13B]; }
+def R13  : Register<"r13",  64> { list<Register> SubRegs = [R13D, R13W, R13B]; }
+
+// R14
+def R14B : Register<"r14b", 8>;
+def R14W : Register<"r14w", 16> { list<Register> SubRegs = [R14B]; }
+def R14D : Register<"r14d", 32> { list<Register> SubRegs = [R14W, R14B]; }
+def R14  : Register<"r14",  64> { list<Register> SubRegs = [R14D, R14W, R14B]; }
+
+// R15
+def R15B : Register<"r15b", 8>;
+def R15W : Register<"r15w", 16> { list<Register> SubRegs = [R15B]; }
+def R15D : Register<"r15d", 32> { list<Register> SubRegs = [R15W, R15B]; }
+def R15  : Register<"r15",  64> { list<Register> SubRegs = [R15D, R15W, R15B]; }
+
+// GPR64
+def GR64 : RegisterClass<64, [RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP,
+                              R8, R9, R10, R11, R12, R13, R14, R15]>;
+// GPR32
+def GR32 : RegisterClass<32, [EAX, EBX, ECX, EDX, ESI, EDI, ESP, EBP,
+                              R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D]>;
+// GPR16
+def GR16 : RegisterClass<16, [AX, BX, CX, DX, SI, DI, SP, BP,
+                              R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
+// GPR8
+def GR8  : RegisterClass<8,  [AL, BL, CL, DL, SIL, DIL, SPL, BPL,
+                              R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;

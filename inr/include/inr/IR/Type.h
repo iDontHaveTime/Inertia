@@ -35,6 +35,22 @@ public:
         return typeID_;
     }
 
+    bool isVoid() const noexcept {
+        return typeID_ == TypeID::Void;
+    }
+
+    bool isInteger() const noexcept {
+        return typeID_ == TypeID::Integer;
+    }
+
+    bool isPointer() const noexcept {
+        return typeID_ == TypeID::Pointer;
+    }
+
+    bool isFunction() const noexcept {
+        return typeID_ == TypeID::Function;
+    }
+
     virtual ~Type() noexcept = default;
 };
 
@@ -77,15 +93,8 @@ public:
 };
 
 class PointerType : public Type {
-    const Type* pointee_;
-
 public:
-    PointerType(const Type* pointee) noexcept :
-        Type(TypeID::Pointer), pointee_(pointee) {}
-
-    const Type* getPointee() const noexcept {
-        return pointee_;
-    }
+    PointerType() noexcept : Type(TypeID::Pointer) {}
 };
 
 /// @brief Be able to print out the type to a stream.

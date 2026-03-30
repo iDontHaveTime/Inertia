@@ -58,7 +58,7 @@ public:
     /// @param type The IR type it should be.
     /// @param name Name of the value.
     explicit Value(ValueID id, const Type* type, sview name = {}) noexcept :
-        valueID_(id), type_(type), name_(name) {}
+        valueID_(id), type_(type), name_(name), flags_(0) {}
 
     /// @brief Gets the name of the value.
     /// @return String view of the name.

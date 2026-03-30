@@ -4,12 +4,49 @@
 
 // This file is for anything target generic, used by other inr-gen files.
 
-// Base class for all target definitions.
-// First parameter is the target name, ideally without spaces.
-// Second parameter is the pointer size of the target.
-// Third being the endian, has two options: little, big.
-class Target<string name, int pointerSize, endian tEndian>{
+// Target description.
+class Target<string name, int ptrSize, endian targetEndian> {
+    // Target name, used for debugging.
     string Name = name;
-    int PointerSize = pointerSize;
-    endian Endian = tEndian;
+    // Namespace name, shouldn't have spaces and must be C++ namespace compatible.
+    string Namespace = name;
+    // Pointer size of the target.
+    int PointerSize = ptrSize;
+    // Endian of the target.
+    endian Endian = targetEndian;
+}
+
+// Register description.
+class Register<string name, int size> {
+    // Name of the register, used for asm.
+    string Name = name;
+    // Size of the register.
+    int Size = size;
+    // Subregisters.
+    list<Register> SubRegs = [];
+}
+
+// Register class, groups registers.
+class RegisterClass<int size, list<Register> regs> {
+    // Size of the registers.
+    int Size = size;
+    // Registers it holds.
+    list<Register> Regs = regs;
+}
+
+// Describes the calling convention.
+class CallingConv<list<Register> args, list<Register> ret, list<Register> callerSaved, 
+                  list<Register> calleeSaved, Register stackPtr, Register framePtr>{
+    // Args that are in registers.
+    list<Register> Args = args;
+    // Return registers.
+    list<Register> Ret = ret;
+    // Caller saved registers.
+    list<Register> CallerSaved = callerSaved;
+    // Callee saved registers.
+    list<Register> CalleeSaved = calleeSaved;
+    // Stack pointer.
+    Register StackPtr = stackPtr;
+    // Frame pointer.
+    Register FramePtr = framePtr;
 }

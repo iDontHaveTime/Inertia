@@ -43,8 +43,8 @@ public:
     void print(raw_stream&, const class TreeNodeBuilder&) const;
 
     ~MachineModule() noexcept {
-        for(MachineFunction* f = functions_.head; f != nullptr;) {
-            MachineFunction* next = f->next;
+        for(MachineFunction* f = functions_.front(); f != nullptr;) {
+            MachineFunction* next = f->getNext();
             delete f;
             f = next;
         }

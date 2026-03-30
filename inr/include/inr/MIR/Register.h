@@ -41,6 +41,14 @@ public:
     constexpr Register(uint32_t index, Kind kind) noexcept :
         index_(index), kind_(kind) {}
 
+    constexpr static Register createPhysical(uint32_t index) noexcept {
+        return Register(index, Kind::Physical);
+    }
+
+    constexpr static Register createVirtual(uint32_t index) noexcept {
+        return Register(index, Kind::Virtual);
+    }
+
     constexpr Register(const Register&) noexcept = default;
     constexpr Register& operator=(const Register&) noexcept = default;
 

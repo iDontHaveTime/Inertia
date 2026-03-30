@@ -20,11 +20,6 @@ file(GLOB TargetSources "Target/*.cpp")
 
 add_inertia_library(Target ${TargetSources})
 
-# ISel Library
-file(GLOB_RECURSE ISelSources "ISel/*.cpp")
-
-add_inertia_library(ISel ${ISelSources})
-
 # Option Library
 file(GLOB OptionSources "Option/*.cpp")
 

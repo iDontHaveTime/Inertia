@@ -17,10 +17,12 @@ namespace inr::gen {
 class parser {
 public:
     /// @brief Parses the provided tokens.
+    /// @param driver inr-gen driver.
+    /// @param fname Name of the file being parsed.
     /// @param tokens Result from the lexer.
     /// @param result Destination of the parser.
-    static bool parse(class GenDriver& driver, const std::vector<token>& tokens,
-                      RecordStorage& result);
+    static bool parse(class GenDriver& driver, sview fname,
+                      const std::vector<token>& tokens, RecordStorage& result);
 };
 
 } // namespace inr::gen

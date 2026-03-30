@@ -1,0 +1,17 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+include "inr/Target/Target.ing";
+include "inr/Target/x86/x86Registers.ing";
+
+// File for defining x86 calling conventions.
+
+def SystemV : CallingConv<
+    [RDI, RSI, RDX, RCX, R8, R9],                // Arg regs.
+    [RAX, RDX],                                  // Return regs.
+    [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11], // Caller saved regs.
+    [RBX, R12, R13, R14, R15],                   // Callee saved regs.
+    RSP,                                         // Stack pointer register.
+    RBP                                          // Frame pointer register.
+>;

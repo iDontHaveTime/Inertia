@@ -43,8 +43,8 @@ public:
     }
 
     ~Module() noexcept {
-        for(Function* f = functions_.head; f != nullptr;) {
-            Function* next = f->next;
+        for(Function* f = functions_.front(); f != nullptr;) {
+            Function* next = f->getNext();
             delete f;
             f = next;
         }

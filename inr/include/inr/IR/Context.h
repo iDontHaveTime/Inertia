@@ -52,14 +52,16 @@ class InrContext {
     ///
     /// This is here because void type is not dynamic, there can only be one.
     VoidType voidType_;
+    /// @brief Pointer type.
+    ///
+    /// Same reason as void.
+    PointerType ptrType_;
     /// @brief Storage of pointers to different types.
     mutable std::vector<std::unique_ptr<Type>> storage_;
     /// @brief Storage of pointers to constant types.
     mutable std::vector<std::unique_ptr<Constant>> constantStorage_;
     /// @brief Map of integers with the width as the key.
     mutable std::unordered_map<unsigned, const Type*> integers_;
-    /// @brief Map of pointers with the pointee as the key.
-    mutable std::unordered_map<const Type*, const Type*> pointers_;
     /// @brief A list of function signatures.
     mutable std::vector<std::unique_ptr<FunctionType>> functionTypes_;
     /// @brief Map of integer constants.
@@ -109,14 +111,8 @@ public:
     /// @brief Creates a pointer to the provided pointee.
     /// @param pointee The type the pointer points to.
     /// @return Pointer to the pointer type.
-    const PointerType* getPointer(const Type* pointee) const {
-        auto [it, inserted] = pointers_.try_emplace(pointee, nullptr);
-        if(inserted) {
-            it->second =
-                storage_.emplace_back(std::make_unique<PointerType>(pointee))
-                    .get();
-        }
-        return (const PointerType*)it->second;
+    const PointerType* getPointer() const {
+        return &ptrType_;
     }
 
     /// @brief Creates a function signature with the provided return type and

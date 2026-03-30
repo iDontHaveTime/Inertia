@@ -20,7 +20,7 @@ namespace inr::gen {
 class token {
 public:
     /// @brief The type of the token.
-    enum class ID {
+    enum class ID : uint8_t {
         IntegerLiteral, ///< Integer literal (e.g. 42).
         FloatLiteral,   ///< Float literal, unsupported.
         CharLiteral,    ///< Char literal, unsupported.
@@ -56,6 +56,10 @@ private:
     const char* start_;
     /// @brief End of the token.
     const char* end_;
+    /// @brief Line of the token.
+    unsigned long line_;
+    /// @brief Column of the first character.
+    unsigned long column_;
     /// @brief Type of the token.
     ID id_;
     /// @brief Extra data, explained below.
@@ -71,15 +75,28 @@ public:
     /// @param end Pointer to the end.
     /// @param id Token type.
     /// @param extra Extra flags, can be read above.
-    token(const char* start, const char* end, ID id, uint8_t extra = 0) noexcept
-        :
-        start_(start), end_(end), id_(id), extra_(extra) {}
+    token(const char* start, const char* end, unsigned long line,
+          unsigned long column, ID id, uint8_t extra = 0) noexcept :
+        start_(start),
+        end_(end),
+        line_(line),
+        column_(column),
+        id_(id),
+        extra_(extra) {}
 
     /// @brief Set the end pointer of the token.
     /// @param end New end pointer.
     void setEnd(const char* end) {
         end_ = end;
     };
+
+    unsigned long getLine() const noexcept {
+        return line_;
+    }
+
+    unsigned long getColumn() const noexcept {
+        return column_;
+    }
 
     /// @brief Get the pointer to the start.
     /// @return Pointer to the start.
@@ -227,7 +244,9 @@ class lexer {
     /// @see `token` constructor for more info.
     void addToken(const char* from, const char* to, token::ID id,
                   uint8_t extra = 0) {
-        tokens_.emplace_back(from, to, id, extra);
+        unsigned long column = column_ - (to - from);
+        if(column) column++;
+        tokens_.emplace_back(from, to, line_, column, id, extra);
     }
 
     /// @brief Used internally.

@@ -144,6 +144,16 @@ public:
         return nullptr;
     }
 
+    /// @brief Returns a vector of defs that are derived from the class.
+    /// @param record Pointer to the class.
+    std::vector<const Record*> getDefsDerivedFrom(const Record* record) const;
+
+    /// @brief Returns a vector of defs that are derived from the class.
+    /// @param className Name of the class they must be derived from.
+    std::vector<const Record*> getDefsDerivedFrom(sview className) const {
+        return getDefsDerivedFrom(findClass(className));
+    }
+
     const Record* findDef(sview name) const noexcept;
 
     template<typename InitK, typename... Args>
@@ -267,6 +277,10 @@ public:
     int64_t getValue() const noexcept {
         return val_;
     }
+
+    static int64_t get(const Init* init) {
+        return ((const IntegerInit*)init)->getValue();
+    }
 };
 
 class StringInit : public TypeInit {
@@ -288,6 +302,10 @@ public:
             return sview(str.data(), str.size());
         }
     }
+
+    static sview get(const Init* init) {
+        return ((const StringInit*)init)->getValue();
+    }
 };
 
 class EndianInit : public TypeInit {
@@ -299,6 +317,10 @@ public:
 
     std::endian getValue() const noexcept {
         return endian_;
+    }
+
+    static std::endian get(const Init* init) {
+        return ((const EndianInit*)init)->getValue();
     }
 };
 
@@ -314,6 +336,10 @@ public:
 
     const std::vector<const Init*>& getInits() const noexcept {
         return inits_;
+    }
+
+    static const std::vector<const Init*>& get(const Init* init) {
+        return ((const ListInit*)init)->getInits();
     }
 };
 
@@ -528,7 +554,7 @@ public:
     bool isDerived(const Record* rec) const noexcept {
         for(const Record* r : superclasses_) {
             if(r == rec) return true;
-            if(rec->isDerived(rec)) return true;
+            if(r->isDerived(rec)) return true;
         }
         return false;
     }
@@ -541,6 +567,16 @@ public:
         return false;
     }
 };
+
+inline std::vector<const Record*> RecordStorage::getDefsDerivedFrom(const Record* record) const {
+    std::vector<const Record*> recs;
+
+    for(const std::unique_ptr<Record>& def : defs_) {
+        if(def->isDerived(record)) recs.push_back(def.get());
+    }
+
+    return recs;
+}
 
 inline const Record* RecordStorage::findDef(sview name) const noexcept {
     for(const std::unique_ptr<Record>& rec : defs_) {

@@ -23,6 +23,10 @@ class Block : public ilist_node<Block> {
         parent_(parent), name_(name) {}
 
 public:
+    const ilist<Instruction>& getInstructions() const noexcept {
+        return instructions_;
+    }
+
     ilist<Instruction>& getInstructions() noexcept {
         return instructions_;
     }
@@ -40,8 +44,8 @@ public:
     }
 
     ~Block() noexcept {
-        for(Instruction* i = instructions_.head; i != nullptr;) {
-            Instruction* next = i->next;
+        for(Instruction* i = instructions_.front(); i != nullptr;) {
+            Instruction* next = i->getNext();
             delete i;
             i = next;
         }

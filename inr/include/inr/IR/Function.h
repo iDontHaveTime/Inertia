@@ -63,8 +63,8 @@ public:
     }
 
     ~Function() noexcept {
-        for(Block* b = blocks_.head; b != nullptr;) {
-            Block* next = b->next;
+        for(Block* b = blocks_.front(); b != nullptr;) {
+            Block* next = b->getNext();
             delete b;
             b = next;
         }

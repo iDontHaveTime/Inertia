@@ -9,9 +9,8 @@
 /// @brief Contains the instruction class.
 
 #include <inr/ADT/IList.h>
+#include <inr/ADT/IVector.h>
 #include <inr/IR/Value.h>
-
-#include <stdexcept>
 
 namespace inr {
 
@@ -20,11 +19,13 @@ class Instruction : public Value, public ilist_node<Instruction> {
 public:
     enum class InstructionID { RETURN, ADD };
 
+    static sview getInstructionIDStr(InstructionID);
+
 protected:
     /// @brief The block that the instruction is in.
     class Block* parent_;
     /// @brief The instruction's operands.
-    std::vector<Value*> operands_;
+    ivec<Value*, 3> operands_;
 
     /// @brief What instruction this is.
     InstructionID insID_;
@@ -41,14 +42,14 @@ protected:
     /// @param operands The operands of the instruction.
     /// @param name The name of this instruction.
     Instruction(InstructionID id, const Type* type, Block* parent,
-                std::vector<Value*> operands, sview name = "") :
+                ivec<Value*, 3> operands, sview name = "") :
         Value(ValueID::Instruction, type, name),
         parent_(parent),
         operands_(std::move(operands)),
         insID_(id) {
         append(parent, this);
         for(Value* op : operands_) {
-            op->addUser(op);
+            op->addUser(this);
         }
     }
 
@@ -76,7 +77,7 @@ public:
 
     /// @brief Gets the operands of the instruction.
     /// @return Const reference to the vector.
-    const std::vector<Value*>& getOperands() const noexcept {
+    const ivec<Value*, 3>& getOperands() const noexcept {
         return operands_;
     }
 
@@ -98,8 +99,20 @@ public:
     friend class Block;
 };
 
+/// @brief Instruction with the terminator function overriden.
+class TermInst : public Instruction {
+public:
+    TermInst(InstructionID id, const Type* type, Block* parent,
+             ivec<Value*, 3> operands, sview name = "") :
+        Instruction(id, type, parent, operands, name) {}
+
+    bool isTerminator() const noexcept override {
+        return true;
+    }
+};
+
 /// @brief The "ret" (Return) instruction.
-class ReturnInst : public Instruction {
+class ReturnInst : public TermInst {
     /// @brief The basic return instruction constructor.
     /// @see create(Value*, Block*) to get more details.
     ReturnInst(Value* retVal, Block* parent);
@@ -112,21 +125,13 @@ public:
     static ReturnInst* create(Value* retVal, Block* parent) {
         return new ReturnInst(retVal, parent);
     }
-
-    bool isTerminator() const noexcept override {
-        return true;
-    }
 };
 
 class BinaryInst : public Instruction {
     /// @brief The basic binary op instruction constructor.
     BinaryInst(InstructionID id, Value* lhs, Value* rhs, sview name,
                Block* parent) :
-        Instruction(id, lhs->getType(), parent, {lhs, rhs}, name) {
-        if(lhs->getType() != rhs->getType())
-            throw std::runtime_error(
-                "Types do not match in a new binary op instruction.");
-    }
+        Instruction(id, lhs->getType(), parent, {lhs, rhs}, name) {}
 
 public:
     /// @brief Creates a new add instruction.

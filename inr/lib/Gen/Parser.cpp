@@ -15,21 +15,27 @@
 
 namespace inr::gen {
 
-constexpr sview PARSER_NAME = "inr-gen-parser";
-
 class TokenStream {
     std::vector<token>::const_iterator it_;
     decltype(it_) end_;
+    sview fname_;
 
 public:
-    TokenStream(const std::vector<token>& tokens) noexcept :
-        it_(tokens.begin()), end_(tokens.end()) {}
+    TokenStream(const std::vector<token>& tokens, sview fname) noexcept :
+        it_(tokens.begin()), end_(tokens.end()), fname_(fname) {}
+
+    template<typename... Args>
+    void errorpos(Args&&... args) const {
+        log::sendposargs(errs(), log::Level::ERROR, fname_, current().getLine(),
+                         current().getColumn(), std::forward<Args>(args)...);
+    }
 
     bool atEnd() const noexcept {
         return it_ == end_;
     }
 
     const token& current() const noexcept {
+        if(atEnd()) return *(it_ - 1);
         return *it_;
     }
 
@@ -68,8 +74,7 @@ bool advanceIfNotUnexpected(TokenStream& ts) {
     bool fail = !ts.advance();
 
     if(fail) {
-        inr::log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                       "token stream ended abruptly");
+        ts.errorpos("token stream ended abruptly");
     }
 
     return fail;
@@ -96,15 +101,13 @@ const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
     if(expectedType->getKind() == RecordType::Kind::Def) {
         const Record* def = result.findDef(symbol);
         if(!def) {
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ",
-                          symbol, " was not found");
+            ts.errorpos("def ", symbol, " was not found");
             return nullptr;
         }
         const RecordDef* rdef = (const RecordDef*)expectedType;
         if(!def->isDerived(rdef->getRecord())) {
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "def ",
-                          symbol, " must be derived from ",
-                          rdef->getRecord()->getName());
+            ts.errorpos("def ", symbol, " must be derived from ",
+                        rdef->getRecord()->getName());
             return nullptr;
         }
         return result.newInit<DefInit>(result, def);
@@ -114,9 +117,21 @@ const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
 }
 
 const Init* parseEndianInit(TokenStream& ts, RecordStorage& result) {
-    return result.newInit<EndianInit>(
-        result, ts.current().getID() == token::ID::Little ? std::endian::little
-                                                          : std::endian::big);
+    token::ID id = ts.getID();
+
+    std::endian endian;
+    if(id == token::ID::Little) {
+        endian = std::endian::little;
+    }
+    else if(id == token::ID::Big) {
+        endian = std::endian::big;
+    }
+    else {
+        ts.errorpos("endian must be either 'little' or 'big'");
+        return nullptr;
+    }
+
+    return result.newInit<EndianInit>(result, endian);
 }
 
 const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
@@ -128,8 +143,8 @@ const Init* parseListInit(TokenStream& ts, RecordStorage& result,
                           const RecordType* expectedType) {
     if(advanceIfNotUnexpected(ts)) return nullptr;
     if(expectedType->getKind() != RecordType::Kind::List) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "to initialize a list a list must be init");
+        ts.errorpos("expected type '", expectedType->getAsString(),
+                    "' but got 'list<...>'");
         return nullptr;
     }
     ListInit* linit = (ListInit*)result.newInit<ListInit>(expectedType);
@@ -157,6 +172,8 @@ another_list:
 /// @param ts Token stream.
 /// @param result Required for storage.
 /// @param allowIdent Should identifier be allowed (as a string).
+/// @param symbolMap Fields in the current class.
+/// @param expectedType What type the init should be.
 const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
                       std::unordered_map<sview, size_t>& symbolMap,
                       const RecordType* expectedType) {
@@ -193,16 +210,14 @@ const RecordType* parseRecordType(TokenStream& ts, RecordStorage& result);
 
 const RecordType* parseListType(TokenStream& ts, RecordStorage& result) {
     if(!ts.consume(token::ID::LeftArrow)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '<' after list");
+        ts.errorpos("expected '<' after 'list'");
         return nullptr;
     }
 
     const RecordType* ty = parseRecordType(ts, result);
 
     if(!ts.consume(token::ID::RightArrow)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected '>' to close list");
+        ts.errorpos("expected '>' to close 'list'");
         return nullptr;
     }
 
@@ -241,9 +256,8 @@ RecordField* parseRecordField(TokenStream& ts, RecordStorage& result,
     const Init* name = parseInit(ts, result, true, symbolMap, ty);
 
     if(!name || !name->matches(RecordType::Kind::String)) {
-        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                      "field name must be an identifier in record ",
-                      record->getName());
+        ts.errorpos("field name must be an identifier in record ",
+                    record->getName());
         return nullptr;
     }
 
@@ -270,18 +284,18 @@ RecordField* parseRecordField(TokenStream& ts, RecordStorage& result,
                 }
             }
             if(err) {
-                log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                              "expected type '", ty->getAsString(),
-                              "' but got '", errType, "' instead in field ",
-                              field.first->getName());
+                ts.errorpos("expected type '", ty->getAsString(), "' but got '",
+                            errType, "' instead in field ",
+                            field.first->getName(), " in record ",
+                            record->getName());
                 init = nullptr;
             }
         }
         else if(!init) {
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                          "expected type '", ty->getAsString(),
-                          "' but got 'unknown' instead in field ",
-                          field.first->getName());
+            ts.errorpos("expected type '", ty->getAsString(),
+                        "' but got 'unknown' instead in field ",
+                        field.first->getName(), " in record ",
+                        record->getName());
         }
         field.first->setValue(init);
     }
@@ -302,14 +316,13 @@ another_arg:
 bool parseFieldsClass(TokenStream& ts, RecordStorage& result, Record* record,
                       std::unordered_map<sview, size_t>& symbolMap) {
 another_field:
-    if(parseRecordField(ts, result, record, RecordField::Kind::Normal,
-                        symbolMap) == nullptr)
-        return true;
+    RecordField* rf = parseRecordField(ts, result, record,
+                                       RecordField::Kind::Normal, symbolMap);
+    if(!rf) return true;
 
     if(!ts.consume(token::ID::Semicolon)) {
-        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected ';' after field declaration in record ",
-                      record->getName());
+        ts.errorpos("expected ';' in field ", rf->getName(), " in record ",
+                    record->getName());
         return true;
     }
 
@@ -322,9 +335,7 @@ bool parseFields(TokenStream& ts, RecordStorage& result, Record* record,
                  RecordField::Kind fieldK,
                  std::unordered_map<sview, size_t>& symbolMap) {
     if(fieldK == RecordField::Kind::Arg && !ts.consume(token::ID::LeftArrow)) {
-        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected '<' but got '",
-                      ts.currentAdvance().getAsString(), '\'');
+        ts.errorpos("expected '<' for args in record ", record->getName());
         return true;
     }
 
@@ -335,9 +346,8 @@ bool parseFields(TokenStream& ts, RecordStorage& result, Record* record,
         case RecordField::Kind::Arg:
             if(parseFieldsArgs(ts, result, record, symbolMap)) return true;
             if(!ts.consume(token::ID::RightArrow)) {
-                log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                              "expected '>' after args in record ",
-                              record->getName());
+                ts.errorpos("expected '>' after args in record ",
+                            record->getName());
                 return true;
             }
             break;
@@ -366,8 +376,7 @@ another_init:
     const Init* init =
         parseInit(ts, result, false, symbolMap, nextArgType(it, end));
     if(!init) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "couldn't parse args");
+        ts.errorpos("couldn't parse args");
         return true;
     }
     args.emplace_back(init);
@@ -381,17 +390,18 @@ bool parseInheritanceImpl(TokenStream& ts, RecordStorage& result,
     const Init* className = parseInit(ts, result, true, symbolMap, nullptr);
 
     if(!className || !className->matches(RecordType::Kind::String)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected identifier for record name");
+        ts.errorpos(
+            "expected identifier for record name in inheritance for record ",
+            record->getName());
         return true;
     }
 
-    const Record* super =
-        result.findClass(((const StringInit*)className)->getValue());
+    sview sclassName = ((const StringInit*)className)->getValue();
+    const Record* super = result.findClass(sclassName);
     if(!super) {
-        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME, "record name '",
-                      ((const StringInit*)className)->getValue(),
-                      "' not found");
+        ts.errorpos("record name '", sclassName,
+                    "' not found for inheritance in record ",
+                    record->getName());
         return true;
     }
 
@@ -404,9 +414,8 @@ bool parseInheritanceImpl(TokenStream& ts, RecordStorage& result,
                       super->getFields().end());
 
         if(!ts.consume(token::ID::RightArrow)) {
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                          "expected '>' when inheriting ", super->getName(),
-                          " in record ", record->getName());
+            ts.errorpos("expected '>' to close args in inheritance of ",
+                        super->getName(), " in record ", record->getName());
             return true;
         }
     }
@@ -430,8 +439,7 @@ bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
     const Init* className = parseInit(ts, result, true, symbolMap, nullptr);
 
     if(!className || !className->matches(RecordType::Kind::String)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected identifier for record name");
+        ts.errorpos("expected identifier for record name");
         return true;
     }
 
@@ -439,9 +447,9 @@ bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
 
     if(ts.expect(token::ID::LeftArrow)) {
         if(kind == Record::Kind::Def) {
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                          "args are not allowed in defs, found in ",
-                          record->getName());
+            ts.errorpos("args are not allowed in defs, found in ",
+                        record->getName());
+            return true;
         }
         if(parseFields(ts, result, record, RecordField::Kind::Arg, symbolMap))
             return true;
@@ -454,9 +462,8 @@ bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
     if(ts.consume(token::ID::Semicolon)) return false;
 
     if(!ts.consume(token::ID::LeftBrace)) {
-        log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                      "expected '{' to open record ",
-                      ((const StringInit*)className)->getValue());
+        ts.errorpos("expected '{' to open record ",
+                    ((const StringInit*)className)->getValue());
         return true;
     }
 
@@ -478,22 +485,19 @@ bool parseInclude(GenDriver& driver, TokenStream& ts, RecordStorage& result) {
     if(advanceIfNotUnexpected(ts)) return true;
 
     if(!ts.expect(token::ID::StringLiteral)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected string literal for include");
+        ts.errorpos("expected string literal for include");
         return true;
     }
 
     sview file = ts.currentAdvance().getAsString();
     if(!ts.consume(token::ID::Semicolon)) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "expected ';' after include");
+        ts.errorpos("expected ';' after include");
         return true;
     }
 
     if(driver.driveFileSpecific(file, result, true) ==
        GenDriver::RequestErr::Internal) {
-        log::send(errs(), log::Level::ERROR, PARSER_NAME,
-                  "error driving include");
+        ts.errorpos("error driving include");
         return true;
     }
 
@@ -510,16 +514,15 @@ bool parseStatements(GenDriver& driver, TokenStream& ts,
         case token::ID::Include:
             return parseInclude(driver, ts, result);
         default:
-            log::sendargs(errs(), log::Level::ERROR, PARSER_NAME,
-                          "unexpected token '",
-                          ts.currentAdvance().getAsString(), '\'');
+            ts.errorpos("unexpected token '", ts.current().getAsString(), '\'');
+            ts.advance();
             return true;
     }
 }
 
-bool parser::parse(GenDriver& driver, const std::vector<token>& toks,
-                   RecordStorage& result) {
-    TokenStream ts(toks);
+bool parser::parse(GenDriver& driver, sview fname,
+                   const std::vector<token>& toks, RecordStorage& result) {
+    TokenStream ts(toks, fname);
 
     bool err = false;
     while(!ts.atEnd()) {
