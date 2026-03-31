@@ -172,11 +172,6 @@ InstructionError* binaryInstVerify(const BinaryInst& inst) {
 
     const Type* type = inst.getType();
 
-    if(type->isVoid() || type->isFunction()) {
-        return new InstructionError(&inst,
-                                    InstructionError::SubKind::TypeNotAllowed);
-    }
-
     return checkOperands(inst, type);
 }
 
@@ -188,6 +183,11 @@ void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
             err = returnVerify(func, (const ReturnInst&)inst);
             break;
         case Instruction::InstructionID::ADD:
+            if(!inst.getType()->isInteger()) {
+                new InstructionError(&inst,
+                                     InstructionError::SubKind::TypeNotAllowed);
+                return;
+            }
             err = binaryInstVerify((const BinaryInst&)inst);
             break;
     }

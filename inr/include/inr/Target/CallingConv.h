@@ -86,6 +86,8 @@ public:
     }
 };
 
+class CCState {};
+
 } // namespace inr
 
 #endif // INERTIA_TARGET_CALLINGCONV_H

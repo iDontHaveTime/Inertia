@@ -7,15 +7,14 @@
 #include <inr/IR/Function.h>
 #include <inr/IR/Instruction.h>
 #include <inr/IR/Module.h>
+#include <inr/IR/Verifier.h>
 #include <inr/Support/Stream.h>
 #include <inr/Support/Version.h>
 #include <inr/Target/Triple.h>
 
 #include <cstdio>
 
-#include "inr/IR/Verifier.h"
-
-int main() {
+int main(int argc, char** argv) {
     (inr::outs() << inr::reportInertiaVersion << '\n').flush();
 
     inr::InrContext ctx;
