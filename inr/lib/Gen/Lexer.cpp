@@ -119,7 +119,7 @@ constexpr std::pair<sview, token::ID> keywords[] = {
     {"def", token::ID::Def},       {"class", token::ID::Class},
     {"int", token::ID::Int},       {"string", token::ID::String},
     {"endian", token::ID::Endian}, {"include", token::ID::Include},
-    {"list", token::ID::List}};
+    {"list", token::ID::List},     {"irtype", token::ID::IRType}};
 
 token::ID lexer::classifyAlpha(sview sv) {
     for(const auto& p : keywords) {

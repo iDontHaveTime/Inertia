@@ -13,6 +13,7 @@
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
 #include <inr/Gen/Record.h>
+#include <inr/IR/Context.h>
 #include <inr/Support/CFile.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/MemoryFile.h>
@@ -27,9 +28,9 @@
 namespace inr::gen {
 
 class GenDriver {
-    int argc_;
     char** argv_;
     CppEmitter* emitter = nullptr;
+    InrContext ctx_;
 
     std::vector<std::filesystem::path> includes_;
     /// @brief Holds a map based on open files
@@ -49,13 +50,14 @@ class GenDriver {
         Register,
         CallingConv
     } selectedBackend_ = Backends::None;
+    int argc_;
 
 public:
     ~GenDriver() noexcept {
         if(emitter) delete emitter;
     }
 
-    GenDriver(int argc, char** argv) noexcept : argc_(argc), argv_(argv) {}
+    GenDriver(int argc, char** argv) noexcept : argv_(argv), argc_(argc) {}
 
     int getArgc() const noexcept {
         return argc_;
@@ -63,6 +65,10 @@ public:
 
     char** getArgv() const noexcept {
         return argv_;
+    }
+
+    const InrContext& getCtx() const noexcept {
+        return ctx_;
     }
 
 private:

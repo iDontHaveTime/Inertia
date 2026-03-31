@@ -10,6 +10,7 @@
 
 #include <inr/ADT/ArrView.h>
 #include <inr/ADT/StrView.h>
+#include <inr/IR/Type.h>
 
 #include <bit>
 #include <cstdint>
@@ -33,7 +34,8 @@ public:
         String,  ///< String type, can be allocated or view.
         Endian,  ///< Either little or big endian.
         List,    ///< List type.
-        Def      ///< Points to a def.
+        Def,     ///< Points to a def.
+        IRType   ///< Points to an IR type.
     };
 
 private:
@@ -112,6 +114,15 @@ public:
         RecordType(Kind::List), elementTy_(elementTy) {}
 };
 
+class RecordIRType : public RecordType {
+public:
+    std::string getAsString() const override {
+        return "irtype";
+    }
+
+    RecordIRType() noexcept : RecordType(Kind::IRType) {}
+};
+
 /// @brief Holds the map of classes and a vector of defs.
 class RecordStorage {
     /// @brief A map of classes.
@@ -124,6 +135,7 @@ class RecordStorage {
     RecordInt integer_;
     RecordString string_;
     RecordEndian endian_;
+    RecordIRType irtype_;
 
     std::vector<std::unique_ptr<RecordType>> typeStorage_;
 
@@ -166,7 +178,7 @@ public:
         return &integer_;
     }
 
-    const RecordDef* getDefTy(const Record* def) noexcept {
+    const RecordDef* getDefTy(const Record* def) {
         return (const RecordDef*)typeStorage_
             .emplace_back(std::make_unique<RecordDef>(def))
             .get();
@@ -186,12 +198,24 @@ public:
             .get();
     }
 
+    const RecordIRType* getIRTy() const noexcept {
+        return &irtype_;
+    }
+
     friend class Record;
 };
 
 class Init {
 public:
-    enum class Kind : uint8_t { Integer, String, Endian, Arg, List, Def };
+    enum class Kind : uint8_t {
+        Integer,
+        String,
+        Endian,
+        Arg,
+        List,
+        Def,
+        IRType
+    };
     static sview kindAsString(Kind kind) {
         switch(kind) {
             case Kind::Integer:
@@ -205,7 +229,9 @@ public:
             case Kind::List:
                 return "list";
             case Kind::Def:
-                return "def";
+                return "record";
+            case Kind::IRType:
+                return "irtype";
         }
     }
 
@@ -231,6 +257,8 @@ public:
                 return kind_ == Kind::List;
             case RecordType::Kind::Def:
                 return kind_ == Kind::Def;
+            case RecordType::Kind::IRType:
+                return kind_ == Kind::IRType;
             default:
                 return false;
         }
@@ -255,11 +283,27 @@ public:
     }
 };
 
+class IRTypeInit : public TypeInit {
+    const Type* type_;
+
+public:
+    IRTypeInit(RecordStorage& s, const Type* type) :
+        TypeInit(Kind::IRType, s.getIRTy()), type_(type) {}
+
+    const Type* getValue() const noexcept {
+        return type_;
+    }
+
+    static const Type* get(const Init* init) {
+        return ((const IRTypeInit*)init)->getValue();
+    }
+};
+
 class DefInit : public TypeInit {
     const Record* def_;
 
 public:
-    DefInit(RecordStorage& s, const Record* def) noexcept :
+    DefInit(RecordStorage& s, const Record* def) :
         TypeInit(Kind::Def, s.getDefTy(def)), def_(def) {}
 
     const Record* getValue() const noexcept {

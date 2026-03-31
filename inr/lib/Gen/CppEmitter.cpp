@@ -27,18 +27,6 @@
 //     int Size = size;
 //     list<Register> Regs = regs;
 // }
-//
-// class CallingConv<list<Register> args, list<Register> ret, list<Register>
-// callerSaved,
-//                   list<Register> calleeSaved, Register stackPtr, Register
-//                   framePtr>{
-//     list<Register> Args = args;
-//     list<Register> Ret = ret;
-//     list<Register> CallerSaved = callerSaved;
-//     list<Register> CalleeSaved = calleeSaved;
-//     Register StackPtr = stackPtr;
-//     Register FramePtr = framePtr;
-// }
 
 namespace inr::gen {
 
@@ -237,45 +225,6 @@ bool RegisterBackend::emit(const RecordStorage& result) {
 
 // CALLING CONV BACKEND
 
-struct CallingConvInfo : public InrGenInfo {
-    gen_list Args;
-    gen_list Ret;
-    gen_list CallerSaved;
-    gen_list CalleeSaved;
-    gen_def StackPtr;
-    gen_def FramePtr;
-
-    CallingConvInfo(const Record* conv) {
-        const Init* ArgsInit = conv->getField("Args");
-        const Init* RetInit = conv->getField("Ret");
-        const Init* CallerSavedInit = conv->getField("CallerSaved");
-        const Init* CalleeSavedInit = conv->getField("CalleeSaved");
-        const Init* StackPtrInit = conv->getField("StackPtr");
-        const Init* FramePtrInit = conv->getField("FramePtr");
-
-        if(!ArgsInit || !RetInit || !CallerSavedInit || !CalleeSavedInit ||
-           !StackPtrInit || !FramePtrInit)
-            return;
-
-        if(!ArgsInit->matches(RecordType::Kind::List)) return;
-        if(!RetInit->matches(RecordType::Kind::List)) return;
-        if(!CallerSavedInit->matches(RecordType::Kind::List)) return;
-        if(!CalleeSavedInit->matches(RecordType::Kind::List)) return;
-        if(!StackPtrInit->matches(RecordType::Kind::Def)) return;
-        if(!FramePtrInit->matches(RecordType::Kind::Def)) return;
-
-        Args = &ListInit::get(ArgsInit);
-        Ret = &ListInit::get(RetInit);
-        CallerSaved = &ListInit::get(CallerSavedInit);
-        CalleeSaved = &ListInit::get(CalleeSavedInit);
-
-        StackPtr = DefInit::get(StackPtrInit);
-        FramePtr = DefInit::get(FramePtrInit);
-
-        Success = true;
-    }
-};
-
 bool CallingConvBackend::emit(const RecordStorage& result) {
     TargetInfo target = getTargetInfo(result);
     if(!target.Success) return true;
@@ -295,41 +244,6 @@ bool CallingConvBackend::emit(const RecordStorage& result) {
     // NAMESPACE
     addNamespace(target.Namespace);
     openBody();
-
-    for(const Record* conv : convs) {
-        CallingConvInfo info(conv);
-        if(!info.Success) {
-            err = true;
-            break;
-        }
-
-        sview convName = conv->getName();
-
-        write("constexpr Register ", convName, "_Args[] = ");
-        openBody();
-        generateRegisterList(os_, info.Args);
-        closeBody(true);
-
-        write("constexpr Register ", convName, "_Ret[] = ");
-        openBody();
-        generateRegisterList(os_, info.Ret);
-        closeBody(true);
-
-        write("constexpr Register ", convName, "_CallerSaved[] = ");
-        openBody();
-        generateRegisterList(os_, info.CallerSaved);
-        closeBody(true);
-
-        write("constexpr Register ", convName, "_CalleeSaved[] = ");
-        openBody();
-        generateRegisterList(os_, info.CalleeSaved);
-        closeBody(true);
-
-        writeln("constexpr Register ", convName,
-                "_StackPtr = ", info.StackPtr->getName(), ';');
-        writeln("constexpr Register ", convName,
-                "_FramePtr = ", info.FramePtr->getName(), ';');
-    }
 
     closeBody();
     // END OF NAMESPACE

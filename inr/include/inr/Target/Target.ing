@@ -34,19 +34,21 @@ class RegisterClass<int size, list<Register> regs> {
     list<Register> Regs = regs;
 }
 
-// Describes the calling convention.
-class CallingConv<list<Register> args, list<Register> ret, list<Register> callerSaved, 
-                  list<Register> calleeSaved, Register stackPtr, Register framePtr>{
-    // Args that are in registers.
-    list<Register> Args = args;
-    // Return registers.
-    list<Register> Ret = ret;
-    // Caller saved registers.
-    list<Register> CallerSaved = callerSaved;
-    // Callee saved registers.
-    list<Register> CalleeSaved = calleeSaved;
-    // Stack pointer.
-    Register StackPtr = stackPtr;
-    // Frame pointer.
-    Register FramePtr = framePtr;
+class CCAction;
+
+class CCAssignToReg<list<Register> regs> : CCAction {
+    list<Register> Regs = regs;
+}
+
+class CCAssignToStack<int size, int align> : CCAction {
+    int Size = size;
+    int Align = align;
+}
+
+class CCPredicate<CCAction action> : CCAction {
+    CCAction SubAction = action;
+}
+
+class CCIfType<list<irtype> types, CCAction action> : CCPredicate<action> {
+    list<irtype> Types = types;
 }

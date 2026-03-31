@@ -8,6 +8,8 @@
 #include <inr/Gen/Lexer.h>
 #include <inr/Gen/Parser.h>
 #include <inr/Gen/Record.h>
+#include <inr/IR/Context.h>
+#include <inr/IR/Type.h>
 #include <inr/Support/Logger.h>
 
 #include <unordered_map>
@@ -88,9 +90,15 @@ const Init* parseStringInit(TokenStream& ts, RecordStorage& result) {
     return result.newInit<StringInit>(result, ts.current().getAsString());
 }
 
+const Init* parseAnonDef(TokenStream& ts, RecordStorage& result,
+                         const Record* inherit,
+                         std::unordered_map<sview, size_t>& symbolMap,
+                         const InrContext& ctx);
+
 const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
                                 std::unordered_map<sview, size_t>& symbolMap,
-                                const RecordType* expectedType) {
+                                const RecordType* expectedType,
+                                const InrContext& ctx) {
     sview symbol = ts.current().getAsString();
 
     auto it = symbolMap.find(symbol);
@@ -99,6 +107,11 @@ const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
     }
 
     if(expectedType->getKind() == RecordType::Kind::Def) {
+        const Record* maybeAnon = result.findClass(symbol);
+        if(maybeAnon) {
+            return parseAnonDef(ts, result, maybeAnon, symbolMap, ctx);
+        }
+
         const Record* def = result.findDef(symbol);
         if(!def) {
             ts.errorpos("def ", symbol, " was not found");
@@ -111,6 +124,12 @@ const Init* parseIdentifierInit(TokenStream& ts, RecordStorage& result,
             return nullptr;
         }
         return result.newInit<DefInit>(result, def);
+    }
+
+    if(expectedType->getKind() == RecordType::Kind::IRType) {
+        const Type* t = strToType(ctx, symbol);
+        if(!t) return nullptr;
+        return result.newInit<IRTypeInit>(result, t);
     }
 
     return nullptr;
@@ -136,11 +155,12 @@ const Init* parseEndianInit(TokenStream& ts, RecordStorage& result) {
 
 const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
                       std::unordered_map<sview, size_t>& symbolMap,
-                      const RecordType* expectedType);
+                      const RecordType* expectedType, const InrContext& ctx);
 
 const Init* parseListInit(TokenStream& ts, RecordStorage& result,
                           std::unordered_map<sview, size_t>& symbolMap,
-                          const RecordType* expectedType) {
+                          const RecordType* expectedType,
+                          const InrContext& ctx) {
     if(advanceIfNotUnexpected(ts)) return nullptr;
     if(expectedType->getKind() != RecordType::Kind::List) {
         ts.errorpos("expected type '", expectedType->getAsString(),
@@ -154,7 +174,7 @@ const Init* parseListInit(TokenStream& ts, RecordStorage& result,
 another_list:
     const Init* candidate =
         parseInit(ts, result, false, symbolMap,
-                  ((const RecordList*)expectedType)->getElementTy());
+                  ((const RecordList*)expectedType)->getElementTy(), ctx);
     if(candidate) {
         linit->addInit(candidate);
     }
@@ -176,7 +196,7 @@ another_list:
 /// @param expectedType What type the init should be.
 const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
                       std::unordered_map<sview, size_t>& symbolMap,
-                      const RecordType* expectedType) {
+                      const RecordType* expectedType, const InrContext& ctx) {
     const Init* init = nullptr;
     switch(ts.getID()) {
         case token::ID::IntegerLiteral:
@@ -185,7 +205,8 @@ const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
         case token::ID::Identifier:
             if(allowIdent) init = parseStringInit(ts, result);
             else
-                init = parseIdentifierInit(ts, result, symbolMap, expectedType);
+                init = parseIdentifierInit(ts, result, symbolMap, expectedType,
+                                           ctx);
             break;
         case token::ID::StringLiteral:
             if(!allowIdent) init = parseStringInit(ts, result);
@@ -196,7 +217,7 @@ const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
             init = parseEndianInit(ts, result);
             break;
         case token::ID::LeftSquare:
-            init = parseListInit(ts, result, symbolMap, expectedType);
+            init = parseListInit(ts, result, symbolMap, expectedType, ctx);
             break;
         default:
             break;
@@ -243,6 +264,8 @@ const RecordType* parseRecordType(TokenStream& ts, RecordStorage& result) {
             return parseListType(ts, result);
         case token::ID::Identifier:
             return parseIdentifierType(tokAsView, result);
+        case token::ID::IRType:
+            return result.getIRTy();
         default:
             return nullptr;
     }
@@ -250,10 +273,11 @@ const RecordType* parseRecordType(TokenStream& ts, RecordStorage& result) {
 
 RecordField* parseRecordField(TokenStream& ts, RecordStorage& result,
                               Record* record, RecordField::Kind kind,
-                              std::unordered_map<sview, size_t>& symbolMap) {
+                              std::unordered_map<sview, size_t>& symbolMap,
+                              const InrContext& ctx) {
     const RecordType* ty = parseRecordType(ts, result);
 
-    const Init* name = parseInit(ts, result, true, symbolMap, ty);
+    const Init* name = parseInit(ts, result, true, symbolMap, ty, ctx);
 
     if(!name || !name->matches(RecordType::Kind::String)) {
         ts.errorpos("field name must be an identifier in record ",
@@ -264,7 +288,7 @@ RecordField* parseRecordField(TokenStream& ts, RecordStorage& result,
     std::pair<RecordField*, size_t> field = record->newField(name, ty, kind);
 
     if(ts.consume(token::ID::Equals)) {
-        const Init* init = parseInit(ts, result, false, symbolMap, ty);
+        const Init* init = parseInit(ts, result, false, symbolMap, ty, ctx);
         if(init && !init->matches(ty)) {
             bool err = true;
             sview errType = Init::kindAsString(init->getKind());
@@ -304,20 +328,22 @@ RecordField* parseRecordField(TokenStream& ts, RecordStorage& result,
 }
 
 bool parseFieldsArgs(TokenStream& ts, RecordStorage& result, Record* record,
-                     std::unordered_map<sview, size_t>& symbolMap) {
+                     std::unordered_map<sview, size_t>& symbolMap,
+                     const InrContext& ctx) {
 another_arg:
-    if(parseRecordField(ts, result, record, RecordField::Kind::Arg,
-                        symbolMap) == nullptr)
+    if(parseRecordField(ts, result, record, RecordField::Kind::Arg, symbolMap,
+                        ctx) == nullptr)
         return true;
     if(ts.consume(token::ID::Comma)) goto another_arg;
     return false;
 }
 
 bool parseFieldsClass(TokenStream& ts, RecordStorage& result, Record* record,
-                      std::unordered_map<sview, size_t>& symbolMap) {
+                      std::unordered_map<sview, size_t>& symbolMap,
+                      const InrContext& ctx) {
 another_field:
-    RecordField* rf = parseRecordField(ts, result, record,
-                                       RecordField::Kind::Normal, symbolMap);
+    RecordField* rf = parseRecordField(
+        ts, result, record, RecordField::Kind::Normal, symbolMap, ctx);
     if(!rf) return true;
 
     if(!ts.consume(token::ID::Semicolon)) {
@@ -333,7 +359,8 @@ another_field:
 
 bool parseFields(TokenStream& ts, RecordStorage& result, Record* record,
                  RecordField::Kind fieldK,
-                 std::unordered_map<sview, size_t>& symbolMap) {
+                 std::unordered_map<sview, size_t>& symbolMap,
+                 const InrContext& ctx) {
     if(fieldK == RecordField::Kind::Arg && !ts.consume(token::ID::LeftArrow)) {
         ts.errorpos("expected '<' for args in record ", record->getName());
         return true;
@@ -341,10 +368,11 @@ bool parseFields(TokenStream& ts, RecordStorage& result, Record* record,
 
     switch(fieldK) {
         case RecordField::Kind::Normal:
-            if(parseFieldsClass(ts, result, record, symbolMap)) return true;
+            if(parseFieldsClass(ts, result, record, symbolMap, ctx))
+                return true;
             break;
         case RecordField::Kind::Arg:
-            if(parseFieldsArgs(ts, result, record, symbolMap)) return true;
+            if(parseFieldsArgs(ts, result, record, symbolMap, ctx)) return true;
             if(!ts.consume(token::ID::RightArrow)) {
                 ts.errorpos("expected '>' after args in record ",
                             record->getName());
@@ -371,10 +399,11 @@ bool parseArgsInit(TokenStream& ts, RecordStorage& result,
                    std::unordered_map<sview, size_t>& symbolMap,
                    std::vector<const Init*>& args,
                    std::vector<RecordField>::const_iterator& it,
-                   std::vector<RecordField>::const_iterator end) {
+                   std::vector<RecordField>::const_iterator end,
+                   const InrContext& ctx) {
 another_init:
     const Init* init =
-        parseInit(ts, result, false, symbolMap, nextArgType(it, end));
+        parseInit(ts, result, false, symbolMap, nextArgType(it, end), ctx);
     if(!init) {
         ts.errorpos("couldn't parse args");
         return true;
@@ -384,10 +413,43 @@ another_init:
     return false;
 }
 
+const Init* parseAnonDef(TokenStream& ts, RecordStorage& result,
+                         const Record* inherit,
+                         std::unordered_map<sview, size_t>& symbolMap,
+                         const InrContext& ctx) {
+    ts.advance();
+    std::string defName = "__anon_def_";
+    defName += std::to_string(result.getDefs().size());
+
+    Record* record = Record::newRecord(
+        result, result.newInit<StringInit>(result, std::move(defName)),
+        Record::Kind::Def);
+
+    std::vector<const Init*> args;
+    auto currentArg = inherit->getFields().begin();
+
+    if(ts.consume(token::ID::LeftArrow)) {
+        parseArgsInit(ts, result, symbolMap, args, currentArg,
+                      inherit->getFields().end(), ctx);
+
+        if(!ts.expect(token::ID::RightArrow)) {
+            ts.errorpos("expected '>' to close anonymous def in ",
+                        inherit->getName());
+            return nullptr;
+        }
+    }
+
+    record->addSuperclass(inherit, args);
+
+    return result.newInit<DefInit>(result, record);
+}
+
 bool parseInheritanceImpl(TokenStream& ts, RecordStorage& result,
                           Record* record,
-                          std::unordered_map<sview, size_t>& symbolMap) {
-    const Init* className = parseInit(ts, result, true, symbolMap, nullptr);
+                          std::unordered_map<sview, size_t>& symbolMap,
+                          const InrContext& ctx) {
+    const Init* className =
+        parseInit(ts, result, true, symbolMap, nullptr, ctx);
 
     if(!className || !className->matches(RecordType::Kind::String)) {
         ts.errorpos(
@@ -411,7 +473,7 @@ bool parseInheritanceImpl(TokenStream& ts, RecordStorage& result,
 
     if(ts.consume(token::ID::LeftArrow)) {
         parseArgsInit(ts, result, symbolMap, args, currentArg,
-                      super->getFields().end());
+                      super->getFields().end(), ctx);
 
         if(!ts.consume(token::ID::RightArrow)) {
             ts.errorpos("expected '>' to close args in inheritance of ",
@@ -426,17 +488,20 @@ bool parseInheritanceImpl(TokenStream& ts, RecordStorage& result,
 }
 
 bool parseInheritance(TokenStream& ts, RecordStorage& result, Record* record,
-                      std::unordered_map<sview, size_t>& symbolMap) {
+                      std::unordered_map<sview, size_t>& symbolMap,
+                      const InrContext& ctx) {
 another_inheritance:
-    if(parseInheritanceImpl(ts, result, record, symbolMap)) return true;
+    if(parseInheritanceImpl(ts, result, record, symbolMap, ctx)) return true;
     if(ts.consume(token::ID::Comma)) goto another_inheritance;
     return false;
 }
 
-bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
+bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind,
+                 const InrContext& ctx) {
     if(advanceIfNotUnexpected(ts)) return true;
     std::unordered_map<sview, size_t> symbolMap;
-    const Init* className = parseInit(ts, result, true, symbolMap, nullptr);
+    const Init* className =
+        parseInit(ts, result, true, symbolMap, nullptr, ctx);
 
     if(!className || !className->matches(RecordType::Kind::String)) {
         ts.errorpos("expected identifier for record name");
@@ -451,12 +516,13 @@ bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
                         record->getName());
             return true;
         }
-        if(parseFields(ts, result, record, RecordField::Kind::Arg, symbolMap))
+        if(parseFields(ts, result, record, RecordField::Kind::Arg, symbolMap,
+                       ctx))
             return true;
     }
 
     if(ts.consume(token::ID::Colon)) {
-        if(parseInheritance(ts, result, record, symbolMap)) return true;
+        if(parseInheritance(ts, result, record, symbolMap, ctx)) return true;
     }
 
     if(ts.consume(token::ID::Semicolon)) return false;
@@ -467,18 +533,19 @@ bool parseRecord(TokenStream& ts, RecordStorage& result, Record::Kind kind) {
         return true;
     }
 
-    if(parseFields(ts, result, record, RecordField::Kind::Normal, symbolMap))
+    if(parseFields(ts, result, record, RecordField::Kind::Normal, symbolMap,
+                   ctx))
         return true;
 
     return false;
 }
 
-bool parseClass(TokenStream& ts, RecordStorage& result) {
-    return parseRecord(ts, result, Record::Kind::Class);
+bool parseClass(TokenStream& ts, RecordStorage& result, const InrContext& ctx) {
+    return parseRecord(ts, result, Record::Kind::Class, ctx);
 }
 
-bool parseDef(TokenStream& ts, RecordStorage& result) {
-    return parseRecord(ts, result, Record::Kind::Def);
+bool parseDef(TokenStream& ts, RecordStorage& result, const InrContext& ctx) {
+    return parseRecord(ts, result, Record::Kind::Def, ctx);
 }
 
 bool parseInclude(GenDriver& driver, TokenStream& ts, RecordStorage& result) {
@@ -508,9 +575,9 @@ bool parseStatements(GenDriver& driver, TokenStream& ts,
                      RecordStorage& result) {
     switch(ts.getID()) {
         case token::ID::Class:
-            return parseClass(ts, result);
+            return parseClass(ts, result, driver.getCtx());
         case token::ID::Def:
-            return parseDef(ts, result);
+            return parseDef(ts, result, driver.getCtx());
         case token::ID::Include:
             return parseInclude(driver, ts, result);
         default:

@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <initializer_list>
+#include <string>
 #include <vector>
 
 namespace inr {
@@ -96,6 +97,9 @@ class PointerType : public Type {
 public:
     PointerType() noexcept : Type(TypeID::Pointer) {}
 };
+
+const Type* strToType(const class InrContext& ctx, class sview str);
+std::string typeToStr(const Type* t);
 
 /// @brief Be able to print out the type to a stream.
 class raw_stream& operator<<(raw_stream&, const Type&);

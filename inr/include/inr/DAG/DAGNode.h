@@ -26,9 +26,6 @@ enum class DAGType : int32_t {
     Constant,
     Register,
     FrameIndex,
-
-    // Other
-
     CopyToReg,
     CopyFromReg,
 

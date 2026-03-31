@@ -332,6 +332,28 @@ public:
     ~standard_file_stream() noexcept override;
 };
 
+/// @brief Provides a raw_stream interface for std::string.
+class string_stream : public raw_stream {
+    std::string str_;
+
+    void writeImpl(const char* ptr, size_t size) override {
+        str_ += std::string_view(ptr, size);
+    }
+
+public:
+    /// @brief Default constructor.
+    string_stream() noexcept : raw_stream(0) {}
+
+    /// @brief Uses the provided string.
+    /// @param str String to use.
+    string_stream(std::string str) noexcept : str_(std::move(str)) {}
+
+    /// @brief Returns the string and empties the one in the class.
+    std::string str() const noexcept {
+        return std::move(str_);
+    }
+};
+
 } // namespace inr
 
 #endif // INERTIA_SUPPORT_STREAM_H

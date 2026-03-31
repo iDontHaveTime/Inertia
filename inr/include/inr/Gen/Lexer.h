@@ -46,6 +46,7 @@ public:
         String,         ///< string keyword.
         Include,        ///< include keyword.
         List,           ///< list keyword.
+        IRType,         ///< irtype keyword.
         Colon,          ///< ':'
         Slash,          ///< '/'
         End             ///< Error token.
