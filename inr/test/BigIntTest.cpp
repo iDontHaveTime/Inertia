@@ -8,7 +8,8 @@
 int main() {
     inr::bigint zeroint;
 
-    inr::outs() << zeroint << '\n' << inr::bigint(128, 64) + inr::bigint(128, 6) << '\n';
+    inr::outs() << zeroint << '\n'
+                << inr::bigint(128, 64) + inr::bigint(128, 6) << '\n';
 
     return 0;
 }

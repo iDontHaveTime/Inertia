@@ -11,55 +11,64 @@
 #include <inr/ADT/ArrView.h>
 #include <inr/Support/Stream.h>
 
+#include <bit>
+#include <climits>
 #include <cstddef>
-#include <cstdint>
 #include <stdexcept>
 
 namespace inr {
 
 class bigint {
+public:
+    using Limb = unsigned long long;
+    using SLimb = long long;
+
+    constexpr static size_t LIMB_BITS = sizeof(Limb) * CHAR_BIT;
+    constexpr static size_t LIMB_DIV = std::countr_zero(LIMB_BITS);
+
+private:
     union {
-        uint64_t stack_;
-        uint64_t* heap_;
+        Limb stack_;
+        Limb* heap_;
     };
     size_t bits_;
 
     inline size_t calculateLimbC() const noexcept {
-        return (bits_ + 63) >> 6;
+        return (bits_ + (LIMB_BITS - 1)) >> LIMB_DIV;
     }
 
     void setNewSize() {
-        if(bits_ <= 64) {
+        if(bits_ <= LIMB_BITS) {
             return;
         }
-        heap_ = new uint64_t[calculateLimbC()];
+        heap_ = new Limb[calculateLimbC()];
     }
 
-    uint64_t* heapEnd() noexcept {
+    Limb* heapEnd() noexcept {
         return heap_ + calculateLimbC();
     }
 
-    uint64_t* heapLast() noexcept {
-        return (heap_ + ((bits_ - 1) >> 6));
+    Limb* heapLast() noexcept {
+        return (heap_ + ((bits_ - 1) >> LIMB_DIV));
     }
 
-    const uint64_t* heapLast() const noexcept {
-        return (heap_ + ((bits_ - 1) >> 6));
+    const Limb* heapLast() const noexcept {
+        return (heap_ + ((bits_ - 1) >> LIMB_DIV));
     }
 
-    uint64_t last() const noexcept {
+    Limb last() const noexcept {
         if(onStack()) return stack_;
         return *heapLast();
     }
 
     bigint& zeroOutTopBits() noexcept {
-        if(!(bits_ & 127)) return *this;
+        if(!(bits_ & ((2 << LIMB_DIV) - 1))) return *this;
 
         if(onStack()) {
-            stack_ &= (uint64_t(1) << bits_) - 1;
+            stack_ &= (Limb(1) << bits_) - 1;
         }
         else {
-            *heapLast() &= (uint64_t(1) << bits_) - 1;
+            *heapLast() &= (Limb(1) << bits_) - 1;
         }
         return *this;
     }
@@ -78,31 +87,31 @@ public:
     /// given.
     /// @param bits Width of the integer.
     /// @param limbs Limbs, most significant limb first.
-    bigint(size_t bits, arrview<uint64_t> limbs) : bigint(bits) {
+    bigint(size_t bits, arrview<Limb> limbs) : bigint(bits) {
         if(onStack()) {
-            uint64_t val = limbs.back();
-            val &= (uint64_t(1) << bits) - 1;
+            Limb val = limbs.back();
+            val &= (Limb(1) << bits) - 1;
 
             stack_ = val;
             return;
         }
-        uint64_t* i = heap_;
+        Limb* i = heap_;
         for(auto it = limbs.rbegin(); it != limbs.rend(); ++it) {
             if(i == heapEnd()) return;
             *i = *it;
         }
     }
 
-    /// @brief Constructs a bigint from the uint64_t value provided.
+    /// @brief Constructs a bigint from the Limb value provided.
     /// @param bits Width of the integer.
     /// @param val Value for the limb.
     /// @param isSigned Should it sign extend.
-    bigint(size_t bits, uint64_t val, bool isSigned = false) : bigint(bits) {
+    bigint(size_t bits, Limb val, bool isSigned = false) : bigint(bits) {
         if(onStack()) {
-            val &= (uint64_t(1) << bits) - 1;
+            val &= (Limb(1) << bits) - 1;
 
             if(isSigned && bits > 0) {
-                uint64_t sign_bit = uint64_t(1) << (bits - 1);
+                Limb sign_bit = Limb(1) << (bits - 1);
                 if(val & sign_bit) {
                     val |= ~((sign_bit << 1) - 1);
                 }
@@ -113,7 +122,7 @@ public:
         }
         *heap_ = val;
 
-        uint64_t ext = (isSigned && (val >> 63)) ? ~uint64_t(0) : 0;
+        Limb ext = (isSigned && (val >> ((1 << LIMB_DIV) - 1))) ? ~Limb(0) : 0;
         std::fill(heap_ + 1, heapEnd(), ext);
     }
 
@@ -178,25 +187,25 @@ public:
         return *this;
     }
 
-    const uint64_t* data() const noexcept {
-        return bits_ > 64 ? heap_ : &stack_;
+    const Limb* data() const noexcept {
+        return bits_ > LIMB_BITS ? heap_ : &stack_;
     }
 
     /// @brief Is this bigint on heap or not.
     bool onHeap() const noexcept {
-        return bits_ > 64;
+        return bits_ > LIMB_BITS;
     }
 
     /// @brief Is this bigint on stack or not.
     bool onStack() const noexcept {
-        return bits_ <= 64;
+        return bits_ <= LIMB_BITS;
     }
 
     ~bigint() noexcept {
         if(onHeap()) delete[] heap_;
     }
 
-    /// @brief Returns the amount of uint64_t limbs.
+    /// @brief Returns the amount of Limb limbs.
     size_t size() const noexcept {
         return calculateLimbC();
     }
@@ -213,10 +222,10 @@ public:
         if(bit >= bits_)
             throw std::out_of_range("The selected bit is out of range.");
         if(onStack()) {
-            return stack_ & (uint64_t(1) << bit);
+            return stack_ & (Limb(1) << bit);
         }
-        size_t limb = bit >> 6;
-        size_t bitInLimb = bit & 63;
+        size_t limb = bit >> LIMB_DIV;
+        size_t bitInLimb = bit & ((1 << LIMB_DIV) - 1);
 
         return (heap_[limb] >> bitInLimb) & 1;
     }
@@ -258,12 +267,12 @@ private:
             throw std::runtime_error("bigint bits must match in operators");
     }
 
-    static bool bigintAdd(uint64_t* dest, const uint64_t* src, bool c,
+    static bool bigintAdd(Limb* dest, const Limb* src, bool c,
                           size_t limbs) noexcept;
-    static bool bigintAddLimb(uint64_t* dest, uint64_t src,
-                              size_t limbs) noexcept;
-    static void bigintShiftRight(uint64_t* dest, size_t limbs,
+    static bool bigintAddLimb(Limb* dest, Limb src, size_t limbs) noexcept;
+    static void bigintShiftRight(Limb* dest, size_t limbs,
                                  unsigned shiftN) noexcept;
+    static void base10Impl(bigint& tmp, raw_stream&);
 
 public:
     void shiftRight(unsigned times) noexcept {
