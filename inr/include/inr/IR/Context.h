@@ -17,19 +17,11 @@
 #include <initializer_list>
 #include <memory>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
-namespace inr {
+#include "inr/ADT/BigInt.h"
 
-struct PairHash {
-    template<typename T, typename Y>
-    size_t operator()(const std::pair<T, Y>& p) const noexcept {
-        size_t h1 = std::hash<T>{}(p.first);
-        size_t h2 = std::hash<Y>{}(p.second);
-        return h1 ^ (h2 << 1);
-    }
-};
+namespace inr {
 
 /// @brief This class is used for providing stable pointers to certain data
 /// structures.
@@ -64,10 +56,8 @@ class InrContext {
     mutable std::unordered_map<unsigned, const Type*> integers_;
     /// @brief A list of function signatures.
     mutable std::vector<std::unique_ptr<FunctionType>> functionTypes_;
-    /// @brief Map of integer constants.
-    mutable std::unordered_map<std::pair<const IntegerType*, uint64_t>,
-                               ConstantInt*, PairHash>
-        intConstants_;
+    /// @brief Used for storing various values.
+    mutable std::vector<std::unique_ptr<Value>> valueStorage_;
 
     const IntegerType* i1_ = getInt(1);   ///< Cache i1 (common for bool type).
     const IntegerType* i8_ = getInt(8);   ///< Cache i8 (common integer type).
@@ -168,15 +158,15 @@ public:
     }
 
     ConstantInt* getIntConstant(const IntegerType* type, uint64_t value) const {
-        auto key = std::make_pair(type, value);
-        auto it = intConstants_.find(key);
-        if(it != intConstants_.end()) return it->second;
+        return (ConstantInt*)valueStorage_
+            .emplace_back(new ConstantInt(type, value))
+            .get();
+    }
 
-        auto ci = (ConstantInt*)constantStorage_
-                      .emplace_back(std::make_unique<ConstantInt>(type, value))
-                      .get();
-        intConstants_[key] = ci;
-        return ci;
+    ConstantInt* getIntConstant(const IntegerType* type, bigint value) const {
+        return (ConstantInt*)valueStorage_
+            .emplace_back(new ConstantInt(type, std::move(value)))
+            .get();
     }
 
     ~InrContext() noexcept = default;

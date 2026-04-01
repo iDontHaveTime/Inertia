@@ -8,13 +8,15 @@
 #include <cstddef>
 #include <cstdint>
 
-#define USE_X86LIBS __x86_64__
+#ifdef __x86_64__
+#define USE_X86LIBS 1
+#endif
 
 #if USE_X86LIBS
 #define DO_NOT_USE_BUILTIN
 #endif
 
-#if USE_X86LIBS || defined(__aarch64__)
+#if defined(USE_X86LIBS) || defined(__aarch64__)
 #define USE_SECOND_BASE10IMPL
 #endif
 

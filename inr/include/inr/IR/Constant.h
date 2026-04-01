@@ -8,6 +8,7 @@
 /// @file IR/Constant.h
 /// @brief Contains constant value classes.
 
+#include <inr/ADT/BigInt.h>
 #include <inr/IR/Type.h>
 #include <inr/IR/Value.h>
 
@@ -43,13 +44,16 @@ public:
 
 /// @brief This is a constant integer value node.
 class ConstantInt : public Constant {
-    uint64_t value_;
+    bigint value_;
 
 public:
-    ConstantInt(const IntegerType* type, uint64_t value) noexcept :
-        Constant(ConstantID::Integer, type), value_(value) {};
+    ConstantInt(const IntegerType* type, uint64_t value) :
+        Constant(ConstantID::Integer, type), value_(type->getWidth(), value) {};
 
-    uint64_t getValue() const noexcept {
+    ConstantInt(const IntegerType* type, bigint value) :
+        Constant(ConstantID::Integer, type), value_(std::move(value)) {}
+
+    const bigint& getValue() const noexcept {
         return value_;
     }
 };
