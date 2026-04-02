@@ -8,27 +8,31 @@ include "inr/Target/Target.ing";
 
 // RAX
 def AL   : Register<"al",   8>;
-def AX   : Register<"ax",   16> { list<Register> SubRegs = [AL]; }
-def EAX  : Register<"eax",  32> { list<Register> SubRegs = [AX, AL]; }
-def RAX  : Register<"rax",  64> { list<Register> SubRegs = [EAX, AX, AL]; }
+def AH   : Register<"ah",   8>;
+def AX   : Register<"ax",   16> { list<Register> SubRegs = [AH, AL]; }
+def EAX  : Register<"eax",  32> { list<Register> SubRegs = [AX, AH, AL]; }
+def RAX  : Register<"rax",  64> { list<Register> SubRegs = [EAX, AX, AH, AL]; }
 
 // RBX
 def BL   : Register<"bl",   8>;
-def BX   : Register<"bx",   16> { list<Register> SubRegs = [BL]; }
-def EBX  : Register<"ebx",  32> { list<Register> SubRegs = [BX, BL]; }
-def RBX  : Register<"rbx",  64> { list<Register> SubRegs = [EBX, BX, BL]; }
+def BH   : Register<"bh",   8>;
+def BX   : Register<"bx",   16> { list<Register> SubRegs = [BH, BL]; }
+def EBX  : Register<"ebx",  32> { list<Register> SubRegs = [BX, BH, BL]; }
+def RBX  : Register<"rbx",  64> { list<Register> SubRegs = [EBX, BX, BH, BL]; }
 
 // RCX
 def CL   : Register<"cl",   8>;
-def CX   : Register<"cx",   16> { list<Register> SubRegs = [CL]; }
-def ECX  : Register<"ecx",  32> { list<Register> SubRegs = [CX, CL]; }
-def RCX  : Register<"rcx",  64> { list<Register> SubRegs = [ECX, CX, CL]; }
+def CH   : Register<"ch",   8>;
+def CX   : Register<"cx",   16> { list<Register> SubRegs = [CH, CL]; }
+def ECX  : Register<"ecx",  32> { list<Register> SubRegs = [CX, CH, CL]; }
+def RCX  : Register<"rcx",  64> { list<Register> SubRegs = [ECX, CX, CH, CL]; }
 
 // RDX
 def DL   : Register<"dl",   8>;
-def DX   : Register<"dx",   16> { list<Register> SubRegs = [DL]; }
-def EDX  : Register<"edx",  32> { list<Register> SubRegs = [DX, DL]; }
-def RDX  : Register<"rdx",  64> { list<Register> SubRegs = [EDX, DX, DL]; }
+def DH   : Register<"dh",   8>;
+def DX   : Register<"dx",   16> { list<Register> SubRegs = [DH, DL]; }
+def EDX  : Register<"edx",  32> { list<Register> SubRegs = [DX, DH, DL]; }
+def RDX  : Register<"rdx",  64> { list<Register> SubRegs = [EDX, DX, DH, DL]; }
 
 // RSI
 def SIL  : Register<"sil",  8>;
@@ -112,5 +116,5 @@ def GR32 : RegisterClass<32, [EAX, EBX, ECX, EDX, ESI, EDI, ESP, EBP,
 def GR16 : RegisterClass<16, [AX, BX, CX, DX, SI, DI, SP, BP,
                               R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W]>;
 // GPR8
-def GR8  : RegisterClass<8,  [AL, BL, CL, DL, SIL, DIL, SPL, BPL,
+def GR8  : RegisterClass<8,  [AL, AH, BL, BH, CL, CH, DL, DH, SIL, DIL, SPL, BPL,
                               R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B]>;

@@ -2,225 +2,453 @@
 #ifdef x86_REGISTER_HEADER
 #undef x86_REGISTER_HEADER
 namespace inr::x86{
-constexpr Register AL = Register::createPhysical(0);
-constexpr Register AX = Register::createPhysical(1);
-constexpr Register AX_SubRegs[] = {
-AL
+constexpr const char* x86_StrTable = "al\0ah\0ax\0eax\0rax\0bl\0bh\0bx\0ebx\0rbx\0cl\0ch\0cx\0ecx\0rcx\0dl\0dh\0dx\0edx\0rdx\0sil\0si\0esi\0rsi\0dil\0di\0edi\0rdi\0spl\0sp\0esp\0rsp\0bpl\0bp\0ebp\0rbp\0r8b\0r8w\0r8d\0r8\0r9b\0r9w\0r9d\0r9\0r10b\0r10w\0r10d\0r10\0r11b\0r11w\0r11d\0r11\0r12b\0r12w\0r12d\0r12\0r13b\0r13w\0r13d\0r13\0r14b\0r14w\0r14d\0r14\0r15b\0r15w\0r15d\0r15\0GR64\0GR32\0GR16\0GR8\0";
+constexpr Register x86_RegsDef[] = {
+	Register::createPhysical(0), // AL
+	Register::createPhysical(1), // AH
+	Register::createPhysical(2), // AX
+	Register::createPhysical(3), // EAX
+	Register::createPhysical(4), // RAX
+	Register::createPhysical(5), // BL
+	Register::createPhysical(6), // BH
+	Register::createPhysical(7), // BX
+	Register::createPhysical(8), // EBX
+	Register::createPhysical(9), // RBX
+	Register::createPhysical(10), // CL
+	Register::createPhysical(11), // CH
+	Register::createPhysical(12), // CX
+	Register::createPhysical(13), // ECX
+	Register::createPhysical(14), // RCX
+	Register::createPhysical(15), // DL
+	Register::createPhysical(16), // DH
+	Register::createPhysical(17), // DX
+	Register::createPhysical(18), // EDX
+	Register::createPhysical(19), // RDX
+	Register::createPhysical(20), // SIL
+	Register::createPhysical(21), // SI
+	Register::createPhysical(22), // ESI
+	Register::createPhysical(23), // RSI
+	Register::createPhysical(24), // DIL
+	Register::createPhysical(25), // DI
+	Register::createPhysical(26), // EDI
+	Register::createPhysical(27), // RDI
+	Register::createPhysical(28), // SPL
+	Register::createPhysical(29), // SP
+	Register::createPhysical(30), // ESP
+	Register::createPhysical(31), // RSP
+	Register::createPhysical(32), // BPL
+	Register::createPhysical(33), // BP
+	Register::createPhysical(34), // EBP
+	Register::createPhysical(35), // RBP
+	Register::createPhysical(36), // R8B
+	Register::createPhysical(37), // R8W
+	Register::createPhysical(38), // R8D
+	Register::createPhysical(39), // R8
+	Register::createPhysical(40), // R9B
+	Register::createPhysical(41), // R9W
+	Register::createPhysical(42), // R9D
+	Register::createPhysical(43), // R9
+	Register::createPhysical(44), // R10B
+	Register::createPhysical(45), // R10W
+	Register::createPhysical(46), // R10D
+	Register::createPhysical(47), // R10
+	Register::createPhysical(48), // R11B
+	Register::createPhysical(49), // R11W
+	Register::createPhysical(50), // R11D
+	Register::createPhysical(51), // R11
+	Register::createPhysical(52), // R12B
+	Register::createPhysical(53), // R12W
+	Register::createPhysical(54), // R12D
+	Register::createPhysical(55), // R12
+	Register::createPhysical(56), // R13B
+	Register::createPhysical(57), // R13W
+	Register::createPhysical(58), // R13D
+	Register::createPhysical(59), // R13
+	Register::createPhysical(60), // R14B
+	Register::createPhysical(61), // R14W
+	Register::createPhysical(62), // R14D
+	Register::createPhysical(63), // R14
+	Register::createPhysical(64), // R15B
+	Register::createPhysical(65), // R15W
+	Register::createPhysical(66), // R15D
+	Register::createPhysical(67), // R15
+	// Subregisters of AX
+	Register::createPhysical(1), // AH
+	Register::createPhysical(0), // AL
+	// Subregisters of EAX
+	Register::createPhysical(2), // AX
+	Register::createPhysical(1), // AH
+	Register::createPhysical(0), // AL
+	// Subregisters of RAX
+	Register::createPhysical(3), // EAX
+	Register::createPhysical(2), // AX
+	Register::createPhysical(1), // AH
+	Register::createPhysical(0), // AL
+	// Subregisters of BX
+	Register::createPhysical(6), // BH
+	Register::createPhysical(5), // BL
+	// Subregisters of EBX
+	Register::createPhysical(7), // BX
+	Register::createPhysical(6), // BH
+	Register::createPhysical(5), // BL
+	// Subregisters of RBX
+	Register::createPhysical(8), // EBX
+	Register::createPhysical(7), // BX
+	Register::createPhysical(6), // BH
+	Register::createPhysical(5), // BL
+	// Subregisters of CX
+	Register::createPhysical(11), // CH
+	Register::createPhysical(10), // CL
+	// Subregisters of ECX
+	Register::createPhysical(12), // CX
+	Register::createPhysical(11), // CH
+	Register::createPhysical(10), // CL
+	// Subregisters of RCX
+	Register::createPhysical(13), // ECX
+	Register::createPhysical(12), // CX
+	Register::createPhysical(11), // CH
+	Register::createPhysical(10), // CL
+	// Subregisters of DX
+	Register::createPhysical(16), // DH
+	Register::createPhysical(15), // DL
+	// Subregisters of EDX
+	Register::createPhysical(17), // DX
+	Register::createPhysical(16), // DH
+	Register::createPhysical(15), // DL
+	// Subregisters of RDX
+	Register::createPhysical(18), // EDX
+	Register::createPhysical(17), // DX
+	Register::createPhysical(16), // DH
+	Register::createPhysical(15), // DL
+	// Subregisters of SI
+	Register::createPhysical(20), // SIL
+	// Subregisters of ESI
+	Register::createPhysical(21), // SI
+	Register::createPhysical(20), // SIL
+	// Subregisters of RSI
+	Register::createPhysical(22), // ESI
+	Register::createPhysical(21), // SI
+	Register::createPhysical(20), // SIL
+	// Subregisters of DI
+	Register::createPhysical(24), // DIL
+	// Subregisters of EDI
+	Register::createPhysical(25), // DI
+	Register::createPhysical(24), // DIL
+	// Subregisters of RDI
+	Register::createPhysical(26), // EDI
+	Register::createPhysical(25), // DI
+	Register::createPhysical(24), // DIL
+	// Subregisters of SP
+	Register::createPhysical(28), // SPL
+	// Subregisters of ESP
+	Register::createPhysical(29), // SP
+	Register::createPhysical(28), // SPL
+	// Subregisters of RSP
+	Register::createPhysical(30), // ESP
+	Register::createPhysical(29), // SP
+	Register::createPhysical(28), // SPL
+	// Subregisters of BP
+	Register::createPhysical(32), // BPL
+	// Subregisters of EBP
+	Register::createPhysical(33), // BP
+	Register::createPhysical(32), // BPL
+	// Subregisters of RBP
+	Register::createPhysical(34), // EBP
+	Register::createPhysical(33), // BP
+	Register::createPhysical(32), // BPL
+	// Subregisters of R8W
+	Register::createPhysical(36), // R8B
+	// Subregisters of R8D
+	Register::createPhysical(37), // R8W
+	Register::createPhysical(36), // R8B
+	// Subregisters of R8
+	Register::createPhysical(38), // R8D
+	Register::createPhysical(37), // R8W
+	Register::createPhysical(36), // R8B
+	// Subregisters of R9W
+	Register::createPhysical(40), // R9B
+	// Subregisters of R9D
+	Register::createPhysical(41), // R9W
+	Register::createPhysical(40), // R9B
+	// Subregisters of R9
+	Register::createPhysical(42), // R9D
+	Register::createPhysical(41), // R9W
+	Register::createPhysical(40), // R9B
+	// Subregisters of R10W
+	Register::createPhysical(44), // R10B
+	// Subregisters of R10D
+	Register::createPhysical(45), // R10W
+	Register::createPhysical(44), // R10B
+	// Subregisters of R10
+	Register::createPhysical(46), // R10D
+	Register::createPhysical(45), // R10W
+	Register::createPhysical(44), // R10B
+	// Subregisters of R11W
+	Register::createPhysical(48), // R11B
+	// Subregisters of R11D
+	Register::createPhysical(49), // R11W
+	Register::createPhysical(48), // R11B
+	// Subregisters of R11
+	Register::createPhysical(50), // R11D
+	Register::createPhysical(49), // R11W
+	Register::createPhysical(48), // R11B
+	// Subregisters of R12W
+	Register::createPhysical(52), // R12B
+	// Subregisters of R12D
+	Register::createPhysical(53), // R12W
+	Register::createPhysical(52), // R12B
+	// Subregisters of R12
+	Register::createPhysical(54), // R12D
+	Register::createPhysical(53), // R12W
+	Register::createPhysical(52), // R12B
+	// Subregisters of R13W
+	Register::createPhysical(56), // R13B
+	// Subregisters of R13D
+	Register::createPhysical(57), // R13W
+	Register::createPhysical(56), // R13B
+	// Subregisters of R13
+	Register::createPhysical(58), // R13D
+	Register::createPhysical(57), // R13W
+	Register::createPhysical(56), // R13B
+	// Subregisters of R14W
+	Register::createPhysical(60), // R14B
+	// Subregisters of R14D
+	Register::createPhysical(61), // R14W
+	Register::createPhysical(60), // R14B
+	// Subregisters of R14
+	Register::createPhysical(62), // R14D
+	Register::createPhysical(61), // R14W
+	Register::createPhysical(60), // R14B
+	// Subregisters of R15W
+	Register::createPhysical(64), // R15B
+	// Subregisters of R15D
+	Register::createPhysical(65), // R15W
+	Register::createPhysical(64), // R15B
+	// Subregisters of R15
+	Register::createPhysical(66), // R15D
+	Register::createPhysical(65), // R15W
+	Register::createPhysical(64), // R15B
+	// Register class GR64
+	Register::createPhysical(4), // RAX
+	Register::createPhysical(9), // RBX
+	Register::createPhysical(14), // RCX
+	Register::createPhysical(19), // RDX
+	Register::createPhysical(23), // RSI
+	Register::createPhysical(27), // RDI
+	Register::createPhysical(31), // RSP
+	Register::createPhysical(35), // RBP
+	Register::createPhysical(39), // R8
+	Register::createPhysical(43), // R9
+	Register::createPhysical(47), // R10
+	Register::createPhysical(51), // R11
+	Register::createPhysical(55), // R12
+	Register::createPhysical(59), // R13
+	Register::createPhysical(63), // R14
+	Register::createPhysical(67), // R15
+	// Register class GR32
+	Register::createPhysical(3), // EAX
+	Register::createPhysical(8), // EBX
+	Register::createPhysical(13), // ECX
+	Register::createPhysical(18), // EDX
+	Register::createPhysical(22), // ESI
+	Register::createPhysical(26), // EDI
+	Register::createPhysical(30), // ESP
+	Register::createPhysical(34), // EBP
+	Register::createPhysical(38), // R8D
+	Register::createPhysical(42), // R9D
+	Register::createPhysical(46), // R10D
+	Register::createPhysical(50), // R11D
+	Register::createPhysical(54), // R12D
+	Register::createPhysical(58), // R13D
+	Register::createPhysical(62), // R14D
+	Register::createPhysical(66), // R15D
+	// Register class GR16
+	Register::createPhysical(2), // AX
+	Register::createPhysical(7), // BX
+	Register::createPhysical(12), // CX
+	Register::createPhysical(17), // DX
+	Register::createPhysical(21), // SI
+	Register::createPhysical(25), // DI
+	Register::createPhysical(29), // SP
+	Register::createPhysical(33), // BP
+	Register::createPhysical(37), // R8W
+	Register::createPhysical(41), // R9W
+	Register::createPhysical(45), // R10W
+	Register::createPhysical(49), // R11W
+	Register::createPhysical(53), // R12W
+	Register::createPhysical(57), // R13W
+	Register::createPhysical(61), // R14W
+	Register::createPhysical(65), // R15W
+	// Register class GR8
+	Register::createPhysical(0), // AL
+	Register::createPhysical(1), // AH
+	Register::createPhysical(5), // BL
+	Register::createPhysical(6), // BH
+	Register::createPhysical(10), // CL
+	Register::createPhysical(11), // CH
+	Register::createPhysical(15), // DL
+	Register::createPhysical(16), // DH
+	Register::createPhysical(20), // SIL
+	Register::createPhysical(24), // DIL
+	Register::createPhysical(28), // SPL
+	Register::createPhysical(32), // BPL
+	Register::createPhysical(36), // R8B
+	Register::createPhysical(40), // R9B
+	Register::createPhysical(44), // R10B
+	Register::createPhysical(48), // R11B
+	Register::createPhysical(52), // R12B
+	Register::createPhysical(56), // R13B
+	Register::createPhysical(60), // R14B
+	Register::createPhysical(64), // R15B
 };
-constexpr Register EAX = Register::createPhysical(2);
-constexpr Register EAX_SubRegs[] = {
-AX, AL
+constexpr const Register& AL = x86_RegsDef[0];
+constexpr const Register& AH = x86_RegsDef[1];
+constexpr const Register& AX = x86_RegsDef[2];
+constexpr const Register& EAX = x86_RegsDef[3];
+constexpr const Register& RAX = x86_RegsDef[4];
+constexpr const Register& BL = x86_RegsDef[5];
+constexpr const Register& BH = x86_RegsDef[6];
+constexpr const Register& BX = x86_RegsDef[7];
+constexpr const Register& EBX = x86_RegsDef[8];
+constexpr const Register& RBX = x86_RegsDef[9];
+constexpr const Register& CL = x86_RegsDef[10];
+constexpr const Register& CH = x86_RegsDef[11];
+constexpr const Register& CX = x86_RegsDef[12];
+constexpr const Register& ECX = x86_RegsDef[13];
+constexpr const Register& RCX = x86_RegsDef[14];
+constexpr const Register& DL = x86_RegsDef[15];
+constexpr const Register& DH = x86_RegsDef[16];
+constexpr const Register& DX = x86_RegsDef[17];
+constexpr const Register& EDX = x86_RegsDef[18];
+constexpr const Register& RDX = x86_RegsDef[19];
+constexpr const Register& SIL = x86_RegsDef[20];
+constexpr const Register& SI = x86_RegsDef[21];
+constexpr const Register& ESI = x86_RegsDef[22];
+constexpr const Register& RSI = x86_RegsDef[23];
+constexpr const Register& DIL = x86_RegsDef[24];
+constexpr const Register& DI = x86_RegsDef[25];
+constexpr const Register& EDI = x86_RegsDef[26];
+constexpr const Register& RDI = x86_RegsDef[27];
+constexpr const Register& SPL = x86_RegsDef[28];
+constexpr const Register& SP = x86_RegsDef[29];
+constexpr const Register& ESP = x86_RegsDef[30];
+constexpr const Register& RSP = x86_RegsDef[31];
+constexpr const Register& BPL = x86_RegsDef[32];
+constexpr const Register& BP = x86_RegsDef[33];
+constexpr const Register& EBP = x86_RegsDef[34];
+constexpr const Register& RBP = x86_RegsDef[35];
+constexpr const Register& R8B = x86_RegsDef[36];
+constexpr const Register& R8W = x86_RegsDef[37];
+constexpr const Register& R8D = x86_RegsDef[38];
+constexpr const Register& R8 = x86_RegsDef[39];
+constexpr const Register& R9B = x86_RegsDef[40];
+constexpr const Register& R9W = x86_RegsDef[41];
+constexpr const Register& R9D = x86_RegsDef[42];
+constexpr const Register& R9 = x86_RegsDef[43];
+constexpr const Register& R10B = x86_RegsDef[44];
+constexpr const Register& R10W = x86_RegsDef[45];
+constexpr const Register& R10D = x86_RegsDef[46];
+constexpr const Register& R10 = x86_RegsDef[47];
+constexpr const Register& R11B = x86_RegsDef[48];
+constexpr const Register& R11W = x86_RegsDef[49];
+constexpr const Register& R11D = x86_RegsDef[50];
+constexpr const Register& R11 = x86_RegsDef[51];
+constexpr const Register& R12B = x86_RegsDef[52];
+constexpr const Register& R12W = x86_RegsDef[53];
+constexpr const Register& R12D = x86_RegsDef[54];
+constexpr const Register& R12 = x86_RegsDef[55];
+constexpr const Register& R13B = x86_RegsDef[56];
+constexpr const Register& R13W = x86_RegsDef[57];
+constexpr const Register& R13D = x86_RegsDef[58];
+constexpr const Register& R13 = x86_RegsDef[59];
+constexpr const Register& R14B = x86_RegsDef[60];
+constexpr const Register& R14W = x86_RegsDef[61];
+constexpr const Register& R14D = x86_RegsDef[62];
+constexpr const Register& R14 = x86_RegsDef[63];
+constexpr const Register& R15B = x86_RegsDef[64];
+constexpr const Register& R15W = x86_RegsDef[65];
+constexpr const Register& R15D = x86_RegsDef[66];
+constexpr const Register& R15 = x86_RegsDef[67];
+constexpr RegisterDesc x86_RegsDesc[] = {
+	{0, 0, 0},
+	{3, 0, 0},
+	{6, 68, 2},
+	{9, 70, 3},
+	{13, 73, 4},
+	{17, 0, 0},
+	{20, 0, 0},
+	{23, 77, 2},
+	{26, 79, 3},
+	{30, 82, 4},
+	{34, 0, 0},
+	{37, 0, 0},
+	{40, 86, 2},
+	{43, 88, 3},
+	{47, 91, 4},
+	{51, 0, 0},
+	{54, 0, 0},
+	{57, 95, 2},
+	{60, 97, 3},
+	{64, 100, 4},
+	{68, 0, 0},
+	{72, 104, 1},
+	{75, 105, 2},
+	{79, 107, 3},
+	{83, 0, 0},
+	{87, 110, 1},
+	{90, 111, 2},
+	{94, 113, 3},
+	{98, 0, 0},
+	{102, 116, 1},
+	{105, 117, 2},
+	{109, 119, 3},
+	{113, 0, 0},
+	{117, 122, 1},
+	{120, 123, 2},
+	{124, 125, 3},
+	{128, 0, 0},
+	{132, 128, 1},
+	{136, 129, 2},
+	{140, 131, 3},
+	{143, 0, 0},
+	{147, 134, 1},
+	{151, 135, 2},
+	{155, 137, 3},
+	{158, 0, 0},
+	{163, 140, 1},
+	{168, 141, 2},
+	{173, 143, 3},
+	{177, 0, 0},
+	{182, 146, 1},
+	{187, 147, 2},
+	{192, 149, 3},
+	{196, 0, 0},
+	{201, 152, 1},
+	{206, 153, 2},
+	{211, 155, 3},
+	{215, 0, 0},
+	{220, 158, 1},
+	{225, 159, 2},
+	{230, 161, 3},
+	{234, 0, 0},
+	{239, 164, 1},
+	{244, 165, 2},
+	{249, 167, 3},
+	{253, 0, 0},
+	{258, 170, 1},
+	{263, 171, 2},
+	{268, 173, 3},
 };
-constexpr Register RAX = Register::createPhysical(3);
-constexpr Register RAX_SubRegs[] = {
-EAX, AX, AL
+constexpr RegisterClass x86_RegsClass[] = {
+	{176, 16, 64, 272},
+	{192, 16, 32, 277},
+	{208, 16, 16, 282},
+	{224, 20, 8, 287},
 };
-constexpr Register BL = Register::createPhysical(4);
-constexpr Register BX = Register::createPhysical(5);
-constexpr Register BX_SubRegs[] = {
-BL
-};
-constexpr Register EBX = Register::createPhysical(6);
-constexpr Register EBX_SubRegs[] = {
-BX, BL
-};
-constexpr Register RBX = Register::createPhysical(7);
-constexpr Register RBX_SubRegs[] = {
-EBX, BX, BL
-};
-constexpr Register CL = Register::createPhysical(8);
-constexpr Register CX = Register::createPhysical(9);
-constexpr Register CX_SubRegs[] = {
-CL
-};
-constexpr Register ECX = Register::createPhysical(10);
-constexpr Register ECX_SubRegs[] = {
-CX, CL
-};
-constexpr Register RCX = Register::createPhysical(11);
-constexpr Register RCX_SubRegs[] = {
-ECX, CX, CL
-};
-constexpr Register DL = Register::createPhysical(12);
-constexpr Register DX = Register::createPhysical(13);
-constexpr Register DX_SubRegs[] = {
-DL
-};
-constexpr Register EDX = Register::createPhysical(14);
-constexpr Register EDX_SubRegs[] = {
-DX, DL
-};
-constexpr Register RDX = Register::createPhysical(15);
-constexpr Register RDX_SubRegs[] = {
-EDX, DX, DL
-};
-constexpr Register SIL = Register::createPhysical(16);
-constexpr Register SI = Register::createPhysical(17);
-constexpr Register SI_SubRegs[] = {
-SIL
-};
-constexpr Register ESI = Register::createPhysical(18);
-constexpr Register ESI_SubRegs[] = {
-SI, SIL
-};
-constexpr Register RSI = Register::createPhysical(19);
-constexpr Register RSI_SubRegs[] = {
-ESI, SI, SIL
-};
-constexpr Register DIL = Register::createPhysical(20);
-constexpr Register DI = Register::createPhysical(21);
-constexpr Register DI_SubRegs[] = {
-DIL
-};
-constexpr Register EDI = Register::createPhysical(22);
-constexpr Register EDI_SubRegs[] = {
-DI, DIL
-};
-constexpr Register RDI = Register::createPhysical(23);
-constexpr Register RDI_SubRegs[] = {
-EDI, DI, DIL
-};
-constexpr Register SPL = Register::createPhysical(24);
-constexpr Register SP = Register::createPhysical(25);
-constexpr Register SP_SubRegs[] = {
-SPL
-};
-constexpr Register ESP = Register::createPhysical(26);
-constexpr Register ESP_SubRegs[] = {
-SP, SPL
-};
-constexpr Register RSP = Register::createPhysical(27);
-constexpr Register RSP_SubRegs[] = {
-ESP, SP, SPL
-};
-constexpr Register BPL = Register::createPhysical(28);
-constexpr Register BP = Register::createPhysical(29);
-constexpr Register BP_SubRegs[] = {
-BPL
-};
-constexpr Register EBP = Register::createPhysical(30);
-constexpr Register EBP_SubRegs[] = {
-BP, BPL
-};
-constexpr Register RBP = Register::createPhysical(31);
-constexpr Register RBP_SubRegs[] = {
-EBP, BP, BPL
-};
-constexpr Register R8B = Register::createPhysical(32);
-constexpr Register R8W = Register::createPhysical(33);
-constexpr Register R8W_SubRegs[] = {
-R8B
-};
-constexpr Register R8D = Register::createPhysical(34);
-constexpr Register R8D_SubRegs[] = {
-R8W, R8B
-};
-constexpr Register R8 = Register::createPhysical(35);
-constexpr Register R8_SubRegs[] = {
-R8D, R8W, R8B
-};
-constexpr Register R9B = Register::createPhysical(36);
-constexpr Register R9W = Register::createPhysical(37);
-constexpr Register R9W_SubRegs[] = {
-R9B
-};
-constexpr Register R9D = Register::createPhysical(38);
-constexpr Register R9D_SubRegs[] = {
-R9W, R9B
-};
-constexpr Register R9 = Register::createPhysical(39);
-constexpr Register R9_SubRegs[] = {
-R9D, R9W, R9B
-};
-constexpr Register R10B = Register::createPhysical(40);
-constexpr Register R10W = Register::createPhysical(41);
-constexpr Register R10W_SubRegs[] = {
-R10B
-};
-constexpr Register R10D = Register::createPhysical(42);
-constexpr Register R10D_SubRegs[] = {
-R10W, R10B
-};
-constexpr Register R10 = Register::createPhysical(43);
-constexpr Register R10_SubRegs[] = {
-R10D, R10W, R10B
-};
-constexpr Register R11B = Register::createPhysical(44);
-constexpr Register R11W = Register::createPhysical(45);
-constexpr Register R11W_SubRegs[] = {
-R11B
-};
-constexpr Register R11D = Register::createPhysical(46);
-constexpr Register R11D_SubRegs[] = {
-R11W, R11B
-};
-constexpr Register R11 = Register::createPhysical(47);
-constexpr Register R11_SubRegs[] = {
-R11D, R11W, R11B
-};
-constexpr Register R12B = Register::createPhysical(48);
-constexpr Register R12W = Register::createPhysical(49);
-constexpr Register R12W_SubRegs[] = {
-R12B
-};
-constexpr Register R12D = Register::createPhysical(50);
-constexpr Register R12D_SubRegs[] = {
-R12W, R12B
-};
-constexpr Register R12 = Register::createPhysical(51);
-constexpr Register R12_SubRegs[] = {
-R12D, R12W, R12B
-};
-constexpr Register R13B = Register::createPhysical(52);
-constexpr Register R13W = Register::createPhysical(53);
-constexpr Register R13W_SubRegs[] = {
-R13B
-};
-constexpr Register R13D = Register::createPhysical(54);
-constexpr Register R13D_SubRegs[] = {
-R13W, R13B
-};
-constexpr Register R13 = Register::createPhysical(55);
-constexpr Register R13_SubRegs[] = {
-R13D, R13W, R13B
-};
-constexpr Register R14B = Register::createPhysical(56);
-constexpr Register R14W = Register::createPhysical(57);
-constexpr Register R14W_SubRegs[] = {
-R14B
-};
-constexpr Register R14D = Register::createPhysical(58);
-constexpr Register R14D_SubRegs[] = {
-R14W, R14B
-};
-constexpr Register R14 = Register::createPhysical(59);
-constexpr Register R14_SubRegs[] = {
-R14D, R14W, R14B
-};
-constexpr Register R15B = Register::createPhysical(60);
-constexpr Register R15W = Register::createPhysical(61);
-constexpr Register R15W_SubRegs[] = {
-R15B
-};
-constexpr Register R15D = Register::createPhysical(62);
-constexpr Register R15D_SubRegs[] = {
-R15W, R15B
-};
-constexpr Register R15 = Register::createPhysical(63);
-constexpr Register R15_SubRegs[] = {
-R15D, R15W, R15B
-};
-constexpr Register GR64[] = {
-RAX, RBX, RCX, RDX, RSI, RDI, RSP, RBP, R8, R9, R10, R11, R12, R13, R14, R15
-};
-constexpr Register GR32[] = {
-EAX, EBX, ECX, EDX, ESI, EDI, ESP, EBP, R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D
-};
-constexpr Register GR16[] = {
-AX, BX, CX, DX, SI, DI, SP, BP, R8W, R9W, R10W, R11W, R12W, R13W, R14W, R15W
-};
-constexpr Register GR8[] = {
-AL, BL, CL, DL, SIL, DIL, SPL, BPL, R8B, R9B, R10B, R11B, R12B, R13B, R14B, R15B
-};
+constexpr const RegisterClass& GR64 = x86_RegsClass[0];
+constexpr const RegisterClass& GR32 = x86_RegsClass[1];
+constexpr const RegisterClass& GR16 = x86_RegsClass[2];
+constexpr const RegisterClass& GR8 = x86_RegsClass[3];
+constexpr RegisterInfo RegInfo = {x86_StrTable, x86_RegsDef, 68, x86_RegsDesc, x86_RegsClass};
 }
 #endif

@@ -18,7 +18,7 @@ namespace inr {
 /// @brief The base class for all types.
 class Type {
 public:
-    enum class TypeID : uint8_t { Void, Integer, Pointer, Function };
+    enum class TypeID : uint8_t { Void, Integer, Pointer, Function, Block };
 
 protected:
     TypeID typeID_;
@@ -58,6 +58,11 @@ public:
 class VoidType : public Type {
 public:
     VoidType() noexcept : Type(TypeID::Void) {}
+};
+
+class BlockType : public Type {
+public:
+    BlockType() noexcept : Type(TypeID::Block) {}
 };
 
 class IntegerType : public Type {

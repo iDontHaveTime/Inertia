@@ -8,6 +8,8 @@
 /// @file ADT/ArrView.h
 /// @brief Provides an array wrapper class similar to llvm::ArrayRef<T>.
 
+#include <inr/ADT/IVector.h>
+
 #include <iterator>
 #include <vector>
 
@@ -49,6 +51,11 @@ public:
     arrview(const std::vector<T>& vec) noexcept :
         data_(vec.data()), len_(vec.size()) {}
 
+    /// @brief Creates a new array view from an inline vector.
+    template<size_t N>
+    arrview(const ivec<T, N>& vec) noexcept :
+        data_(vec.data()), len_(vec.size()) {}
+
     /// @brief Creates a new array view from pointer and length.
     /// @param data Pointer to the start of the array.
     /// @param length How many elements in the array.
@@ -65,6 +72,19 @@ public:
     /// @param arr Array.
     template<typename AT, size_t N>
     constexpr arrview(AT (&arr)[N]) noexcept : data_(arr), len_(N) {}
+
+    /// @brief Creates a new array view from a span.
+    /// @param data The base of the span.
+    /// @param start Where the span starts from.
+    /// @param n How many elements.
+    ///
+    /// For example if we have:
+    /// ```c++
+    /// int arr[] = {1, 2, 3, 4, 5};
+    /// ```
+    /// Then an array view of `arrview<int>(arr, 1, 2)` would contain `{2, 3}`.
+    constexpr arrview(const_pointer data, size_type start, size_type n) :
+        data_(data + start), len_(n) {}
 
     constexpr iterator begin() const noexcept {
         return data_;

@@ -8,11 +8,15 @@
 /// @file Target/CallingConv.h
 /// @brief Calling convention related classes live here.
 
+#include <inr/ADT/ArrView.h>
+#include <inr/ADT/IVector.h>
 #include <inr/IR/Type.h>
+#include <inr/MIR/MachineFunction.h>
 #include <inr/MIR/Register.h>
 
 #include <cstdint>
 #include <variant>
+#include <vector>
 
 namespace inr {
 
@@ -86,7 +90,71 @@ public:
     }
 };
 
-class CCState {};
+class CCState {
+    bool vararg_;
+    MachineFunction* mfunc_;
+    std::vector<CCAssign> assigns_;
+
+    std::vector<Register> availableRegs_;
+    int64_t stackOffset_ = 0;
+
+public:
+    arrview<CCAssign> getAssigns() const noexcept {
+        return assigns_;
+    }
+
+    bool isVararg() const noexcept {
+        return vararg_;
+    }
+
+    const MachineFunction* getMFunc() const noexcept {
+        return mfunc_;
+    }
+
+    arrview<Register> getAvailableRegs() const noexcept {
+        return availableRegs_;
+    }
+
+    int64_t getStackOffset() const noexcept {
+        return stackOffset_;
+    }
+
+    Register allocateReg(arrview<Register> regs) {
+        for(Register reg : regs) {
+            for(auto it = availableRegs_.begin(); it != availableRegs_.end();
+                ++it) {
+                if(*it == reg) {
+                    availableRegs_.erase(it);
+                    return reg;
+                }
+            }
+        }
+        return Register::createNone();
+    }
+
+    int64_t allocateStack(unsigned size, unsigned align) {
+        stackOffset_ = (stackOffset_ + align - 1) & ~(align - 1);
+        int64_t offset = stackOffset_;
+        stackOffset_ += size;
+        return offset;
+    }
+
+    using CCFunc = bool (*)(unsigned, const Type*, CCState&);
+
+    void analyzeArgs(arrview<const Type*> args, CCFunc ccFunc) {
+        for(unsigned i = 0; i < args.size(); i++) {
+            ccFunc(i, args[i], *this);
+        }
+    }
+
+    void analyzeReturn(const Type* ret, CCFunc ccFunc) {
+        ccFunc(0, ret, *this);
+    }
+
+    void addAssign(CCAssign assign) {
+        assigns_.emplace_back(assign);
+    }
+};
 
 } // namespace inr
 

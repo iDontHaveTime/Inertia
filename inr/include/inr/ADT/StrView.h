@@ -153,7 +153,7 @@ public:
 
     /// @brief Compares two string views.
     constexpr bool operator==(sview other) const {
-        return (*this <=> other) == 0;
+        return (*this <=> other) == std::strong_ordering::equal;
     }
 
     /// @brief Finds a character in the string and returns its index.

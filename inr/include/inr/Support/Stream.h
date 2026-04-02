@@ -63,6 +63,9 @@ protected:
     /// @param size Size of the data.
     virtual void writeImpl(const char* ptr, size_t size) = 0;
 
+    /// @brief If the flush has extra steps.
+    virtual void flushImpl() {}
+
     /// @brief The buffer size constructors default to.
     constexpr static size_t DEFAULT_BUFFER_SIZE = 0x2000;
 
@@ -70,6 +73,9 @@ public:
     /// @brief Constructs a stream with the selected buffer size.
     /// @param bufferSize Size for the buffer, 0 for unbuffered.
     raw_stream(size_t bufferSize = DEFAULT_BUFFER_SIZE);
+
+    raw_stream(const raw_stream&) = delete;
+    raw_stream& operator=(const raw_stream&) = delete;
 
     /// @brief Returns the buffer size of the stream.
     /// @return Buffer size.
@@ -95,6 +101,7 @@ public:
             writeImpl(buffStart, buffCur - buffStart);
             buffCur = buffStart;
         }
+        flushImpl();
     }
 
     /// @brief Is the stream displayed on a tty or console window.
@@ -317,6 +324,10 @@ class standard_file_stream : public raw_stream {
     bool close_;
     /// @brief Overriden write implementation to write to the FILE.
     void writeImpl(const char* ptr, size_t size) override;
+
+    void flushImpl() override {
+        if(file_) fflush(file_);
+    }
 
 public:
     /// @brief The basic constructor for this stream class.

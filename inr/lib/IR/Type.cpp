@@ -15,6 +15,7 @@ const Type* strToType(const InrContext& ctx, sview str) {
     if(str.empty()) return nullptr;
     if(str == "void") return ctx.getVoid();
     if(str == "ptr") return ctx.getPointer();
+    if(str == "block") return ctx.getBlock();
 
     if(str[0] == 'i' && str.size() > 1) {
         sview iN = str.slice(1, str.size());
@@ -51,8 +52,8 @@ raw_stream& operator<<(raw_stream& os, const Type& type) {
             }
             return os << ')';
         }
-        default:
-            return os << "unknown";
+        case Type::TypeID::Block:
+            return os << "block";
     }
 }
 

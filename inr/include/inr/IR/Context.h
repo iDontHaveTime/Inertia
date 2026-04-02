@@ -8,6 +8,7 @@
 /// @file IR/Context.h
 /// @brief Contains the context class.
 
+#include <inr/ADT/BigInt.h>
 #include <inr/ADT/StrView.h>
 #include <inr/IR/Constant.h>
 #include <inr/IR/Module.h>
@@ -18,8 +19,6 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
-
-#include "inr/ADT/BigInt.h"
 
 namespace inr {
 
@@ -48,6 +47,8 @@ class InrContext {
     ///
     /// Same reason as void.
     PointerType ptrType_;
+    /// @brief Block type.
+    BlockType blockType_;
     /// @brief Storage of pointers to different types.
     mutable std::vector<std::unique_ptr<Type>> storage_;
     /// @brief Storage of pointers to constant types.
@@ -83,6 +84,10 @@ public:
     /// @return Pointer to the void type.
     const VoidType* getVoid() const noexcept {
         return &voidType_;
+    }
+
+    const BlockType* getBlock() const noexcept {
+        return &blockType_;
     }
 
     /// @brief Creates a new integer type.

@@ -8,6 +8,8 @@
 #include <inr/Support/Logger.h>
 #include <inr/Support/Stream.h>
 
+#include <unordered_map>
+
 // REFERENCE
 //
 // class Target<string name, int ptrSize, endian targetEndian> {
@@ -135,25 +137,6 @@ static inline TargetInfo getTargetInfo(const RecordStorage& result) {
     return {targetDef.front()};
 }
 
-static inline bool generateRegisterList(raw_stream& os,
-                                        InrGenInfo::gen_list reglist) {
-    bool err = false;
-    size_t subIdx = 0;
-    for(const Init* subInit : *reglist) {
-        if(subIdx++) {
-            os << ", ";
-        }
-        if(!subInit->matches(RecordType::Kind::Def)) {
-            err = true;
-            break;
-        }
-        const Record* subReg = ((const DefInit*)subInit)->getValue();
-        os << subReg->getName();
-    }
-    os << '\n';
-    return err;
-}
-
 bool RegisterBackend::emit(const RecordStorage& result) {
     TargetInfo target = getTargetInfo(result);
     if(!target.Success) return true;
@@ -177,7 +160,53 @@ bool RegisterBackend::emit(const RecordStorage& result) {
     addNamespace(target.Namespace);
     openBody();
 
+    struct LocalRegInfo {
+        size_t idx;
+        size_t strIdx;
+        size_t subregIdx;
+        size_t subregC;
+    };
+
+    struct LocalRegClassInfo {
+        size_t idx;
+        size_t strIdx;
+    };
+
+    std::unordered_map<const Record*, LocalRegInfo> mapOfRegisters;
+    std::unordered_map<const Record*, LocalRegClassInfo> mapOfRegClasses;
+
+    write("constexpr const char* ", target.Namespace, "_StrTable = \"");
+
+    size_t currentStrIdx = 0;
+    for(const Record* reg : registers) {
+        RegisterInfo info(reg);
+        if(!info.Success) {
+            err = true;
+            break;
+        }
+        mapOfRegisters[reg].strIdx = currentStrIdx;
+        write(info.Name, "\\0");
+        currentStrIdx += info.Name.size() + 1;
+    }
+
+    for(const Record* regclass : registerClasses) {
+        mapOfRegClasses[regclass].strIdx = currentStrIdx;
+        write(regclass->getName(), "\\0");
+        currentStrIdx += regclass->getName().size() + 1;
+    }
+
+    writeln("\";");
+
+    write("constexpr Register ", target.Namespace, "_RegsDef[] = ");
+    openBody();
     size_t currentIdx = 0;
+
+    for(const Record* reg : registers) {
+        mapOfRegisters[reg].idx = currentIdx;
+        write("\tRegister::createPhysical(", currentIdx++, "), ");
+        addComment(reg->getName());
+    }
+
     for(const Record* reg : registers) {
         RegisterInfo info(reg);
         if(!info.Success) {
@@ -185,34 +214,90 @@ bool RegisterBackend::emit(const RecordStorage& result) {
             break;
         }
 
-        writeln("constexpr Register ", reg->getName(),
-                " = Register::createPhysical(", currentIdx++, ");");
-
-        if(!info.SubRegs->empty()) {
-            write("constexpr Register ", reg->getName(), "_SubRegs[] = ");
-            openBody();
-
-            generateRegisterList(os_, info.SubRegs);
-
-            closeBody(true);
+        LocalRegInfo& lreginfo = mapOfRegisters[reg];
+        if(info.SubRegs->empty()) {
+            lreginfo.subregIdx = 0;
+            lreginfo.subregC = 0;
+            continue;
         }
-        if(err) break;
-    }
+        write('\t');
+        addComment("Subregisters of ", reg->getName());
+        lreginfo.subregIdx = currentIdx;
+        lreginfo.subregC = info.SubRegs->size();
 
-    for(const Record* regClass : registerClasses) {
-        RegisterClassInfo info(regClass);
+        for(const Init* subregInit : *info.SubRegs) {
+            const Record* subReg = DefInit::get(subregInit);
+            write("\tRegister::createPhysical(", mapOfRegisters[subReg].idx,
+                  "), ");
+            addComment(subReg->getName());
+        }
+
+        currentIdx += info.SubRegs->size();
+    }
+    for(const Record* regclass : registerClasses) {
+        RegisterClassInfo info(regclass);
         if(!info.Success) {
             err = true;
             break;
         }
+        mapOfRegClasses[regclass].idx = currentIdx;
 
-        write("constexpr Register ", regClass->getName(), "[] = ");
-        openBody();
+        write('\t');
+        addComment("Register class ", regclass->getName());
 
-        generateRegisterList(os_, info.Regs);
+        for(const Init* regInit : *info.Regs) {
+            const Record* reg = DefInit::get(regInit);
+            write("\tRegister::createPhysical(", mapOfRegisters[reg].idx,
+                  "), ");
+            addComment(reg->getName());
+        }
 
-        closeBody(true);
+        currentIdx += info.Regs->size();
     }
+
+    closeBody(true);
+
+    for(size_t i = 0; i < registers.size(); i++) {
+        writeln("constexpr const Register& ", registers[i]->getName(), " = ",
+                target.Namespace, "_RegsDef[", i, "];");
+    }
+
+    write("constexpr RegisterDesc ", target.Namespace, "_RegsDesc[] = ");
+    openBody();
+
+    for(const Record* reg : registers) {
+        LocalRegInfo& lreginfo = mapOfRegisters[reg];
+        write("\t{", lreginfo.strIdx, ", ", lreginfo.subregIdx, ", ",
+              lreginfo.subregC, "},\n");
+    }
+
+    closeBody(true);
+
+    write("constexpr RegisterClass ", target.Namespace, "_RegsClass[] = ");
+    openBody();
+
+    for(const Record* regclass : registerClasses) {
+        RegisterClassInfo info(regclass);
+        if(!info.Success) {
+            err = true;
+            break;
+        }
+        write("\t{", mapOfRegClasses[regclass].idx, ", ", info.Regs->size(),
+              ", ", info.Size, ", ", mapOfRegClasses[regclass].strIdx, "},\n");
+    }
+
+    closeBody(true);
+
+    for(size_t i = 0; i < registerClasses.size(); i++) {
+        writeln("constexpr const RegisterClass& ",
+                registerClasses[i]->getName(), " = ", target.Namespace,
+                "_RegsClass[", i, "];");
+    }
+
+    writeln("constexpr RegisterInfo RegInfo = {", target.Namespace, "_StrTable",
+            ", ", target.Namespace, "_RegsDef", ", ", registers.size(), ", ",
+            target.Namespace, "_RegsDesc", ", ", target.Namespace, "_RegsClass",
+            "};");
 
     closeBody();
     // END OF NAMESPACE

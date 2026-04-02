@@ -23,6 +23,7 @@ public:
     enum class ValueID : uint8_t {
         Argument,
         Function,
+        Block,
         ConstantInt,
         Instruction
     };
@@ -104,6 +105,10 @@ public:
 
     bool hasUsers() const noexcept {
         return !users_.empty();
+    }
+
+    bool isVolatile() const noexcept {
+        return flags_ & decltype(flags_)(ValueFlags::Volatile);
     }
 
     virtual ~Value() noexcept = default;

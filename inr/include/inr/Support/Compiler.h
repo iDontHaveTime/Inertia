@@ -6,7 +6,7 @@
 #define INERTIA_SUPPORT_COMPILER_H
 
 /// @file Support/Compiler.h
-/// @brief Provides macros that don't depend on the compiler.
+/// @brief Provides miscellaneous macros.
 
 #ifndef __has_feature
 #define __has_feature(x) 0

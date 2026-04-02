@@ -28,6 +28,7 @@ static inline void replaceOperand(replc_t& replacements, const Value*& op) {
             break;
         case Value::ValueID::ConstantInt:
         case Value::ValueID::Function:
+        case Value::ValueID::Block:
             break;
     }
 }

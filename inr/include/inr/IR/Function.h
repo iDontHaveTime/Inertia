@@ -58,9 +58,7 @@ public:
         return args_.data() + arg;
     }
 
-    Block* newBlock(sview name) {
-        return blocks_.push_back(new Block(this, name));
-    }
+    Block* newBlock(const InrContext& ctx, sview name);
 
     ~Function() noexcept {
         for(Block* b = blocks_.front(); b != nullptr;) {

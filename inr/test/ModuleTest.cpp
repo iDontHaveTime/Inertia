@@ -31,7 +31,7 @@ int main(int argc, char** argv) {
     inr::standard_file_stream exampleStream(
         fopen("inr/example/module_example.inr", "w"), true, 0);
 
-    inr::Block* entry = func->newBlock("entry");
+    inr::Block* entry = func->newBlock(ctx, "entry");
 
     auto add = inr::BinaryInst::createAdd(ctx.getIntConstant(ctx.getI32(), 20),
                                           func->getArg(0), "sum", entry);

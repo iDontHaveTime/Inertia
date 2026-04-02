@@ -14,13 +14,12 @@
 
 namespace inr {
 
-class Block : public ilist_node<Block> {
+class Block : public Value, public ilist_node<Block> {
     class Function* parent_;
-    sview name_;
     ilist<Instruction> instructions_;
 
-    Block(Function* parent, sview name) noexcept :
-        parent_(parent), name_(name) {}
+    Block(const Type* type, Function* parent, sview name) noexcept :
+        Value(ValueID::Block, type, name), parent_(parent) {}
 
 public:
     const ilist<Instruction>& getInstructions() const noexcept {

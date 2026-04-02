@@ -96,6 +96,14 @@ public:
         return false;
     }
 
+    /// @brief Returns if the instruction can be safely removed.
+    static bool removeable(const Instruction& inst) {
+        return inst.isVolatile() ? false
+                                 : (inst.getUsers().empty()
+                                        ? (inst.isTerminator() ? false : true)
+                                        : false);
+    }
+
     friend class Block;
 };
 
