@@ -1,0 +1,25 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+// This file is for defining registers.
+
+include "inr/Target/TargetDAG.ing";
+
+// Register description.
+class Register<string name, int size> {
+    // Name of the register, used for asm.
+    string Name = name;
+    // Size of the register.
+    int Size = size;
+    // Subregisters.
+    list<Register> SubRegs = [];
+}
+
+// Register class, groups registers.
+class RegisterClass<int size, list<Register> regs> : DagNode {
+    // Size of the registers.
+    int Size = size;
+    // Registers it holds.
+    list<Register> Regs = regs;
+}

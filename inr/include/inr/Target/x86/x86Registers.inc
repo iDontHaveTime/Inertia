@@ -300,6 +300,166 @@ constexpr Register x86_RegsDef[] = {
 	Register::createPhysical(56), // R13B
 	Register::createPhysical(60), // R14B
 	Register::createPhysical(64), // R15B
+	// Superregs of AL
+	Register::createPhysical(2), // AX
+	Register::createPhysical(3), // EAX
+	Register::createPhysical(4), // RAX
+	// Superregs of AH
+	Register::createPhysical(2), // AX
+	Register::createPhysical(3), // EAX
+	Register::createPhysical(4), // RAX
+	// Superregs of AX
+	Register::createPhysical(3), // EAX
+	Register::createPhysical(4), // RAX
+	// Superregs of EAX
+	Register::createPhysical(4), // RAX
+	// Superregs of BL
+	Register::createPhysical(7), // BX
+	Register::createPhysical(8), // EBX
+	Register::createPhysical(9), // RBX
+	// Superregs of BH
+	Register::createPhysical(7), // BX
+	Register::createPhysical(8), // EBX
+	Register::createPhysical(9), // RBX
+	// Superregs of BX
+	Register::createPhysical(8), // EBX
+	Register::createPhysical(9), // RBX
+	// Superregs of EBX
+	Register::createPhysical(9), // RBX
+	// Superregs of CL
+	Register::createPhysical(12), // CX
+	Register::createPhysical(13), // ECX
+	Register::createPhysical(14), // RCX
+	// Superregs of CH
+	Register::createPhysical(12), // CX
+	Register::createPhysical(13), // ECX
+	Register::createPhysical(14), // RCX
+	// Superregs of CX
+	Register::createPhysical(13), // ECX
+	Register::createPhysical(14), // RCX
+	// Superregs of ECX
+	Register::createPhysical(14), // RCX
+	// Superregs of DL
+	Register::createPhysical(17), // DX
+	Register::createPhysical(18), // EDX
+	Register::createPhysical(19), // RDX
+	// Superregs of DH
+	Register::createPhysical(17), // DX
+	Register::createPhysical(18), // EDX
+	Register::createPhysical(19), // RDX
+	// Superregs of DX
+	Register::createPhysical(18), // EDX
+	Register::createPhysical(19), // RDX
+	// Superregs of EDX
+	Register::createPhysical(19), // RDX
+	// Superregs of SIL
+	Register::createPhysical(21), // SI
+	Register::createPhysical(22), // ESI
+	Register::createPhysical(23), // RSI
+	// Superregs of SI
+	Register::createPhysical(22), // ESI
+	Register::createPhysical(23), // RSI
+	// Superregs of ESI
+	Register::createPhysical(23), // RSI
+	// Superregs of DIL
+	Register::createPhysical(25), // DI
+	Register::createPhysical(26), // EDI
+	Register::createPhysical(27), // RDI
+	// Superregs of DI
+	Register::createPhysical(26), // EDI
+	Register::createPhysical(27), // RDI
+	// Superregs of EDI
+	Register::createPhysical(27), // RDI
+	// Superregs of SPL
+	Register::createPhysical(29), // SP
+	Register::createPhysical(30), // ESP
+	Register::createPhysical(31), // RSP
+	// Superregs of SP
+	Register::createPhysical(30), // ESP
+	Register::createPhysical(31), // RSP
+	// Superregs of ESP
+	Register::createPhysical(31), // RSP
+	// Superregs of BPL
+	Register::createPhysical(33), // BP
+	Register::createPhysical(34), // EBP
+	Register::createPhysical(35), // RBP
+	// Superregs of BP
+	Register::createPhysical(34), // EBP
+	Register::createPhysical(35), // RBP
+	// Superregs of EBP
+	Register::createPhysical(35), // RBP
+	// Superregs of R8B
+	Register::createPhysical(37), // R8W
+	Register::createPhysical(38), // R8D
+	Register::createPhysical(39), // R8
+	// Superregs of R8W
+	Register::createPhysical(38), // R8D
+	Register::createPhysical(39), // R8
+	// Superregs of R8D
+	Register::createPhysical(39), // R8
+	// Superregs of R9B
+	Register::createPhysical(41), // R9W
+	Register::createPhysical(42), // R9D
+	Register::createPhysical(43), // R9
+	// Superregs of R9W
+	Register::createPhysical(42), // R9D
+	Register::createPhysical(43), // R9
+	// Superregs of R9D
+	Register::createPhysical(43), // R9
+	// Superregs of R10B
+	Register::createPhysical(45), // R10W
+	Register::createPhysical(46), // R10D
+	Register::createPhysical(47), // R10
+	// Superregs of R10W
+	Register::createPhysical(46), // R10D
+	Register::createPhysical(47), // R10
+	// Superregs of R10D
+	Register::createPhysical(47), // R10
+	// Superregs of R11B
+	Register::createPhysical(49), // R11W
+	Register::createPhysical(50), // R11D
+	Register::createPhysical(51), // R11
+	// Superregs of R11W
+	Register::createPhysical(50), // R11D
+	Register::createPhysical(51), // R11
+	// Superregs of R11D
+	Register::createPhysical(51), // R11
+	// Superregs of R12B
+	Register::createPhysical(53), // R12W
+	Register::createPhysical(54), // R12D
+	Register::createPhysical(55), // R12
+	// Superregs of R12W
+	Register::createPhysical(54), // R12D
+	Register::createPhysical(55), // R12
+	// Superregs of R12D
+	Register::createPhysical(55), // R12
+	// Superregs of R13B
+	Register::createPhysical(57), // R13W
+	Register::createPhysical(58), // R13D
+	Register::createPhysical(59), // R13
+	// Superregs of R13W
+	Register::createPhysical(58), // R13D
+	Register::createPhysical(59), // R13
+	// Superregs of R13D
+	Register::createPhysical(59), // R13
+	// Superregs of R14B
+	Register::createPhysical(61), // R14W
+	Register::createPhysical(62), // R14D
+	Register::createPhysical(63), // R14
+	// Superregs of R14W
+	Register::createPhysical(62), // R14D
+	Register::createPhysical(63), // R14
+	// Superregs of R14D
+	Register::createPhysical(63), // R14
+	// Superregs of R15B
+	Register::createPhysical(65), // R15W
+	Register::createPhysical(66), // R15D
+	Register::createPhysical(67), // R15
+	// Superregs of R15W
+	Register::createPhysical(66), // R15D
+	Register::createPhysical(67), // R15
+	// Superregs of R15D
+	Register::createPhysical(67), // R15
 };
 constexpr const Register& AL = x86_RegsDef[0];
 constexpr const Register& AH = x86_RegsDef[1];
@@ -370,74 +530,74 @@ constexpr const Register& R15W = x86_RegsDef[65];
 constexpr const Register& R15D = x86_RegsDef[66];
 constexpr const Register& R15 = x86_RegsDef[67];
 constexpr RegisterDesc x86_RegsDesc[] = {
-	{0, 0, 0},
-	{3, 0, 0},
-	{6, 68, 2},
-	{9, 70, 3},
-	{13, 73, 4},
-	{17, 0, 0},
-	{20, 0, 0},
-	{23, 77, 2},
-	{26, 79, 3},
-	{30, 82, 4},
-	{34, 0, 0},
-	{37, 0, 0},
-	{40, 86, 2},
-	{43, 88, 3},
-	{47, 91, 4},
-	{51, 0, 0},
-	{54, 0, 0},
-	{57, 95, 2},
-	{60, 97, 3},
-	{64, 100, 4},
-	{68, 0, 0},
-	{72, 104, 1},
-	{75, 105, 2},
-	{79, 107, 3},
-	{83, 0, 0},
-	{87, 110, 1},
-	{90, 111, 2},
-	{94, 113, 3},
-	{98, 0, 0},
-	{102, 116, 1},
-	{105, 117, 2},
-	{109, 119, 3},
-	{113, 0, 0},
-	{117, 122, 1},
-	{120, 123, 2},
-	{124, 125, 3},
-	{128, 0, 0},
-	{132, 128, 1},
-	{136, 129, 2},
-	{140, 131, 3},
-	{143, 0, 0},
-	{147, 134, 1},
-	{151, 135, 2},
-	{155, 137, 3},
-	{158, 0, 0},
-	{163, 140, 1},
-	{168, 141, 2},
-	{173, 143, 3},
-	{177, 0, 0},
-	{182, 146, 1},
-	{187, 147, 2},
-	{192, 149, 3},
-	{196, 0, 0},
-	{201, 152, 1},
-	{206, 153, 2},
-	{211, 155, 3},
-	{215, 0, 0},
-	{220, 158, 1},
-	{225, 159, 2},
-	{230, 161, 3},
-	{234, 0, 0},
-	{239, 164, 1},
-	{244, 165, 2},
-	{249, 167, 3},
-	{253, 0, 0},
-	{258, 170, 1},
-	{263, 171, 2},
-	{268, 173, 3},
+	{0, 0, 244, 0, 3},
+	{3, 0, 247, 0, 3},
+	{6, 68, 250, 2, 2},
+	{9, 70, 252, 3, 1},
+	{13, 73, 0, 4, 0},
+	{17, 0, 253, 0, 3},
+	{20, 0, 256, 0, 3},
+	{23, 77, 259, 2, 2},
+	{26, 79, 261, 3, 1},
+	{30, 82, 0, 4, 0},
+	{34, 0, 262, 0, 3},
+	{37, 0, 265, 0, 3},
+	{40, 86, 268, 2, 2},
+	{43, 88, 270, 3, 1},
+	{47, 91, 0, 4, 0},
+	{51, 0, 271, 0, 3},
+	{54, 0, 274, 0, 3},
+	{57, 95, 277, 2, 2},
+	{60, 97, 279, 3, 1},
+	{64, 100, 0, 4, 0},
+	{68, 0, 280, 0, 3},
+	{72, 104, 283, 1, 2},
+	{75, 105, 285, 2, 1},
+	{79, 107, 0, 3, 0},
+	{83, 0, 286, 0, 3},
+	{87, 110, 289, 1, 2},
+	{90, 111, 291, 2, 1},
+	{94, 113, 0, 3, 0},
+	{98, 0, 292, 0, 3},
+	{102, 116, 295, 1, 2},
+	{105, 117, 297, 2, 1},
+	{109, 119, 0, 3, 0},
+	{113, 0, 298, 0, 3},
+	{117, 122, 301, 1, 2},
+	{120, 123, 303, 2, 1},
+	{124, 125, 0, 3, 0},
+	{128, 0, 304, 0, 3},
+	{132, 128, 307, 1, 2},
+	{136, 129, 309, 2, 1},
+	{140, 131, 0, 3, 0},
+	{143, 0, 310, 0, 3},
+	{147, 134, 313, 1, 2},
+	{151, 135, 315, 2, 1},
+	{155, 137, 0, 3, 0},
+	{158, 0, 316, 0, 3},
+	{163, 140, 319, 1, 2},
+	{168, 141, 321, 2, 1},
+	{173, 143, 0, 3, 0},
+	{177, 0, 322, 0, 3},
+	{182, 146, 325, 1, 2},
+	{187, 147, 327, 2, 1},
+	{192, 149, 0, 3, 0},
+	{196, 0, 328, 0, 3},
+	{201, 152, 331, 1, 2},
+	{206, 153, 333, 2, 1},
+	{211, 155, 0, 3, 0},
+	{215, 0, 334, 0, 3},
+	{220, 158, 337, 1, 2},
+	{225, 159, 339, 2, 1},
+	{230, 161, 0, 3, 0},
+	{234, 0, 340, 0, 3},
+	{239, 164, 343, 1, 2},
+	{244, 165, 345, 2, 1},
+	{249, 167, 0, 3, 0},
+	{253, 0, 346, 0, 3},
+	{258, 170, 349, 1, 2},
+	{263, 171, 351, 2, 1},
+	{268, 173, 0, 3, 0},
 };
 constexpr RegisterClass x86_RegsClass[] = {
 	{176, 16, 64, 272},

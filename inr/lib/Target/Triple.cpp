@@ -72,15 +72,15 @@ Triple Triple::fromString(sview s) noexcept {
 }
 
 sview Triple::getArchStr(Arch arch) noexcept {
-    return arch_str_table[size_t(arch)].first;
+    return arch_str_table[uint16_t(arch)].first;
 }
 
 sview Triple::getOSStr(OS os) noexcept {
-    return os_str_table[size_t(os)].first;
+    return os_str_table[uint16_t(os)].first;
 }
 
 sview Triple::getABIStr(ABI abi) noexcept {
-    return abi_str_table[size_t(abi)].first;
+    return abi_str_table[uint16_t(abi)].first;
 }
 
 std::string Triple::str() const {
@@ -120,6 +120,83 @@ std::endian Triple::getEndian() const noexcept {
         case Arch::x86_64:
             return std::endian::little;
     }
+}
+
+} // namespace inr
+
+// clang-format off
+#include <inr/Target/x86/x86Registers.h>
+#include <inr/Target/x86/x86CallingConv.h>
+// clang-format on
+
+namespace inr {
+
+const RegisterInfo* Triple::getRegisterInfo(Arch arch) noexcept {
+    switch(arch) {
+        case Arch::Unknown:
+            return nullptr;
+        case Arch::x86_64:
+            return &x86::RegInfo;
+    }
+}
+
+static inline CallingConv getx86_64CC(Triple::OS os, Triple::ABI abi) noexcept {
+    switch(os) {
+        case Triple::OS::Unknown:
+            return CallingConv::C;
+        case Triple::OS::Linux:
+            switch(abi) {
+                case Triple::ABI::Unknown:
+                    return CallingConv::C;
+                case Triple::ABI::GNU:
+                    return CallingConv::SysV;
+            }
+    }
+}
+
+static inline bool getCC(Triple::Arch arch, Triple::OS os, Triple::ABI abi,
+                         CallingConv& cc) {
+    if(cc == CallingConv::C) {
+        switch(arch) {
+            case Triple::Arch::x86_64:
+                cc = getx86_64CC(os, abi);
+                break;
+            case Triple::Arch::Unknown:
+                return true;
+        }
+    }
+
+    if(cc == CallingConv::C) return true;
+
+    return false;
+}
+
+static inline CCFunc getx86CCFunc(CallingConv cc, bool ret) {
+    switch(cc) {
+        case CallingConv::SysV:
+            return ret ? x86::CCRetSysV : x86::CCSysV;
+        case CallingConv::C:
+            __builtin_unreachable();
+    }
+}
+
+static inline CCFunc getFinalCC(Triple::Arch arch, Triple::OS os,
+                                Triple::ABI abi, CallingConv cc, bool ret) {
+    if(getCC(arch, os, abi, cc)) return nullptr;
+    switch(arch) {
+        case Triple::Arch::x86_64:
+            return getx86CCFunc(cc, ret);
+        case Triple::Arch::Unknown:
+            __builtin_unreachable();
+    }
+}
+
+CCFunc Triple::getCCArgs(Arch arch, OS os, ABI abi, CallingConv cc) noexcept {
+    return getFinalCC(arch, os, abi, cc, false);
+}
+
+CCFunc Triple::getCCRet(Arch arch, OS os, ABI abi, CallingConv cc) noexcept {
+    return getFinalCC(arch, os, abi, cc, true);
 }
 
 } // namespace inr

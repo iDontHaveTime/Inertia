@@ -13,14 +13,18 @@
 #include <inr/IR/Type.h>
 #include <inr/MIR/MachineFunction.h>
 #include <inr/MIR/Register.h>
+#define INR_CCFUNC
+#include <inr/Target/CCFunc.h>
 
 #include <cstdint>
+#include <initializer_list>
 #include <variant>
 #include <vector>
 
 namespace inr {
 
 class CCAssign {
+public:
     enum class Info {
         Full, ///< Value fits in the location.
 
@@ -32,6 +36,7 @@ class CCAssign {
 
     };
 
+private:
     /// @brief What data is the dest assigned to.
     ///
     /// Can be a register (e.g. RDI arg 1).
@@ -65,6 +70,14 @@ public:
         return as;
     }
 
+    bool isReg() const noexcept {
+        return std::holds_alternative<Register>(data_);
+    }
+
+    bool isMem() const noexcept {
+        return std::holds_alternative<int64_t>(data_);
+    }
+
     unsigned getValN() const noexcept {
         return valN_;
     }
@@ -91,14 +104,22 @@ public:
 };
 
 class CCState {
-    bool vararg_;
     MachineFunction* mfunc_;
+    bool vararg_;
+    const RegisterInfo* regInfo_;
     std::vector<CCAssign> assigns_;
 
     std::vector<Register> availableRegs_;
     int64_t stackOffset_ = 0;
 
 public:
+    CCState(MachineFunction* mfunc, bool vararg, const RegisterInfo* regInfo,
+            arrview<Register> allocateable) :
+        mfunc_(mfunc),
+        vararg_(vararg),
+        regInfo_(regInfo),
+        availableRegs_(allocateable.begin(), allocateable.end()) {}
+
     arrview<CCAssign> getAssigns() const noexcept {
         return assigns_;
     }
@@ -119,14 +140,27 @@ public:
         return stackOffset_;
     }
 
+    Register allocateReg(std::initializer_list<Register> regs) {
+        return allocateReg(arrview<Register>(regs.begin(), regs.end()));
+    }
+
     Register allocateReg(arrview<Register> regs) {
         for(Register reg : regs) {
-            for(auto it = availableRegs_.begin(); it != availableRegs_.end();
-                ++it) {
-                if(*it == reg) {
-                    availableRegs_.erase(it);
-                    return reg;
-                }
+            auto it =
+                std::find(availableRegs_.begin(), availableRegs_.end(), reg);
+            if(it != availableRegs_.end()) {
+                availableRegs_.erase(it);
+
+                for(Register sub : regInfo_->getSubRegs(reg))
+                    availableRegs_.erase(std::remove(availableRegs_.begin(),
+                                                     availableRegs_.end(), sub),
+                                         availableRegs_.end());
+                for(Register super : regInfo_->getSuperRegs(reg))
+                    availableRegs_.erase(
+                        std::remove(availableRegs_.begin(),
+                                    availableRegs_.end(), super),
+                        availableRegs_.end());
+                return reg;
             }
         }
         return Register::createNone();
@@ -138,8 +172,6 @@ public:
         stackOffset_ += size;
         return offset;
     }
-
-    using CCFunc = bool (*)(unsigned, const Type*, CCState&);
 
     void analyzeArgs(arrview<const Type*> args, CCFunc ccFunc) {
         for(unsigned i = 0; i < args.size(); i++) {

@@ -43,6 +43,8 @@ raw_stream& operator<<(raw_stream& os, const token& token) {
             [[fallthrough]];
         case token::ID::Equals:
             [[fallthrough]];
+        case token::ID::Dollar:
+            [[fallthrough]];
         case token::ID::RightSquare:
             return os << token.getAsChar();
         default:
@@ -119,7 +121,8 @@ constexpr std::pair<sview, token::ID> keywords[] = {
     {"def", token::ID::Def},       {"class", token::ID::Class},
     {"int", token::ID::Int},       {"string", token::ID::String},
     {"endian", token::ID::Endian}, {"include", token::ID::Include},
-    {"list", token::ID::List},     {"irtype", token::ID::IRType}};
+    {"list", token::ID::List},     {"irtype", token::ID::IRType},
+    {"dag", token::ID::Dag}};
 
 token::ID lexer::classifyAlpha(sview sv) {
     for(const auto& p : keywords) {
@@ -298,6 +301,8 @@ token::ID lexer::classifySymbol() const noexcept {
             return token::ID::Slash;
         case '=':
             return token::ID::Equals;
+        case '$':
+            return token::ID::Dollar;
         default:
             return token::ID::End;
     }

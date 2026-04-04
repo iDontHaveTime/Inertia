@@ -52,6 +52,10 @@ public:
         return typeID_ == TypeID::Function;
     }
 
+    bool isBlock() const noexcept {
+        return typeID_ == TypeID::Block;
+    }
+
     virtual ~Type() noexcept = default;
 };
 

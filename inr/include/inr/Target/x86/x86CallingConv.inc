@@ -2,5 +2,67 @@
 #ifdef x86_CALLING_CONV_HEADER
 #undef x86_CALLING_CONV_HEADER
 namespace inr::x86{
+bool CCSysV(unsigned valN, const Type* type, CCState& state){
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8))){
+Register reg = state.allocateReg({DIL, SIL, DL, CL, R8B, R9B});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16))){
+Register reg = state.allocateReg({DI, SI, DX, CX, R8W, R9W});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32))){
+Register reg = state.allocateReg({EDI, ESI, EDX, ECX, R8D, R9D});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) || (type->isPointer())){
+Register reg = state.allocateReg({RDI, RSI, RDX, RCX, R8, R9});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+return false;
+}
+bool CCRetSysV(unsigned valN, const Type* type, CCState& state){
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8))){
+Register reg = state.allocateReg({AL});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16))){
+Register reg = state.allocateReg({AX});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32))){
+Register reg = state.allocateReg({EAX, EDX});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) || (type->isPointer())){
+Register reg = state.allocateReg({RAX, RDX});
+if(!reg.isNone()) {
+state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+return true;
+}
+}
+return false;
+}
 }
 #endif

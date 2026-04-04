@@ -5,6 +5,7 @@
 include "inr/Target/Target.ing";
 include "inr/Target/x86/x86Registers.ing";
 include "inr/Target/x86/x86CallingConv.ing";
+include "inr/Target/x86/x86Instructions.ing";
 
 // Main x86 file.
 

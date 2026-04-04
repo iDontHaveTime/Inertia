@@ -24,8 +24,8 @@ class MachineModule {
 public:
     explicit MachineModule(sview name) : name_(name) {}
 
-    MachineFunction* newFunction(sview name) {
-        return functions_.push_back(MachineFunction::create(name, this));
+    MachineFunction* addFunction(MachineFunction* func) {
+        return functions_.push_back(func);
     }
 
     sview getName() const noexcept {

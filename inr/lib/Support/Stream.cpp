@@ -120,7 +120,6 @@ struct CheckTerminalColors {
 
 stream::stream(int fd, bool shouldClose, size_t bufferSize) :
     raw_stream(bufferSize), fd_(fd), close_(shouldClose) {
-    /// stdout and stderr can have colors if are in a TTY.
     if(fd == 1 || fd == 2) {
         if(bool(isatty(fd))) {
             displayed_ = true;

@@ -1,0 +1,26 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+// File contains everything relating to target's dag patterns.
+
+class DagNode;
+class DagNodeOperator;
+
+class BuiltinOperator : DagNodeOperator;
+
+def ADD  : BuiltinOperator;
+def SUB  : BuiltinOperator;
+def MUL  : BuiltinOperator;
+def SDIV : BuiltinOperator;
+def UDIV : BuiltinOperator;
+def SREM : BuiltinOperator;
+def UREM : BuiltinOperator;
+
+def imm : DagNode;
+
+class Instruction<dag in, dag out, string asmStr> : DagNodeOperator {
+    dag In = in;
+    dag Out = out;
+    string AsmStr = asmStr;
+}

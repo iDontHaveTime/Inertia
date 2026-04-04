@@ -6,3 +6,17 @@ include "inr/Target/Target.ing";
 include "inr/Target/x86/x86Registers.ing";
 
 // File for defining x86 calling conventions.
+
+def SysV : CallingConv<[
+    CCIfType<[i8],  CCAssignToReg<[DIL, SIL, DL, CL, R8B, R9B]>>,
+    CCIfType<[i16], CCAssignToReg<[DI, SI, DX, CX, R8W, R9W]>>,
+    CCIfType<[i32], CCAssignToReg<[EDI, ESI, EDX, ECX, R8D, R9D]>>,
+    CCIfType<[i64, ptr], CCAssignToReg<[RDI, RSI, RDX, RCX, R8, R9]>>
+]>;
+
+def RetSysV : CallingConv<[
+    CCIfType<[i8], CCAssignToReg<[AL]>>,
+    CCIfType<[i16], CCAssignToReg<[AX]>>,
+    CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>,
+    CCIfType<[i64, ptr], CCAssignToReg<[RAX, RDX]>>
+]>;

@@ -3,11 +3,15 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
 #include <inr/ADT/ArrView.h>
+#include <inr/ADT/StrView.h>
+#include <inr/DAG/DAGNode.h>
 #include <inr/Gen/CppEmitter.h>
 #include <inr/Gen/Record.h>
+#include <inr/IR/Type.h>
 #include <inr/Support/Logger.h>
 #include <inr/Support/Stream.h>
 
+#include <string>
 #include <unordered_map>
 
 // REFERENCE
@@ -165,6 +169,8 @@ bool RegisterBackend::emit(const RecordStorage& result) {
         size_t strIdx;
         size_t subregIdx;
         size_t subregC;
+        size_t superRegIdx;
+        std::vector<const Record*> superRegs;
     };
 
     struct LocalRegClassInfo {
@@ -227,8 +233,9 @@ bool RegisterBackend::emit(const RecordStorage& result) {
 
         for(const Init* subregInit : *info.SubRegs) {
             const Record* subReg = DefInit::get(subregInit);
-            write("\tRegister::createPhysical(", mapOfRegisters[subReg].idx,
-                  "), ");
+            LocalRegInfo& lsubreginfo = mapOfRegisters[subReg];
+            lsubreginfo.superRegs.emplace_back(reg);
+            write("\tRegister::createPhysical(", lsubreginfo.idx, "), ");
             addComment(subReg->getName());
         }
 
@@ -255,6 +262,32 @@ bool RegisterBackend::emit(const RecordStorage& result) {
         currentIdx += info.Regs->size();
     }
 
+    for(const Record* reg : registers) {
+        RegisterInfo info(reg);
+        if(!info.Success) {
+            err = true;
+            break;
+        }
+
+        LocalRegInfo& lreginfo = mapOfRegisters[reg];
+        if(lreginfo.superRegs.empty()) {
+            lreginfo.superRegIdx = 0;
+            continue;
+        }
+        lreginfo.superRegIdx = currentIdx;
+
+        write('\t');
+        addComment("Superregs of ", reg->getName());
+
+        for(const Record* superreg : lreginfo.superRegs) {
+            write("\tRegister::createPhysical(", mapOfRegisters[superreg].idx,
+                  "), ");
+            addComment(superreg->getName());
+        }
+
+        currentIdx += lreginfo.superRegs.size();
+    }
+
     closeBody(true);
 
     for(size_t i = 0; i < registers.size(); i++) {
@@ -268,7 +301,8 @@ bool RegisterBackend::emit(const RecordStorage& result) {
     for(const Record* reg : registers) {
         LocalRegInfo& lreginfo = mapOfRegisters[reg];
         write("\t{", lreginfo.strIdx, ", ", lreginfo.subregIdx, ", ",
-              lreginfo.subregC, "},\n");
+              lreginfo.superRegIdx, ", ", lreginfo.subregC, ", ",
+              lreginfo.superRegs.size(), "},\n");
     }
 
     closeBody(true);
@@ -310,6 +344,102 @@ bool RegisterBackend::emit(const RecordStorage& result) {
 
 // CALLING CONV BACKEND
 
+static inline void typeCondition(raw_stream& os, const Type* t) {
+    os << "";
+    switch(t->getTypeID()) {
+        case Type::TypeID::Void:
+            // Should be allowed?
+            os << "type->isVoid()";
+            break;
+        case Type::TypeID::Integer:
+            os << "(type->isInteger() && ((const "
+                  "IntegerType*)type)->getWidth() "
+                  "== "
+               << ((const IntegerType*)t)->getWidth() << ')';
+            break;
+        case Type::TypeID::Pointer:
+            os << "type->isPointer()";
+            break;
+        case Type::TypeID::Block:
+            // Pointer to block?
+            os << "type->isBlock()";
+            break;
+        case Type::TypeID::Function:
+            // Not allowed
+            break;
+    }
+}
+
+static inline bool emitAction(raw_stream& os, const Record* action,
+                              const RecordStorage& result) {
+    const Record* CCAssignToReg = result.findClass("CCAssignToReg");
+    const Record* CCAssignToStack = result.findClass("CCAssignToStack");
+    (void)CCAssignToStack;
+    const Record* CCPredicate = result.findClass("CCPredicate");
+    const Record* CCIfType = result.findClass("CCIfType");
+
+    if(action->isDerived(CCPredicate)) {
+        const Record* subAction = DefInit::get(action->getField("SubAction"));
+
+        if(action->isDerived(CCIfType)) {
+            const Init* InitTypes = action->getField("Types");
+            TargetInfo::gen_list ListTypes = &ListInit::get(InitTypes);
+
+            os << "if(";
+            for(const Init* ListTInit : *ListTypes) {
+                if(ListTInit != ListTypes->front()) {
+                    os << " || ";
+                }
+                os << '(';
+                typeCondition(os, IRTypeInit::get(ListTInit));
+                os << ')';
+            }
+            os << "){\n";
+            if(emitAction(os, subAction, result)) return true;
+            os << "}\n";
+        }
+    }
+    else {
+        if(action->isDerived(CCAssignToReg)) {
+            TargetInfo::gen_list Regs =
+                &ListInit::get(action->getField("Regs"));
+            os << "Register reg = state.allocateReg({";
+            for(const Init* InitReg : *Regs) {
+                if(InitReg != Regs->front()) {
+                    os << ", ";
+                }
+                os << DefInit::get(InitReg)->getName();
+            }
+
+            os << "});\n"
+               << "if(!reg.isNone()) {\n"
+               << "state.addAssign(CCAssign::getReg(valN, type, reg, type, "
+                  "CCAssign::Info::Full));\n"
+               << "return true;\n"
+               << "}\n";
+        }
+    }
+
+    return false;
+}
+
+static inline bool emitCC(raw_stream& os, const Record* cc,
+                          const RecordStorage& result) {
+    const Init* InitActions = cc->getField("Actions");
+    if(!InitActions || !InitActions->matches(RecordType::Kind::List))
+        return true;
+
+    TargetInfo::gen_list Actions = &ListInit::get(InitActions);
+
+    for(const Init* InitAction : *Actions) {
+        if(emitAction(os, DefInit::get(InitAction), result)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 bool CallingConvBackend::emit(const RecordStorage& result) {
     TargetInfo target = getTargetInfo(result);
     if(!target.Success) return true;
@@ -330,11 +460,243 @@ bool CallingConvBackend::emit(const RecordStorage& result) {
     addNamespace(target.Namespace);
     openBody();
 
+    for(const Record* cc : convs) {
+        write("bool CC", cc->getName(),
+              "(unsigned valN, const Type* type, CCState& state)");
+        openBody();
+        if(emitCC(os_, cc, result)) {
+            err = true;
+            break;
+        }
+        writeln("return false;");
+        closeBody();
+    }
+
     closeBody();
     // END OF NAMESPACE
 
     addEndIf();
     // END OF CALLING CONV HEADER
+
+    return err;
+}
+
+using VarMap =
+    std::unordered_map<const std::pair<const Init*, const StringInit*>*,
+                       uint32_t>;
+using OutVarMap = std::unordered_map<sview, uint32_t>;
+
+static inline void mapDagOps(raw_stream& os, VarMap& map, const DagInit* in,
+                             uint32_t& idx, const std::string& checkingOf) {
+    uint32_t opIdx = 0;
+    for(const std::pair<const Init*, const StringInit*>& arg : in->getArgs()) {
+        map[&arg] = idx;
+        std::string name = "op";
+        name += std::to_string(idx++);
+        os << "\t\tDAGNode* " << name << " = " << checkingOf << "->getOperand("
+           << opIdx++ << ");\n";
+        if(arg.first->matches(RecordType::Kind::Dag)) {
+            mapDagOps(os, map, (const DagInit*)arg.first, idx, name);
+        }
+    }
+}
+
+static inline void emitDagIn(
+    raw_stream& os, const DagInit* in,
+    const std::unordered_map<const Record*, std::string>& dagOps,
+    const RecordStorage& result, uint32_t instIdx, VarMap& varMap,
+    const std::string& checkingOf) {
+    auto op = dagOps.find(in->getOperator()->getValue());
+    if(op == dagOps.end()) return;
+
+    os << "\t\tif(" << checkingOf << "->getNodeType() == " << op->second
+       << ") {\n";
+
+    for(const std::pair<const Init*, const StringInit*>& arg : in->getArgs()) {
+        if(arg.first->matches(RecordType::Kind::Dag)) {
+            std::string name = "op";
+            name += std::to_string(varMap[&arg]);
+            emitDagIn(os, (const DagInit*)arg.first, dagOps, result, instIdx,
+                      varMap, name);
+        }
+        else {
+            // def
+            const Record* rec = DefInit::get(arg.first);
+
+            bool isImm = (rec == result.findDef("imm"));
+            bool isReg = rec->isDerived(result.findClass("RegisterClass"));
+
+            os << "\t\t\tif(!op" << varMap[&arg];
+
+            if(isImm) {
+                os << "->isImm()";
+            }
+
+            if(isReg) {
+                os << "->isReg()";
+            }
+
+            os << ") {\n\t\t\t\tgoto PATTERN_MATCH_NEXT_" << instIdx
+               << ";\n\t\t\t}\n";
+        }
+    }
+
+    os << "\t\t}\n\t\telse goto PATTERN_MATCH_NEXT_" << instIdx << ";\n";
+}
+
+static inline void emitDagOut(
+    raw_stream& os, const DagInit* out,
+    const std::unordered_map<const Record*, std::string>& dagOps,
+    const RecordStorage& result, OutVarMap& varMap) {
+    for(const std::pair<const Init*, const StringInit*>& arg : out->getArgs()) {
+        if(arg.first->matches(RecordType::Kind::Dag)) {
+            emitDagOut(os, (const DagInit*)arg.first, dagOps, result, varMap);
+        }
+        else {
+            if(!arg.second) {
+                vError("output dag MUST have a name binded to the args");
+                return;
+            }
+
+            const Record* rec = DefInit::get(arg.first);
+            sview argName = arg.second->getValue();
+
+            bool isImm = (rec == result.findDef("imm"));
+            bool isReg = rec->isDerived(result.findClass("RegisterClass"));
+
+            os << "\t\t\tMachineOperand::";
+            if(isImm) {
+                os << "createImm(((const DAGConst*)op" << varMap[argName]
+                   << ")->getValue())";
+            }
+
+            if(isReg) {
+                os << "createReg(((const DAGRegister*)op" << varMap[argName]
+                   << ")->getRegister())";
+            }
+
+            if(&arg != &out->getArgs().back()) {
+                os << ',';
+            }
+
+            os << '\n';
+        }
+    }
+}
+
+static inline bool emitDag(
+    raw_stream& os, const Record* inst,
+    const std::unordered_map<const Record*, std::string>& dagOps,
+    const RecordStorage& result, uint32_t instIdx) {
+    const DagInit* in = (const DagInit*)inst->getField("In");
+    const DagInit* out = (const DagInit*)inst->getField("Out");
+
+    if(in->getArgs().empty()) return true;
+    os << "\t{\n";
+    VarMap varMap;
+    uint32_t idx = 0;
+    mapDagOps(os, varMap, in, idx, "dag");
+    emitDagIn(os, in, dagOps, result, instIdx, varMap, "dag");
+
+    auto op = dagOps.find(out->getOperator()->getValue());
+    if(op == dagOps.end()) return true;
+
+    OutVarMap outVarMap;
+
+    for(const std::pair<const std::pair<const Init*, const StringInit*>*,
+                        uint32_t>
+            conv : varMap) {
+        if(conv.first->second) {
+            outVarMap[conv.first->second->getValue()] = conv.second;
+        }
+    }
+
+    os << "\t\tMachineInst::create(";
+
+    os << op->second << ", block, {\n";
+    emitDagOut(os, out, dagOps, result, outVarMap);
+
+    os << "\t\t});\n\t\treturn;\n";
+
+    os << "\t}\n";
+
+    return false;
+}
+
+bool ISelBackend::emit(const RecordStorage& result) {
+    TargetInfo target = getTargetInfo(result);
+    if(!target.Success) return true;
+
+    std::unordered_map<const Record*, std::string> dagOps;
+
+    dagOps[result.findDef("ADD")] = "(uint32_t)DAGType::ADD";
+    dagOps[result.findDef("SUB")] = "(uint32_t)DAGType::SUB";
+    dagOps[result.findDef("MUL")] = "(uint32_t)DAGType::MUL";
+    dagOps[result.findDef("SDIV")] = "(uint32_t)DAGType::SDIV";
+    dagOps[result.findDef("UDIV")] = "(uint32_t)DAGType::UDIV";
+    dagOps[result.findDef("SREM")] = "(uint32_t)DAGType::SREM";
+    dagOps[result.findDef("UREM")] = "(uint32_t)DAGType::UREM";
+
+    std::vector<const Record*> instructions =
+        result.getDefsDerivedFrom("Instruction");
+
+    addComment("Generated by inr-gen, backend: ISel");
+
+    bool err = false;
+
+    constexpr sview ISEL_HEADER_MACRO = "_ISEL_HEADER";
+
+    // ISEL HEADER
+    addIfDef(target.Namespace, ISEL_HEADER_MACRO);
+    addUndef(target.Namespace, ISEL_HEADER_MACRO);
+
+    // NAMESPACE
+    addNamespace(target.Namespace);
+    openBody();
+
+    write("enum class Opcodes : uint32_t ");
+    openBody();
+    writeln("\tOPCODE_START = (uint32_t)DAGType::DAG_TYPE_END,");
+
+    uint32_t idx = 1;
+    for(const Record* inst : instructions) {
+        std::string str = "(uint32_t)Opcodes::";
+        str += inst->getName();
+        dagOps[inst] = std::move(str);
+        writeln('\t', inst->getName(), ',');
+    }
+
+    closeBody(true);
+
+    write("constexpr const char* OpcodeAsmStr[] = ");
+    openBody();
+
+    for(const Record* inst : instructions) {
+        sview asmStr = StringInit::get(inst->getField("AsmStr"));
+        writeln("\t\"", asmStr, "\",");
+    }
+
+    closeBody(true);
+
+    write("void ", target.Namespace,
+          "matchEmit(DAGNode* dag, MachineBlock* block) ");
+    openBody();
+
+    idx = 0;
+    for(const Record* inst : instructions) {
+        if(!emitDag(os_, inst, dagOps, result, idx))
+            writeln("PATTERN_MATCH_NEXT_", idx++, ':');
+    }
+
+    writeln("\treturn;");
+
+    closeBody();
+
+    closeBody();
+    // END OF NAMESPACE
+
+    addEndIf();
+    // END OF ISEL HEADER
 
     return err;
 }

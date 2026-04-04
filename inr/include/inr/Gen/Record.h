@@ -17,6 +17,7 @@
 #include <memory>
 #include <stdexcept>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 #include <vector>
 
@@ -35,7 +36,8 @@ public:
         Endian,  ///< Either little or big endian.
         List,    ///< List type.
         Def,     ///< Points to a def.
-        IRType   ///< Points to an IR type.
+        IRType,  ///< Points to an IR type.
+        Dag      ///< DAG pattern.
     };
 
 private:
@@ -52,6 +54,15 @@ public:
     virtual std::string getAsString() const = 0;
 
     virtual ~RecordType() noexcept = default;
+};
+
+class RecordDag : public RecordType {
+public:
+    std::string getAsString() const override {
+        return "dag";
+    }
+
+    RecordDag() noexcept : RecordType(Kind::Dag) {}
 };
 
 /// @brief Represents an integer record type.
@@ -136,6 +147,7 @@ class RecordStorage {
     RecordString string_;
     RecordEndian endian_;
     RecordIRType irtype_;
+    RecordDag dag_;
 
     std::vector<std::unique_ptr<RecordType>> typeStorage_;
 
@@ -178,6 +190,10 @@ public:
         return &integer_;
     }
 
+    const RecordDag* getDagTy() const noexcept {
+        return &dag_;
+    }
+
     const RecordDef* getDefTy(const Record* def) {
         return (const RecordDef*)typeStorage_
             .emplace_back(std::make_unique<RecordDef>(def))
@@ -214,7 +230,8 @@ public:
         Arg,
         List,
         Def,
-        IRType
+        IRType,
+        Dag
     };
     static sview kindAsString(Kind kind) {
         switch(kind) {
@@ -232,6 +249,8 @@ public:
                 return "record";
             case Kind::IRType:
                 return "irtype";
+            case Kind::Dag:
+                return "dag";
         }
     }
 
@@ -259,6 +278,8 @@ public:
                 return kind_ == Kind::Def;
             case RecordType::Kind::IRType:
                 return kind_ == Kind::IRType;
+            case RecordType::Kind::Dag:
+                return kind_ == Kind::Dag;
             default:
                 return false;
         }
@@ -353,6 +374,27 @@ public:
 
     static sview get(const Init* init) {
         return ((const StringInit*)init)->getValue();
+    }
+};
+
+class DagInit : public TypeInit {
+    const DefInit* operator_;
+    std::vector<std::pair<const Init*, const StringInit*>> args_;
+
+public:
+    DagInit(RecordStorage& s, const DefInit* op) noexcept :
+        TypeInit(Kind::Dag, s.getDagTy()), operator_(op) {}
+
+    void addArg(const Init* lhs, const StringInit* rhs) {
+        args_.emplace_back(std::make_pair(lhs, rhs));
+    }
+
+    const DefInit* getOperator() const noexcept {
+        return operator_;
+    }
+    const std::vector<std::pair<const Init*, const StringInit*>>& getArgs()
+        const noexcept {
+        return args_;
     }
 };
 
@@ -498,24 +540,11 @@ public:
         return {&fields_.emplace_back(name, type, kind), idx};
     }
 
-    bool addSuperclass(const Record* rec, std::vector<const Init*> args) {
-        if(!rec || rec == this) return false;
+    std::vector<const Init*>& addSuperclass(const Record* rec) {
+        if(!rec || rec == this) return args_;
 
-        size_t expectedArgc = 0;
-        for(const RecordField& field : rec->fields_) {
-            if(field.getKind() == RecordField::Kind::Arg) {
-                expectedArgc++;
-            }
-        }
-
-        if(args.size() != expectedArgc)
-            throw std::runtime_error(
-                "Mismatched amount of args when creating a superclass");
-
-        args_.insert(args_.cbegin(), args.begin(), args.end());
         superclasses_.emplace_back(rec);
-
-        return true;
+        return args_;
     }
 
     Kind getKind() const noexcept {
@@ -600,9 +629,9 @@ public:
     }
 
     bool isDerived(const Record* rec) const noexcept {
-        for(const Record* r : superclasses_) {
-            if(r == rec) return true;
-            if(r->isDerived(rec)) return true;
+        for(const Record* super : superclasses_) {
+            if(super == rec) return true;
+            if(super->isDerived(rec)) return true;
         }
         return false;
     }

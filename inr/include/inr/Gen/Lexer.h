@@ -47,8 +47,10 @@ public:
         Include,        ///< include keyword.
         List,           ///< list keyword.
         IRType,         ///< irtype keyword.
+        Dag,            ///< dag keyword.
         Colon,          ///< ':'
         Slash,          ///< '/'
+        Dollar,         ///< '$'
         End             ///< Error token.
     };
 

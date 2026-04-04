@@ -9,11 +9,19 @@
 /// @brief Contains the target triple class.
 
 #include <inr/ADT/StrView.h>
+#define INR_CCFUNC
+#include <inr/Target/CCFunc.h>
 
 #include <cstdint>
 #include <string>
 
 namespace inr {
+
+enum class CallingConv {
+    C, ///< Chooses the default calling convention.
+
+    SysV ///< SystemV calling convention.
+};
 
 /// @brief The target triple class.
 ///
@@ -41,21 +49,21 @@ private:
     OS os_;
     ABI abi_;
 
-    Triple() noexcept :
+    constexpr Triple() noexcept :
         arch_(Arch::Unknown), os_(OS::Unknown), abi_(ABI::Unknown) {}
 
 public:
-    Triple(const Triple&) = default;
-    Triple& operator=(const Triple&) = default;
+    constexpr Triple(const Triple&) = default;
+    constexpr Triple& operator=(const Triple&) = default;
 
-    Triple(Triple&&) = default;
-    Triple& operator=(Triple&&) = default;
+    constexpr Triple(Triple&&) = default;
+    constexpr Triple& operator=(Triple&&) = default;
 
     /// @brief Creates a new target triple.
     /// @param arch The architecture of the target.
     /// @param os The target's operating system.
     /// @param abi The target's ABI.
-    Triple(Arch arch, OS os, ABI abi) noexcept :
+    constexpr Triple(Arch arch, OS os, ABI abi) noexcept :
         arch_(arch), os_(os), abi_(abi) {}
 
     /// @brief Creates a new triple from the string.
@@ -65,28 +73,65 @@ public:
     }
 
     /// @brief Gets the architecture of the target.
-    Arch getArch() const noexcept {
+    constexpr Arch getArch() const noexcept {
         return arch_;
     }
 
     /// @brief Gets the OS of the target.
-    OS getOS() const noexcept {
+    constexpr OS getOS() const noexcept {
         return os_;
     }
 
     /// @brief Gets the ABI of the target.
-    ABI getABI() const noexcept {
+    constexpr ABI getABI() const noexcept {
         return abi_;
     }
 
     /// @brief Checks if the triple is valid or not.
     /// @return True if valid, false if not.
-    bool validTriple() const noexcept {
+    constexpr bool validTriple() const noexcept {
         return arch_ != Arch::Unknown && os_ != OS::Unknown;
     }
 
+    /// @brief Returns arch's pointer size.
     unsigned getPointerWidth() const noexcept;
+
+    /// @brief Returns arch's endian.
     std::endian getEndian() const noexcept;
+
+    /// @brief Returns arch's register info.
+    const class RegisterInfo* getRegisterInfo() const noexcept {
+        return getRegisterInfo(arch_);
+    }
+
+    /// @brief Returns calling convention function for args.
+    CCFunc getCCArgs(CallingConv cc) const noexcept {
+        return getCCArgs(arch_, os_, abi_, cc);
+    }
+
+    /// @brief Returns calling convention function for return.
+    CCFunc getCCRet(CallingConv cc) const noexcept {
+        return getCCRet(arch_, os_, abi_, cc);
+    }
+
+    /// @brief Gets the register info based on the arch.
+    static const RegisterInfo* getRegisterInfo(Arch arch) noexcept;
+
+    /// @brief Gets the calling convention's function for args.
+    /// @param arch Needed when using C calling convention.
+    /// @param os Same as arch.
+    /// @param abi Same as arch.
+    /// @param cc Calling convention override.
+    ///
+    /// When the calling convention is set to C it automatically picks the
+    /// default calling convention for the said architecture, os, and abi.
+    static CCFunc getCCArgs(Arch arch, OS os, ABI abi,
+                            CallingConv cc = CallingConv::C) noexcept;
+
+    /// @brief Gets the calling convention's function for args.
+    /// @see `getCCArgs(Arch, OS, ABI, CallingConv)` for more info.
+    static CCFunc getCCRet(Arch arch, OS os, ABI abi,
+                           CallingConv cc = CallingConv::C) noexcept;
 
     /// @brief Returns the triple as a string.
     std::string str() const;

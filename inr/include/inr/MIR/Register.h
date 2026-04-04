@@ -63,7 +63,7 @@ public:
     }
 
     constexpr bool operator==(Register other) const noexcept {
-        return other.index_ = index_ && other.kind_ == kind_;
+        return other.index_ == index_ && other.kind_ == kind_;
     }
 
     constexpr Register(const Register&) noexcept = default;
@@ -78,11 +78,6 @@ class RegisterClass {
     uint32_t regEnd_;
     unsigned size_;
     uint32_t name_;
-
-public:
-    constexpr RegisterClass(uint32_t start, uint32_t end, unsigned size,
-                            uint32_t name) noexcept :
-        regStart_(start), regEnd_(end), size_(size), name_(name) {}
 
     constexpr uint32_t getStart() const noexcept {
         return regStart_;
@@ -109,19 +104,27 @@ public:
     constexpr uint32_t getName() const noexcept {
         return name_;
     }
+
+public:
+    constexpr RegisterClass(uint32_t start, uint32_t end, unsigned size,
+                            uint32_t name) noexcept :
+        regStart_(start), regEnd_(end), size_(size), name_(name) {}
+
+    friend class RegisterInfo;
 };
 
 class RegisterDesc {
     uint32_t name_;
     uint32_t subregs_;
-    uint32_t subregsC_;
+    uint32_t superregs_;
+    uint16_t subregsC_;
+    uint16_t superregsC_;
 
-public:
     constexpr uint32_t getName() const noexcept {
         return name_;
     }
 
-    constexpr uint32_t getSubRegC() const noexcept {
+    constexpr uint16_t getSubRegC() const noexcept {
         return subregsC_;
     }
 
@@ -129,13 +132,32 @@ public:
         return subregs_;
     }
 
-    constexpr bool hasSubRegs() const noexcept {
-        return subregs_ != 0;
+    constexpr uint16_t getSuperRegC() const noexcept {
+        return superregsC_;
     }
 
-    constexpr RegisterDesc(uint32_t name, uint32_t subregs,
-                           uint32_t subregsC) noexcept :
-        name_(name), subregs_(subregs), subregsC_(subregsC) {}
+    constexpr uint32_t getSuperRegs() const noexcept {
+        return superregs_;
+    }
+
+    constexpr bool hasSubRegs() const noexcept {
+        return subregsC_ != 0;
+    }
+
+    constexpr bool hasSuperRegs() const noexcept {
+        return superregsC_ != 0;
+    }
+
+public:
+    constexpr RegisterDesc(uint32_t name, uint32_t subregs, uint32_t superregs,
+                           uint16_t subregsC, uint16_t superregsC) noexcept :
+        name_(name),
+        subregs_(subregs),
+        superregs_(superregs),
+        subregsC_(subregsC),
+        superregsC_(superregsC) {}
+
+    friend class RegisterInfo;
 };
 
 class RegisterInfo {
@@ -166,6 +188,23 @@ public:
 
         RegisterDesc desc = descArray_[reg.getIndex()];
         return {regsArray_.data() + desc.getSubRegs(), desc.getSubRegC()};
+    }
+
+    constexpr arrview<Register> getSuperRegs(Register reg) const noexcept {
+        if(checkReg(reg)) return {};
+
+        RegisterDesc desc = descArray_[reg.getIndex()];
+        return {regsArray_.data() + desc.getSuperRegs(), desc.getSuperRegC()};
+    }
+
+    constexpr bool hasSuperRegs(Register reg) const noexcept {
+        if(checkReg(reg)) return false;
+        return descArray_[reg.getIndex()].hasSuperRegs();
+    }
+
+    constexpr bool hasSubRegs(Register reg) const noexcept {
+        if(checkReg(reg)) return false;
+        return descArray_[reg.getIndex()].hasSubRegs();
     }
 
     constexpr arrview<Register> getRegClassRegs(
@@ -208,6 +247,10 @@ public:
             idx++;
         }
         return Register::createNone();
+    }
+
+    constexpr arrview<Register> getRegs() const noexcept {
+        return {regsArray_.data(), regNum_};
     }
 };
 

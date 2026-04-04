@@ -40,6 +40,8 @@ class MachineFunction : public ilist_node<MachineFunction> {
     explicit MachineFunction(sview name, MachineModule* parent) :
         name_(name), parent_(parent) {}
 
+    friend class ISel;
+
 public:
     MachineModule* getParent() const noexcept {
         return parent_;

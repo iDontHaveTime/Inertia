@@ -1,0 +1,28 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+// This file is for defining calling conventions.
+
+class CCAction;
+
+class CCAssignToReg<list<Register> regs> : CCAction {
+    list<Register> Regs = regs;
+}
+
+class CCAssignToStack<int size, int align> : CCAction {
+    int Size = size;
+    int Align = align;
+}
+
+class CCPredicate<CCAction action> : CCAction {
+    CCAction SubAction = action;
+}
+
+class CCIfType<list<irtype> types, CCAction action> : CCPredicate<action> {
+    list<irtype> Types = types;
+}
+
+class CallingConv<list<CCAction> actions> {
+    list<CCAction> Actions = actions;
+}

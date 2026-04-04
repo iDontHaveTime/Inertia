@@ -8,9 +8,11 @@
 /// @file MIR/MachineOperand.h
 /// @brief Contains the machine operand class.
 
+#include <inr/IR/Constant.h>
 #include <inr/MIR/Register.h>
 
 #include <cstdint>
+#include <variant>
 
 namespace inr {
 
@@ -20,7 +22,7 @@ public:
     enum class Kind : uint8_t {
         Reg,        ///< Physical or virtual register.
         Imm,        ///< Immediate integer value.
-        FrameIndex, ///< Stack slot, resolved to [rbp - N] during frame
+        FrameIndex, ///< Stack slot, resolved to [rbp +/- N] during frame
                     ///< lowering.
         BlockAddr   ///< Basic block address, for branches.
     };
@@ -28,25 +30,21 @@ public:
 private:
     Kind kind_; ///< Kind of the operand.
 
-    union {
-        Register reg_; ///< Register operand.
-        uint64_t imm_; ///< Immediate operand.
-        uint32_t idx_; ///< Can be either block index, or stack slot
-    };
+    std::variant<Register, const ConstantInt*, uint32_t> data_;
 
     explicit MachineOperand(Register reg) noexcept :
-        kind_(Kind::Reg), reg_(reg) {}
-    explicit MachineOperand(uint64_t imm) noexcept :
-        kind_(Kind::Imm), imm_(imm) {}
+        kind_(Kind::Reg), data_(reg) {}
+    explicit MachineOperand(const ConstantInt* imm) noexcept :
+        kind_(Kind::Imm), data_(imm) {}
     explicit MachineOperand(uint32_t idx, Kind kind) noexcept :
-        kind_(kind), idx_(idx) {}
+        kind_(kind), data_(idx) {}
 
 public:
     static MachineOperand createReg(Register reg) noexcept {
         return MachineOperand(reg);
     }
 
-    static MachineOperand createImm(uint64_t imm) noexcept {
+    static MachineOperand createImm(const ConstantInt* imm) noexcept {
         return MachineOperand(imm);
     }
 
@@ -63,18 +61,18 @@ public:
     }
 
     Register getReg() const noexcept {
-        return reg_;
+        return std::get<Register>(data_);
     }
 
-    uint64_t getImm() const noexcept {
-        return imm_;
+    const ConstantInt* getImm() const noexcept {
+        return std::get<const ConstantInt*>(data_);
     }
 
     uint32_t getFrameIndex() const noexcept {
-        return idx_;
+        return std::get<uint32_t>(data_);
     }
     uint32_t getBlockAddr() const noexcept {
-        return idx_;
+        return std::get<uint32_t>(data_);
     }
 };
 

@@ -4,6 +4,10 @@
 
 // This file is for anything target generic, used by other inr-gen files.
 
+include "inr/Target/TargetDAG.ing";
+include "inr/Target/TargetRegister.ing";
+include "inr/Target/TargetCC.ing";
+
 // Target description.
 class Target<string name, int ptrSize, endian targetEndian> {
     // Target name, used for debugging.
@@ -14,41 +18,4 @@ class Target<string name, int ptrSize, endian targetEndian> {
     int PointerSize = ptrSize;
     // Endian of the target.
     endian Endian = targetEndian;
-}
-
-// Register description.
-class Register<string name, int size> {
-    // Name of the register, used for asm.
-    string Name = name;
-    // Size of the register.
-    int Size = size;
-    // Subregisters.
-    list<Register> SubRegs = [];
-}
-
-// Register class, groups registers.
-class RegisterClass<int size, list<Register> regs> {
-    // Size of the registers.
-    int Size = size;
-    // Registers it holds.
-    list<Register> Regs = regs;
-}
-
-class CCAction;
-
-class CCAssignToReg<list<Register> regs> : CCAction {
-    list<Register> Regs = regs;
-}
-
-class CCAssignToStack<int size, int align> : CCAction {
-    int Size = size;
-    int Align = align;
-}
-
-class CCPredicate<CCAction action> : CCAction {
-    CCAction SubAction = action;
-}
-
-class CCIfType<list<irtype> types, CCAction action> : CCPredicate<action> {
-    list<irtype> Types = types;
 }

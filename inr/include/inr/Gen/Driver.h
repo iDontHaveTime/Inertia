@@ -48,7 +48,8 @@ class GenDriver {
     enum class Backends {
         None,
         Register,
-        CallingConv
+        CallingConv,
+        ISel
     } selectedBackend_ = Backends::None;
     int argc_;
 
@@ -73,19 +74,20 @@ public:
 
 private:
     bool getEmitter(raw_stream& os) {
-        CppEmitter* newEmitter = nullptr;
+        delete emitter;
         switch(selectedBackend_) {
             case Backends::None:
                 break;
             case Backends::Register:
-                newEmitter = new RegisterBackend(os);
+                emitter = new RegisterBackend(os);
                 break;
             case Backends::CallingConv:
-                newEmitter = new CallingConvBackend(os);
+                emitter = new CallingConvBackend(os);
+                break;
+            case Backends::ISel:
+                emitter = new ISelBackend(os);
                 break;
         }
-
-        emitter = newEmitter;
         return emitter == nullptr;
     }
 
@@ -224,6 +226,9 @@ private:
         }
         else if(arg == "--backend-calling-conv") {
             selectedBackend_ = Backends::CallingConv;
+        }
+        else if(arg == "--backend-isel") {
+            selectedBackend_ = Backends::ISel;
         }
         else return true;
 

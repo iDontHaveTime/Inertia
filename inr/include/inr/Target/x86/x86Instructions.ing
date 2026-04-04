@@ -1,0 +1,26 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+// This file contains x86 instructions.
+
+include "inr/Target/Target.ing";
+include "inr/Target/x86/x86Registers.ing";
+
+def ADD32rr : Instruction<
+    (ADD GR32:$dest, GR32:$src),
+    (ADD32rr GR32:$dest, GR32:$src),
+    "addl"
+>;
+
+def ADD32ri : Instruction<
+    (ADD GR32:$dest, imm:$src),
+    (ADD32ri GR32:$dest, imm:$src),
+    "addl"
+>;
+
+def RET : Instruction<
+    (RET),
+    (RET),
+    "ret"
+>;

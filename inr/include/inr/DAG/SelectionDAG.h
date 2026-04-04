@@ -10,6 +10,8 @@
 
 #include <inr/DAG/DAGNode.h>
 #include <inr/IR/Constant.h>
+#include <inr/IR/Type.h>
+#include <inr/MIR/Register.h>
 
 #include <vector>
 
@@ -29,6 +31,8 @@ class SelectionDAG {
     }
 
 public:
+    SelectionDAG() noexcept = default;
+
     SelectionDAG(const SelectionDAG&) = delete;
     SelectionDAG& operator=(const SelectionDAG&) = delete;
 
@@ -52,6 +56,20 @@ public:
         node->addOperand(lhs);
         node->addOperand(rhs);
         return node;
+    }
+
+    DAGNode* createCopyFromReg(Register reg, const Type* type) {
+        return newNode<DAGRegister>(DAGType::CopyFromReg, type, reg);
+    }
+
+    DAGNode* createCopyToReg(DAGNode* input, Register reg, const Type* type) {
+        DAGNode* node = newNode<DAGRegister>(DAGType::CopyToReg, type, reg);
+        node->addOperand(input);
+        return node;
+    }
+
+    DAGNode* createRegister(Register reg, const Type* type) {
+        return newNode<DAGRegister>(DAGType::Register, type, reg);
     }
 };
 
