@@ -16,7 +16,7 @@ file(GLOB IRSources "IR/*.cpp")
 add_inertia_library(IR ${IRSources})
 
 # Target Library
-file(GLOB TargetSources "Target/*.cpp")
+file(GLOB_RECURSE TargetSources "Target/*.cpp")
 
 add_inertia_library(Target ${TargetSources})
 

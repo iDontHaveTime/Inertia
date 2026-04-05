@@ -74,10 +74,10 @@ public:
     /// @brief Allocates a new virtual register and puts the value into the map.
     /// @param val Value to map.
     /// @return The new vreg.
-    uint32_t newVregValue(const Value* val) {
+    Register newVregValue(const Value* val) {
         uint32_t vreg = allocateVReg();
         vregMap_[val] = vreg;
-        return vreg;
+        return Register::createVirtual(vreg);
     }
 
     /// @brief Allocates a new frame slot of the given size.

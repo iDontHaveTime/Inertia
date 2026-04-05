@@ -61,11 +61,7 @@ public:
     Block* newBlock(const InrContext& ctx, sview name);
 
     ~Function() noexcept {
-        for(Block* b = blocks_.front(); b != nullptr;) {
-            Block* next = b->getNext();
-            delete b;
-            b = next;
-        }
+        blocks_.freeUsingDelete();
     }
 
     friend class Module;

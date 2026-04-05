@@ -43,11 +43,7 @@ public:
     }
 
     ~Module() noexcept {
-        for(Function* f = functions_.front(); f != nullptr;) {
-            Function* next = f->getNext();
-            delete f;
-            f = next;
-        }
+        functions_.freeUsingDelete();
     }
 
     void print(raw_stream&) const;

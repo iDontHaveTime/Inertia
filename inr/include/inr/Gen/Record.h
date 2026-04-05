@@ -41,11 +41,13 @@ public:
     };
 
 private:
-    Kind kind_;
+    Kind kind_; ///< Record kind.
 
 public:
+    /// @brief Creates a new record type.
     RecordType(Kind kind) noexcept : kind_(kind) {}
 
+    /// @brief Returns the kind of the record.
     Kind getKind() const noexcept {
         return kind_;
     }
@@ -56,6 +58,7 @@ public:
     virtual ~RecordType() noexcept = default;
 };
 
+/// @brief Represents a DAG record type.
 class RecordDag : public RecordType {
 public:
     std::string getAsString() const override {
@@ -99,7 +102,7 @@ public:
     RecordString() noexcept : RecordType(Kind::String) {}
 };
 
-/// @brief Represents an endian type.
+/// @brief Represents an endian record type.
 class RecordEndian : public RecordType {
 public:
     std::string getAsString() const override {
@@ -109,6 +112,7 @@ public:
     RecordEndian() noexcept : RecordType(Kind::Endian) {}
 };
 
+/// @brief Represents a list record type.
 class RecordList : public RecordType {
     const RecordType* elementTy_;
 
@@ -125,6 +129,7 @@ public:
         RecordType(Kind::List), elementTy_(elementTy) {}
 };
 
+/// @brief Represents an IR type record type.
 class RecordIRType : public RecordType {
 public:
     std::string getAsString() const override {
@@ -221,6 +226,7 @@ public:
     friend class Record;
 };
 
+/// @brief Base class for all derived inits.
 class Init {
 public:
     enum class Kind : uint8_t {
@@ -292,6 +298,7 @@ public:
     virtual ~Init() noexcept = default;
 };
 
+/// @brief Inits that represent a type.
 class TypeInit : public Init {
     const RecordType* type_;
 
@@ -304,6 +311,9 @@ public:
     }
 };
 
+/// @brief Initializes an irtype field.
+///
+/// irtype foo = i32;
 class IRTypeInit : public TypeInit {
     const Type* type_;
 
@@ -320,6 +330,9 @@ public:
     }
 };
 
+/// @brief Initializes a def field.
+///
+/// RECORDNAME foo = DEFNAME;
 class DefInit : public TypeInit {
     const Record* def_;
 
@@ -336,6 +349,9 @@ public:
     }
 };
 
+/// @brief Initializes an integer field.
+///
+/// int foo = 42;
 class IntegerInit : public TypeInit {
     int64_t val_;
 
@@ -352,6 +368,9 @@ public:
     }
 };
 
+/// @brief Initializes a string field.
+///
+/// string foo = "bar";
 class StringInit : public TypeInit {
     std::variant<sview, std::string> str_;
 
@@ -377,6 +396,9 @@ public:
     }
 };
 
+/// @brief Initializes a dag field.
+///
+/// dag foo = (ADD GR32:$lhs, GR32:$rhs);
 class DagInit : public TypeInit {
     const DefInit* operator_;
     std::vector<std::pair<const Init*, const StringInit*>> args_;
@@ -398,6 +420,9 @@ public:
     }
 };
 
+/// @brief Initializes an endian field.
+///
+/// endian foo = little;
 class EndianInit : public TypeInit {
     std::endian endian_;
 
@@ -414,6 +439,9 @@ public:
     }
 };
 
+/// @brief Initializes a list field.
+///
+/// list<...> foo = [...];
 class ListInit : public TypeInit {
     std::vector<const Init*> inits_;
 
@@ -433,6 +461,7 @@ public:
     }
 };
 
+/// @brief References a template arg, should be resolved.
 class ArgInit : public Init {
     size_t ref_;
 
@@ -505,6 +534,14 @@ public:
     }
 };
 
+/// @brief Main storage for the fields.
+///
+/// Records are either classes or defs, each one has their own purposes.
+/// Purpose of a class is to represent a storage that can be reused,
+/// So classes can be inherited, classes can have args, etc..
+/// But defs are final, they inherit a class or classes, then set their args,
+/// defs cannot have their own args, they are the final version of that class or
+/// classes.
 class Record : public RecordIdent {
 public:
     enum class Kind : uint8_t { Class, Def };

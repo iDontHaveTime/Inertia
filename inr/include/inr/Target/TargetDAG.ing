@@ -9,13 +9,15 @@ class DagNodeOperator;
 
 class BuiltinOperator : DagNodeOperator;
 
-def ADD  : BuiltinOperator;
-def SUB  : BuiltinOperator;
-def MUL  : BuiltinOperator;
-def SDIV : BuiltinOperator;
-def UDIV : BuiltinOperator;
-def SREM : BuiltinOperator;
-def UREM : BuiltinOperator;
+def ADD         : BuiltinOperator;
+def SUB         : BuiltinOperator;
+def MUL         : BuiltinOperator;
+def SDIV        : BuiltinOperator;
+def UDIV        : BuiltinOperator;
+def SREM        : BuiltinOperator;
+def UREM        : BuiltinOperator;
+def CopyToReg   : BuiltinOperator;
+def CopyFromReg : BuiltinOperator;
 
 def imm : DagNode;
 

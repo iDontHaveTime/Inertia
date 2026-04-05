@@ -85,7 +85,7 @@ public:
         return reverse_iterator(end());
     }
 
-    constexpr reverse_iterator rbend() const noexcept {
+    constexpr reverse_iterator rend() const noexcept {
         return reverse_iterator(begin());
     }
 
@@ -220,6 +220,7 @@ public:
         return sview(str_ + from, str_ + to);
     }
 
+    /// @brief Alias for hashing this.
     size_t hash() const noexcept {
         return std::hash<std::string_view>{}(strv());
     }

@@ -27,11 +27,13 @@
 
 namespace inr::gen {
 
+/// @brief Driver class for the `inr-gen` tool.
 class GenDriver {
-    char** argv_;
-    CppEmitter* emitter = nullptr;
-    InrContext ctx_;
+    char** argv_;                  ///< Original argv.
+    CppEmitter* emitter = nullptr; ///< Backend.
+    InrContext ctx_;               ///< Context.
 
+    /// @brief Holds include paths.
     std::vector<std::filesystem::path> includes_;
     /// @brief Holds a map based on open files
     ///
@@ -42,37 +44,45 @@ class GenDriver {
                        std::tuple<CFile, MemoryFile, sview>>
         open_;
 
+    /// @brief Input file.
     sview input_;
+    /// @brief Output file.
     sview output_;
 
+    /// @brief Represents possible backends.
     enum class Backends {
         None,
         Register,
         CallingConv,
         ISel
     } selectedBackend_ = Backends::None;
-    int argc_;
+    int argc_; ///< Original argc.
 
 public:
     ~GenDriver() noexcept {
         if(emitter) delete emitter;
     }
 
+    /// @brief Main constructor for the driver.
     GenDriver(int argc, char** argv) noexcept : argv_(argv), argc_(argc) {}
 
+    /// @brief Returns the original argc.
     int getArgc() const noexcept {
         return argc_;
     }
 
+    /// @brief Returns the original argv.
     char** getArgv() const noexcept {
         return argv_;
     }
 
+    /// @brief Returns the context stored.
     const InrContext& getCtx() const noexcept {
         return ctx_;
     }
 
 private:
+    /// @brief Chooses the emitter.
     bool getEmitter(raw_stream& os) {
         delete emitter;
         switch(selectedBackend_) {
@@ -92,6 +102,8 @@ private:
     }
 
 public:
+    /// @brief Emits C++ from the provided records.
+    /// @param result Set from parsing.
     bool emit(const RecordStorage& result) {
         inr::standard_file_stream sfs(
             fopen(std::string(output_.begin(), output_.end()).c_str(), "w"),
@@ -103,12 +115,14 @@ public:
         return emitter->emit(result);
     }
 
+    /// @brief Logs an error, used internally.
     template<typename... Args>
     void error(Args&&... args) const {
         log::sendargs(errs(), log::Level::ERROR, "inr-gen",
                       std::forward<Args>(args)...);
     }
 
+    /// @brief Type of error (or not) the driver has encountered.
     enum class RequestErr {
         Success,     ///< No errors.
         AlreadyOpen, ///< File already open.
@@ -173,6 +187,7 @@ public:
         return {&std::get<1>(it->second), RequestErr::Success};
     }
 
+    /// @brief Used internally.
     RequestErr driveFileSpecific(sview name, gen::RecordStorage& result,
                                  bool searchIncludes) {
         auto p = requestFile(name, searchIncludes);
@@ -198,6 +213,9 @@ public:
     }
 
 private:
+    /// @brief Joined or separate flag.
+    ///
+    /// For example: -ofoo || -o foo.
     sview joinedOrSeparateFlag(int& i) {
         sview arg = getArgv()[i];
 
@@ -214,6 +232,7 @@ private:
         }
     }
 
+    /// @brief Used internally.
     bool parseBackend(int& i) {
         if(selectedBackend_ != Backends::None) {
             error("more than one backend flag is present");
@@ -235,6 +254,7 @@ private:
         return false;
     }
 
+    /// @brief Used internally.
     bool parseFlag(int& i) {
         sview arg = getArgv()[i];
 
@@ -278,6 +298,7 @@ private:
     }
 
 public:
+    /// @brief Parses the args and selects the backend (if mentioned).
     bool parseArgs() {
         bool err = false;
         for(int i = 1; i < getArgc(); i++) {

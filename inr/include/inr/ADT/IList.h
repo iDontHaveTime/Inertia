@@ -26,18 +26,22 @@ class ilist_node {
 public:
     ilist_node() noexcept = default;
 
+    /// @brief Returns the next node.
     T* getNext() noexcept {
         return next_;
     }
 
+    /// @brief Returns the previous node.
     T* getPrev() noexcept {
         return prev_;
     }
 
+    /// @brief Returns the next node, const.
     const T* getNext() const noexcept {
         return next_;
     }
 
+    /// @brief Returns the previous node, const.
     const T* getPrev() const noexcept {
         return prev_;
     }
@@ -180,10 +184,20 @@ public:
         return it.current;
     }
 
+    /// @brief Calculates the size of the list.
     size_type size() const noexcept {
         size_type finalSize = 0;
         for(auto it = begin(); it != end(); ++it, ++finalSize);
         return finalSize;
+    }
+
+    /// @brief Frees all the nodes using `delete`.
+    void freeUsingDelete() noexcept {
+        for(pointer i = front(); i != nullptr;) {
+            pointer next = i->getNext();
+            delete i;
+            i = next;
+        }
     }
 };
 

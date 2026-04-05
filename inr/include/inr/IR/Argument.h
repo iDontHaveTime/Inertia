@@ -15,22 +15,29 @@ namespace inr {
 
 /// @brief A function argument class.
 class Argument : public Value {
-    class Function* parent_;
-    unsigned index_;
+    class Function* parent_; ///< Where does the arg belong to.
+    unsigned index_; ///< Where does the arg sit, e.g. func(arg0, arg1, ...).
 
 public:
+    /// @brief Creates a new argument.
+    /// @param parent Function this arg belongs to.
+    /// @param type Type of the arg, important for CCState.
+    /// @param index What index is this arg.
     Argument(Function* parent, const Type* type, unsigned index,
              sview name = "") noexcept :
         Value(ValueID::Argument, type, name), parent_(parent), index_(index) {}
 
+    /// @brief Gets the index this arg is at.
     unsigned getIndex() const noexcept {
         return index_;
     }
 
+    /// @brief Gets the arg's function, const.
     const Function* getParent() const noexcept {
         return parent_;
     }
 
+    /// @brief Gets the arg's function.
     Function* getParent() noexcept {
         return parent_;
     }

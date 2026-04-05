@@ -487,7 +487,10 @@ using VarMap =
 using OutVarMap = std::unordered_map<sview, uint32_t>;
 
 static inline void mapDagOps(raw_stream& os, VarMap& map, const DagInit* in,
-                             uint32_t& idx, const std::string& checkingOf) {
+                             uint32_t& idx, const std::string& checkingOf,
+                             uint32_t instIdx) {
+    // os << "\t\tif(" << checkingOf << "->getNumOperands() != " <<
+    // in->getArgs().size() << ") goto PATTERN_MATCH_NEXT_" << instIdx << ";\n";
     uint32_t opIdx = 0;
     for(const std::pair<const Init*, const StringInit*>& arg : in->getArgs()) {
         map[&arg] = idx;
@@ -496,7 +499,7 @@ static inline void mapDagOps(raw_stream& os, VarMap& map, const DagInit* in,
         os << "\t\tDAGNode* " << name << " = " << checkingOf << "->getOperand("
            << opIdx++ << ");\n";
         if(arg.first->matches(RecordType::Kind::Dag)) {
-            mapDagOps(os, map, (const DagInit*)arg.first, idx, name);
+            mapDagOps(os, map, (const DagInit*)arg.first, idx, name, instIdx);
         }
     }
 }
@@ -538,6 +541,18 @@ static inline void emitDagIn(
 
             os << ") {\n\t\t\t\tgoto PATTERN_MATCH_NEXT_" << instIdx
                << ";\n\t\t\t}\n";
+
+            if(isReg) {
+                os << "\t\t\telse {\n";
+
+                os << "\t\t\t\tRegister reg = ((const DAGRegister*)op"
+                   << varMap[&arg] << ")->getRegister();\n";
+                os << "\t\t\t\tif(!regInfo->inRegClass(regInfo->getRegClass(\""
+                   << rec->getName() << "\"), reg)) goto PATTERN_MATCH_NEXT_"
+                   << instIdx << ";\n";
+
+                os << "\t\t\t}\n";
+            }
         }
     }
 
@@ -584,22 +599,22 @@ static inline void emitDagOut(
     }
 }
 
-static inline bool emitDag(
+static inline void emitDag(
     raw_stream& os, const Record* inst,
     const std::unordered_map<const Record*, std::string>& dagOps,
     const RecordStorage& result, uint32_t instIdx) {
     const DagInit* in = (const DagInit*)inst->getField("In");
     const DagInit* out = (const DagInit*)inst->getField("Out");
 
-    if(in->getArgs().empty()) return true;
     os << "\t{\n";
+
     VarMap varMap;
     uint32_t idx = 0;
-    mapDagOps(os, varMap, in, idx, "dag");
+    mapDagOps(os, varMap, in, idx, "dag", instIdx);
     emitDagIn(os, in, dagOps, result, instIdx, varMap, "dag");
 
     auto op = dagOps.find(out->getOperator()->getValue());
-    if(op == dagOps.end()) return true;
+    if(op == dagOps.end()) return;
 
     OutVarMap outVarMap;
 
@@ -619,8 +634,6 @@ static inline bool emitDag(
     os << "\t\t});\n\t\treturn;\n";
 
     os << "\t}\n";
-
-    return false;
 }
 
 bool ISelBackend::emit(const RecordStorage& result) {
@@ -636,6 +649,8 @@ bool ISelBackend::emit(const RecordStorage& result) {
     dagOps[result.findDef("UDIV")] = "(uint32_t)DAGType::UDIV";
     dagOps[result.findDef("SREM")] = "(uint32_t)DAGType::SREM";
     dagOps[result.findDef("UREM")] = "(uint32_t)DAGType::UREM";
+    dagOps[result.findDef("CopyToReg")] = "(uint32_t)DAGType::CopyToReg";
+    dagOps[result.findDef("CopyFromReg")] = "(uint32_t)DAGType::CopyFromReg";
 
     std::vector<const Record*> instructions =
         result.getDefsDerivedFrom("Instruction");
@@ -644,15 +659,12 @@ bool ISelBackend::emit(const RecordStorage& result) {
 
     bool err = false;
 
-    constexpr sview ISEL_HEADER_MACRO = "_ISEL_HEADER";
-
-    // ISEL HEADER
-    addIfDef(target.Namespace, ISEL_HEADER_MACRO);
-    addUndef(target.Namespace, ISEL_HEADER_MACRO);
-
     // NAMESPACE
     addNamespace(target.Namespace);
     openBody();
+
+    addIfDef(target.Namespace, "_NEED_OPCODES");
+    addUndef(target.Namespace, "_NEED_OPCODES");
 
     write("enum class Opcodes : uint32_t ");
     openBody();
@@ -668,6 +680,11 @@ bool ISelBackend::emit(const RecordStorage& result) {
 
     closeBody(true);
 
+    addEndIf();
+
+    addIfDef(target.Namespace, "_NEED_STRTABLE");
+    addUndef(target.Namespace, "_NEED_STRTABLE");
+
     write("constexpr const char* OpcodeAsmStr[] = ");
     openBody();
 
@@ -678,25 +695,30 @@ bool ISelBackend::emit(const RecordStorage& result) {
 
     closeBody(true);
 
+    addEndIf();
+
+    addIfDef(target.Namespace, "_NEED_ISEL");
+    addUndef(target.Namespace, "_NEED_ISEL");
+
     write("void ", target.Namespace,
-          "matchEmit(DAGNode* dag, MachineBlock* block) ");
+          "matchEmit(DAGNode* dag, MachineBlock* block, const RegisterInfo* "
+          "regInfo) ");
     openBody();
 
     idx = 0;
     for(const Record* inst : instructions) {
-        if(!emitDag(os_, inst, dagOps, result, idx))
-            writeln("PATTERN_MATCH_NEXT_", idx++, ':');
+        emitDag(os_, inst, dagOps, result, idx);
+        writeln("PATTERN_MATCH_NEXT_", idx++, ':');
     }
 
     writeln("\treturn;");
 
     closeBody();
 
+    addEndIf();
+
     closeBody();
     // END OF NAMESPACE
-
-    addEndIf();
-    // END OF ISEL HEADER
 
     return err;
 }

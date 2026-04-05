@@ -132,6 +132,10 @@ public:
         return mfunc_;
     }
 
+    MachineFunction* getMFunc() noexcept {
+        return mfunc_;
+    }
+
     arrview<Register> getAvailableRegs() const noexcept {
         return availableRegs_;
     }

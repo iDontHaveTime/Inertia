@@ -22,13 +22,14 @@
 #include <inr/Target/Triple.h>
 
 #include <unordered_map>
+#include <unordered_set>
 
 namespace inr {
 
 /// @brief Base ISel class.
 class ISel {
 public:
-    using ValueMap = std::unordered_map<const Value*, DAGNode*>;
+    using ValueMap = std::unordered_map<const Value*, DAGValue>;
 
 protected:
     Triple triple_;
@@ -42,9 +43,12 @@ protected:
 
     virtual void lowerReturn(const Instruction& inst, SelectionDAG& dag,
                              CallingConv cc, ValueMap& map,
-                             MachineBlock* mb) = 0;
+                             MachineFunction* mf) = 0;
 
     virtual void matchEmit(DAGNode* dag, MachineBlock* block) = 0;
+
+    void buildForBlock(const Block& block, SelectionDAG& selDag, CCState& state,
+                       CallingConv cc, MachineBlock* mb, ValueMap& map);
 
 public:
     MachineModule* lower(const Module* module);
@@ -53,7 +57,10 @@ public:
                              SelectionDAG& selDag, CCState& state,
                              CallingConv cc);
     void lowerValue(const Value* val, SelectionDAG& selDag, CCState& state,
-                    ValueMap& map);
+                    CallingConv cc, MachineBlock* mb, ValueMap& map);
+
+    void postOrderEmit(DAGNode* node, MachineBlock* mb,
+                       std::unordered_set<DAGNode*>& visited);
 
     virtual ~ISel() noexcept = default;
 
@@ -63,6 +70,10 @@ public:
 
     const RegisterInfo* getRegisterInfo() const noexcept {
         return regInfo_;
+    }
+
+    static bool isTargetInst(uint32_t op) noexcept {
+        return op > (uint32_t)DAGType::DAG_TYPE_END;
     }
 };
 

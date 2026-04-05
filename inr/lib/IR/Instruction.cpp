@@ -22,10 +22,10 @@ raw_stream& operator<<(raw_stream& os, const Instruction& ins) {
         case Instruction::InstructionID::RETURN:
             os << Instruction::getInstructionIDStr(ins.getID());
             if(ins.getNumOperands()) {
-                return os << *ins.getType() << ' ' << *ins.getOperand(0);
+                return os << ' ' << *ins.getType() << ' ' << *ins.getOperand(0);
             }
             else {
-                return os << "void";
+                return os << " void";
             }
         case Instruction::InstructionID::ADD:
             return os << '%' << ins.getName() << " = "

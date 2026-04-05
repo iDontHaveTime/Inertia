@@ -19,6 +19,18 @@ def ADD32ri : Instruction<
     "addl"
 >;
 
+def ToMOV32rr : Instruction<
+    (CopyToReg GR32:$dest, GR32:$src),
+    (ToMOV32rr GR32:$dest, GR32:$src),
+    "movl"
+>;
+
+def FromMOV32rr : Instruction<
+    (CopyFromReg GR32:$dest, GR32:$src),
+    (FromMOV32rr GR32:$dest, GR32:$src),
+    "movl"
+>;
+
 def RET : Instruction<
     (RET),
     (RET),

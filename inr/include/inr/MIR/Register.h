@@ -226,7 +226,7 @@ public:
         return classArray_[idx];
     }
 
-    constexpr RegisterClass getRegClass(sview name) const {
+    constexpr RegisterClass getRegClass(sview name) const noexcept {
         for(const RegisterClass& regclass : classArray_) {
             if((strArray_.data() + regclass.getName()) == name) return regclass;
         }
@@ -247,6 +247,20 @@ public:
             idx++;
         }
         return Register::createNone();
+    }
+
+    constexpr bool inRegClass(RegisterClass regclass,
+                              Register reg) const noexcept {
+        if(regclass.regStart_ == 0 && regclass.regEnd_ == 0 &&
+           regclass.size_ == 0 && regclass.name_ == 0)
+            return false;
+        if(reg.isVirtual()) return true;
+
+        return std::find(regsArray_.data() + regclass.getStart(),
+                         (regsArray_.data() + regclass.getStart()) +
+                             regclass.getEnd(),
+                         reg) !=
+               ((regsArray_.data() + regclass.getStart()) + regclass.getEnd());
     }
 
     constexpr arrview<Register> getRegs() const noexcept {

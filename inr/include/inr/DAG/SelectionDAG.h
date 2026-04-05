@@ -20,6 +20,9 @@ namespace inr {
 /// @brief Own DAG nodes.
 class SelectionDAG {
     std::vector<DAGNode*> nodes_;
+    DAGNode* root_;
+    DAGNode* entry_;
+    DAGNode* chain_;
 
     DAGNode* addNode(DAGNode* node) {
         return nodes_.emplace_back(node);
@@ -31,7 +34,10 @@ class SelectionDAG {
     }
 
 public:
-    SelectionDAG() noexcept = default;
+    SelectionDAG() noexcept {
+        root_ = entry_ = chain_ =
+            newNode<DAGNode>(DAGType::EntryToken, nullptr);
+    }
 
     SelectionDAG(const SelectionDAG&) = delete;
     SelectionDAG& operator=(const SelectionDAG&) = delete;
@@ -47,29 +53,67 @@ public:
 
     // BUILDING DAG
 
-    DAGNode* createConstant(const ConstantInt* value) {
-        return newNode<DAGConst>(value);
+    DAGValue createConstant(const ConstantInt* value) {
+        return DAGValue(newNode<DAGConst>(value));
     }
 
-    DAGNode* createAdd(const Type* type, DAGNode* lhs, DAGNode* rhs) {
+    DAGValue createAdd(const Type* type, DAGValue lhs, DAGValue rhs) {
         DAGNode* node = newNode<DAGNode>(DAGType::ADD, type);
         node->addOperand(lhs);
         node->addOperand(rhs);
-        return node;
+        return DAGValue(node);
     }
 
-    DAGNode* createCopyFromReg(Register reg, const Type* type) {
-        return newNode<DAGRegister>(DAGType::CopyFromReg, type, reg);
+    DAGValue createCopyFromReg(DAGValue dest, Register src, const Type* type) {
+        DAGNode* node = newNode<DAGNode>(DAGType::CopyFromReg, type);
+        node->addOperand(dest);
+        node->addOperand(newNode<DAGRegister>(type, src));
+        return DAGValue(node);
     }
 
-    DAGNode* createCopyToReg(DAGNode* input, Register reg, const Type* type) {
-        DAGNode* node = newNode<DAGRegister>(DAGType::CopyToReg, type, reg);
-        node->addOperand(input);
-        return node;
+    DAGValue createCopyToReg(DAGValue src, Register dest, const Type* type) {
+        DAGNode* node = newNode<DAGNode>(DAGType::CopyToReg, type);
+        node->addOperand(src);
+        node->addOperand(newNode<DAGRegister>(type, dest));
+        return DAGValue(node);
     }
 
-    DAGNode* createRegister(Register reg, const Type* type) {
-        return newNode<DAGRegister>(DAGType::Register, type, reg);
+    DAGValue createStore(const Type* type, DAGValue ptr, DAGValue value,
+                         DAGValue chIn) {
+        DAGNode* node = newNode<DAGNode>(DAGType::STORE, type);
+        node->addOperand(ptr);
+        node->addOperand(value);
+        node->addOperand(chIn);
+
+        return DAGValue(node);
+    }
+
+    DAGValue createTarget(uint32_t opcode, const Type* t) {
+        return DAGValue(newNode<DAGNode>(opcode, t));
+    }
+
+    DAGValue getRoot() const noexcept {
+        return DAGValue(root_);
+    }
+
+    DAGValue getEntry() const noexcept {
+        return DAGValue(entry_);
+    }
+
+    DAGValue getChain() const noexcept {
+        return DAGValue(chain_);
+    }
+
+    void setRoot(DAGValue node) noexcept {
+        root_ = node.getNode();
+    }
+
+    void setChain(DAGValue node) noexcept {
+        chain_ = node.getNode();
+    }
+
+    DAGValue createRegister(Register reg, const Type* type) {
+        return DAGValue(newNode<DAGRegister>(type, reg));
     }
 };
 

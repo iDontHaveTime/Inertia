@@ -99,10 +99,12 @@ public:
     /// @brief Default constructor, does nothing.
     ivec() noexcept = default;
 
+    /// @brief Copy constructor.
     ivec(const ivec& other) {
         insert(begin(), other.begin(), other.end());
     }
 
+    /// @brief Copy operator.
     ivec& operator=(const ivec& other) {
         if(this != &other) {
             freeMemory();
@@ -111,6 +113,7 @@ public:
         return *this;
     }
 
+    /// @brief Move constructor.
     ivec(ivec&& other) noexcept(std::is_nothrow_move_constructible_v<T>) {
         size_ = other.size_;
         capacity_ = other.capacity_;
@@ -137,6 +140,7 @@ public:
         }
     }
 
+    /// @brief Move operator.
     ivec& operator=(ivec&& other) noexcept(
         std::is_nothrow_move_constructible_v<T>) {
         if(this == &other) return *this;
@@ -170,11 +174,13 @@ public:
         return *this;
     }
 
+    /// @brief Initializer list constructor.
     ivec(std::initializer_list<T> init) {
         growMemory(init.size());
         insert(begin(), init.begin(), init.end());
     }
 
+    /// @brief Initializer list operator.
     ivec& operator=(std::initializer_list<T> init) {
         freeMemory();
         growMemory(init.size());
@@ -182,6 +188,7 @@ public:
         return *this;
     }
 
+    /// @brief Destructor.
     ~ivec() noexcept {
         freeMemory();
     }
@@ -373,22 +380,27 @@ public:
         return std::vector<T>(begin(), end());
     }
 
+    /// @brief Compares elements of the two vectors.
     bool operator==(const ivec& other) const noexcept {
         return std::equal(begin(), end(), other.begin(), other.end());
     }
 
+    /// @brief Returns the first element.
     reference front() noexcept {
         return data_[0];
     }
 
+    /// @brief Returns the last element.
     reference back() noexcept {
         return data_[size_ - 1];
     }
 
+    /// @brief Returns the first element, const.
     const_reference front() const noexcept {
         return data_[0];
     }
 
+    /// @brief Returns the last element, const.
     const_reference back() const noexcept {
         return data_[size_ - 1];
     }

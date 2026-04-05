@@ -8,6 +8,7 @@
 #include <inr/IR/Instruction.h>
 #include <inr/IR/Module.h>
 #include <inr/IR/Verifier.h>
+#include <inr/MIR/MachineModule.h>
 #include <inr/Support/Stream.h>
 #include <inr/Support/Version.h>
 #include <inr/Target/Triple.h>
@@ -33,8 +34,8 @@ int main(int argc, char** argv) {
 
     inr::Block* entry = func->newBlock(ctx, "entry");
 
-    auto add = inr::BinaryInst::createAdd(ctx.getIntConstant(ctx.getI32(), 20),
-                                          func->getArg(0), "sum", entry);
+    auto add = inr::BinaryInst::createAdd(
+        func->getArg(0), ctx.getIntConstant(ctx.getI32(), 20), "sum", entry);
 
     inr::ReturnInst::create(add, entry);
 

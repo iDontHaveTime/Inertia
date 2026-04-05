@@ -43,11 +43,7 @@ public:
     }
 
     ~Block() noexcept {
-        for(Instruction* i = instructions_.front(); i != nullptr;) {
-            Instruction* next = i->getNext();
-            delete i;
-            i = next;
-        }
+        instructions_.freeUsingDelete();
     }
 
     friend class Instruction;

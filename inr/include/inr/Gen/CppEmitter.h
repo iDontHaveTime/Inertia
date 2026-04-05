@@ -61,7 +61,7 @@ protected:
     }
 
     void addNamespace(sview name) {
-        write("namespace inr::", name);
+        write("namespace inr::", name, ' ');
     }
 
 public:
