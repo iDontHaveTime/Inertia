@@ -28,6 +28,10 @@ public:
         return functions_.push_back(func);
     }
 
+    MachineFunction* newFunction(sview name) {
+        return addFunction(new MachineFunction(name, this));
+    }
+
     sview getName() const noexcept {
         return name_;
     }
@@ -41,11 +45,7 @@ public:
     }
 
     ~MachineModule() noexcept {
-        for(MachineFunction* f = functions_.front(); f != nullptr;) {
-            MachineFunction* next = f->getNext();
-            delete f;
-            f = next;
-        }
+        functions_.freeUsingDelete();
     }
 };
 

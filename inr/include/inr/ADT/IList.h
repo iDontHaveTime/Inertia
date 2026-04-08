@@ -118,7 +118,7 @@ public:
         iterator(pointer c) noexcept : current(c) {}
 
         iterator& operator++() noexcept {
-            current = current->next_;
+            if(current) current = current->next_;
             return *this;
         }
 

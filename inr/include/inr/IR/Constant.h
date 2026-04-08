@@ -38,8 +38,6 @@ public:
     ConstantID getConstantID() const noexcept {
         return constantID_;
     }
-
-    virtual ~Constant() noexcept = default;
 };
 
 /// @brief This is a constant integer value node.

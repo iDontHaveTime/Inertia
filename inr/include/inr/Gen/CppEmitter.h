@@ -100,6 +100,13 @@ public:
     bool emit(const RecordStorage& result) override;
 };
 
+class TIRBackend : public CppEmitter {
+public:
+    using CppEmitter::CppEmitter;
+
+    bool emit(const RecordStorage& result) override;
+};
+
 } // namespace inr::gen
 
 #endif // INERTIA_GEN_CPPEMITTER_H

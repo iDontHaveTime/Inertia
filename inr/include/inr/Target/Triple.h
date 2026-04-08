@@ -44,6 +44,9 @@ public:
 
     static Triple fromString(sview) noexcept;
 
+    using TIRMatcherFunc = void (*)(const class TIRInstruction&,
+                                    class MachineBlock*);
+
 private:
     Arch arch_;
     OS os_;
@@ -104,6 +107,18 @@ public:
         return getRegisterInfo(arch_);
     }
 
+    const class TIRTargetDesc* getTIRTargetDesc() const noexcept {
+        return getTIRTargetDesc(arch_);
+    }
+
+    const char* getTIRAsmStr() const noexcept {
+        return getTIRAsmStr(arch_);
+    }
+
+    TIRMatcherFunc getTIRMatchingFunc() const noexcept {
+        return getTIRMatchingFunc(arch_);
+    }
+
     /// @brief Returns calling convention function for args.
     CCFunc getCCArgs(CallingConv cc) const noexcept {
         return getCCArgs(arch_, os_, abi_, cc);
@@ -116,6 +131,8 @@ public:
 
     /// @brief Gets the register info based on the arch.
     static const RegisterInfo* getRegisterInfo(Arch arch) noexcept;
+
+    static const TIRTargetDesc* getTIRTargetDesc(Arch arch) noexcept;
 
     /// @brief Gets the calling convention's function for args.
     /// @param arch Needed when using C calling convention.
@@ -133,11 +150,14 @@ public:
     static CCFunc getCCRet(Arch arch, OS os, ABI abi,
                            CallingConv cc = CallingConv::C) noexcept;
 
+    static const char* getTIRAsmStr(Arch arch) noexcept;
+    static TIRMatcherFunc getTIRMatchingFunc(Arch arch) noexcept;
+
     /// @brief Returns the triple as a string.
     std::string str() const;
 };
 
-class raw_stream& operator<<(raw_stream&, const Triple&);
+class raw_stream& operator<<(raw_stream&, Triple);
 
 } // namespace inr
 

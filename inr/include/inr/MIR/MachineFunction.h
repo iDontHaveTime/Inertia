@@ -41,6 +41,7 @@ class MachineFunction : public ilist_node<MachineFunction> {
         name_(name), parent_(parent) {}
 
     friend class ISel;
+    friend class MachineModule;
 
 public:
     MachineModule* getParent() const noexcept {

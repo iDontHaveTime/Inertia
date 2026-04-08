@@ -5,6 +5,6 @@
 #ifdef INR_CCFUNC
 #undef INR_CCFUNC
 namespace inr {
-using CCFunc = bool (*)(unsigned, const class Type*, class CCState&);
+using CCFunc = bool (*)(unsigned, const class Type*, class CCStateGeneric&);
 }
 #endif

@@ -12,7 +12,9 @@
 #include <inr/ADT/StrView.h>
 #include <inr/IR/Block.h>
 #include <inr/IR/Function.h>
+#include <inr/IR/Value.h>
 #include <inr/TIR/TIRBlock.h>
+#include <inr/TIR/TIRInstruction.h>
 
 namespace inr {
 
@@ -20,6 +22,7 @@ namespace inr {
 class TIRFunction : public ilist_node<TIRFunction> {
     const Function* func_;
     ilist<TIRBlock> blocks_;
+    unsigned vregC_;
 
     TIRFunction(const Function* func) : func_(func) {}
 
@@ -27,11 +30,23 @@ class TIRFunction : public ilist_node<TIRFunction> {
 
 public:
     TIRBlock* newBlock(const Block* block) {
-        return blocks_.push_back(new TIRBlock(block));
+        return blocks_.push_back(new TIRBlock(block, this));
     }
 
     const Function* getFunction() const noexcept {
         return func_;
+    }
+
+    const ilist<TIRBlock>& getBlocks() const noexcept {
+        return blocks_;
+    }
+
+    ilist<TIRBlock>& getBlocks() noexcept {
+        return blocks_;
+    }
+
+    unsigned allocateVreg() noexcept {
+        return vregC_++;
     }
 
     ~TIRFunction() noexcept {

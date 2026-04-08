@@ -209,7 +209,7 @@ public:
     /// @brief Writes an std::string_view to the stream.
     /// @param str String.
     /// @return *this
-    raw_stream& operator<<(const std::string_view& str) {
+    raw_stream& operator<<(std::string_view str) {
         return write(str.data(), str.size());
     }
 

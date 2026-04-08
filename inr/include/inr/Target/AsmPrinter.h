@@ -19,10 +19,12 @@
 namespace inr {
 
 class AsmPrinter {
+    Triple triple_;
     const RegisterInfo* regInfo_;
 
 public:
-    AsmPrinter(Triple triple) noexcept : regInfo_(triple.getRegisterInfo()) {}
+    AsmPrinter(Triple triple) noexcept :
+        triple_(triple), regInfo_(triple.getRegisterInfo()) {}
 
     virtual ~AsmPrinter() noexcept = default;
 
@@ -34,6 +36,10 @@ public:
 
     const RegisterInfo* getRegisterInfo() const noexcept {
         return regInfo_;
+    }
+
+    Triple getTriple() const noexcept {
+        return triple_;
     }
 };
 

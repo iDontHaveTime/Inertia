@@ -60,7 +60,7 @@ public:
 
     Block* newBlock(const InrContext& ctx, sview name);
 
-    ~Function() noexcept {
+    ~Function() noexcept override {
         blocks_.freeUsingDelete();
     }
 

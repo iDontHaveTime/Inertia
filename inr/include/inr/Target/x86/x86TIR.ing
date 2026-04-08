@@ -1,0 +1,30 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+include "inr/Target/Target.ing";
+
+def MOV32rr : TIRInstruction<
+    TIRPatternIn<STORE, i32, [TIRReg, TIRReg]>,
+    TIRPatternOut<"movl">
+>;
+
+def MOV32ri : TIRInstruction<
+    TIRPatternIn<STORE, i32, [TIRReg, TIRImm]>,
+    TIRPatternOut<"movl">
+>;
+
+def RETx86 : TIRInstruction<
+    TIRPatternIn<RET, void, []>,
+    TIRPatternOut<"ret">
+>;
+
+def ADD32rr : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i32, [TIRReg, TIRReg]>,
+    TIRPatternOut<"addl">
+>;
+
+def ADD32ri : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i32, [TIRReg, TIRImm]>,
+    TIRPatternOut<"addl">
+>;

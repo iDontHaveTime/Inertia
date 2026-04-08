@@ -4,9 +4,10 @@
 
 // This file is for anything target generic, used by other inr-gen files.
 
-include "inr/Target/TargetDAG.ing";
+// include "inr/Target/TargetDAG.ing";
 include "inr/Target/TargetRegister.ing";
 include "inr/Target/TargetCC.ing";
+include "inr/Target/TargetTIR.ing";
 
 // Target description.
 class Target<string name, int ptrSize, endian targetEndian> {

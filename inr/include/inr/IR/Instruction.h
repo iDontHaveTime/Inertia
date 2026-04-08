@@ -53,10 +53,6 @@ protected:
         }
     }
 
-    ~Instruction() noexcept override {
-        for(Value* op : operands_) op->removeUser(this);
-    }
-
 public:
     /// @brief Gets the instruction type.
     InstructionID getID() const noexcept {
@@ -102,6 +98,10 @@ public:
                                  : (inst.getUsers().empty()
                                         ? (inst.isTerminator() ? false : true)
                                         : false);
+    }
+
+    ~Instruction() noexcept override {
+        for(Value* op : operands_) op->removeUser(this);
     }
 
     friend class Block;

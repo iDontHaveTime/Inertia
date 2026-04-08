@@ -97,7 +97,9 @@ void lexer::skipWhiteSpace() noexcept {
 }
 
 void lexer::skipAlnum() noexcept {
-    while(std::isalnum((unsigned char)getChar()) && start_ != end_) advance();
+    while((std::isalnum((unsigned char)getChar()) || getChar() == '_') &&
+          start_ != end_)
+        advance();
 }
 
 void lexer::advanceUntil(char c, bool escape) noexcept {
@@ -316,7 +318,7 @@ std::vector<token> lexer::internalLex() {
     while(start_ != end_) {
         skipWhiteSpace();
 
-        if(std::isalpha((unsigned char)getChar())) {
+        if((std::isalpha((unsigned char)getChar())) || getChar() == '_') {
             lexAlpha();
         }
         else if(isSymbol()) {

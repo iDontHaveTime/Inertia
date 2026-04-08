@@ -25,6 +25,8 @@ class TIRModule {
 
     TIRModule(const Module* mod) noexcept : name_(mod->getName()) {}
 
+    friend class TIRLowering;
+
 public:
     static std::unique_ptr<TIRModule> newModule(const Module* mod) {
         return std::unique_ptr<TIRModule>(new TIRModule(mod));
@@ -36,6 +38,14 @@ public:
 
     sview getName() const noexcept {
         return name_;
+    }
+
+    const ilist<TIRFunction>& getFunctions() const noexcept {
+        return funcs_;
+    }
+
+    ilist<TIRFunction>& getFunctions() noexcept {
+        return funcs_;
     }
 
     ~TIRModule() noexcept {

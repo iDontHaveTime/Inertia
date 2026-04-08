@@ -35,15 +35,15 @@ public:
     using difference_type = ptrdiff_t;
 
 private:
-    alignas(T) uint8_t
-        inlineStorage_[N * sizeof(T)]; ///< Stores N objects on stack.
+    alignas(value_type) uint8_t
+        inlineStorage_[N * sizeof(value_type)]; ///< Stores N objects on stack.
     size_type size_ = 0;
     size_type capacity_ = N; ///< How much can this vector currently hold.
     pointer data_ = (pointer)inlineStorage_; ///< Points to the data, could be
                                              ///< the stack array or heap.
 
     bool isHeap() const noexcept {
-        return data_ != (const T*)inlineStorage_;
+        return data_ != (const_pointer)inlineStorage_;
     }
 
     /// @brief Frees the memory and goes back to inline storage.
@@ -67,24 +67,25 @@ private:
             newCapacity <<= 1;
         }
 
-        pointer newData = (pointer) operator new[](newCapacity * sizeof(T));
+        pointer newData =
+            (pointer) operator new[](newCapacity * sizeof(value_type));
 
         size_type i = 0;
         try {
             for(; i < size_; i++) {
-                new(newData + i) T(std::move_if_noexcept(data_[i]));
+                new(newData + i) value_type(std::move_if_noexcept(data_[i]));
             }
         }
         catch(...) {
             for(size_type j = i; j > 0; j--) {
-                newData[j - 1].~T();
+                newData[j - 1].~value_type();
             }
             operator delete[](newData);
             throw;
         }
 
         for(size_type i = size_; i > 0; i--) {
-            data_[i - 1].~T();
+            data_[i - 1].~value_type();
         }
 
         if(isHeap()) {
@@ -114,7 +115,8 @@ public:
     }
 
     /// @brief Move constructor.
-    ivec(ivec&& other) noexcept(std::is_nothrow_move_constructible_v<T>) {
+    ivec(ivec&& other) noexcept(
+        std::is_nothrow_move_constructible_v<value_type>) {
         size_ = other.size_;
         capacity_ = other.capacity_;
 
@@ -129,11 +131,11 @@ public:
             size_type i = 0;
             try {
                 for(; i < size_; i++) {
-                    new(data_ + i) T(std::move(other.data_[i]));
+                    new(data_ + i) value_type(std::move(other.data_[i]));
                 }
             }
             catch(...) {
-                for(size_type j = i; j > 0; j--) data_[j - 1].~T();
+                for(size_type j = i; j > 0; j--) data_[j - 1].~value_type();
                 throw;
             }
             other.clear();
@@ -142,7 +144,7 @@ public:
 
     /// @brief Move operator.
     ivec& operator=(ivec&& other) noexcept(
-        std::is_nothrow_move_constructible_v<T>) {
+        std::is_nothrow_move_constructible_v<value_type>) {
         if(this == &other) return *this;
 
         freeMemory();
@@ -161,11 +163,11 @@ public:
             size_type i = 0;
             try {
                 for(; i < size_; i++) {
-                    new(data_ + i) T(std::move(other.data_[i]));
+                    new(data_ + i) value_type(std::move(other.data_[i]));
                 }
             }
             catch(...) {
-                for(size_type j = i; j > 0; j--) data_[j - 1].~T();
+                for(size_type j = i; j > 0; j--) data_[j - 1].~value_type();
                 throw;
             }
             other.clear();
@@ -175,13 +177,13 @@ public:
     }
 
     /// @brief Initializer list constructor.
-    ivec(std::initializer_list<T> init) {
+    ivec(std::initializer_list<value_type> init) {
         growMemory(init.size());
         insert(begin(), init.begin(), init.end());
     }
 
     /// @brief Initializer list operator.
-    ivec& operator=(std::initializer_list<T> init) {
+    ivec& operator=(std::initializer_list<value_type> init) {
         freeMemory();
         growMemory(init.size());
         insert(begin(), init.begin(), init.end());
@@ -197,7 +199,7 @@ public:
     /// @note Does not free memory, nor go back to stack.
     void clear() noexcept {
         while(size_) {
-            data_[--size_].~T();
+            data_[--size_].~value_type();
         }
     }
 
@@ -241,11 +243,11 @@ public:
         growMemory(size_ + 1);
 
         for(size_type i = size_; i > index; i--) {
-            new(data_ + i) T(std::move_if_noexcept(data_[i - 1]));
-            data_[i - 1].~T();
+            new(data_ + i) value_type(std::move_if_noexcept(data_[i - 1]));
+            data_[i - 1].~value_type();
         }
 
-        new(data_ + index) T(std::forward<Args>(args)...);
+        new(data_ + index) value_type(std::forward<Args>(args)...);
         size_++;
         return data_ + index;
     }
@@ -261,14 +263,14 @@ public:
     /// @brief Copies the object to the back of the vector.
     /// @param v Object to copy.
     /// @return Reference to the new object.
-    reference push_back(const T& v) {
+    reference push_back(const_reference v) {
         return emplace_back(v);
     }
 
     /// @brief Moves the object to the back of the vector.
     /// @param v Object to move.
     /// @return Reference to the new object.
-    reference push_back(T&& v) {
+    reference push_back(value_type&& v) {
         return emplace_back(std::move(v));
     }
 
@@ -276,7 +278,7 @@ public:
     /// @param pos The position to copy it to.
     /// @param v Object to copy.
     /// @return The slot it was placed.
-    iterator insert(iterator pos, const T& v) {
+    iterator insert(iterator pos, const_reference v) {
         return emplace(pos, v);
     }
 
@@ -284,7 +286,7 @@ public:
     /// @param pos The position to move it to.
     /// @param v Object to move.
     /// @return The slot it was placed.
-    iterator insert(iterator pos, T&& v) {
+    iterator insert(iterator pos, value_type&& v) {
         return emplace(pos, std::move(v));
     }
 
@@ -302,19 +304,20 @@ public:
         growMemory(size_ + count);
 
         for(size_type i = size_; i > index; i--) {
-            new(data_ + i + count - 1) T(std::move_if_noexcept(data_[i - 1]));
-            data_[i - 1].~T();
+            new(data_ + i + count - 1)
+                value_type(std::move_if_noexcept(data_[i - 1]));
+            data_[i - 1].~value_type();
         }
 
         size_type i = 0;
         try {
             for(auto it = first; it != last; ++it, i++) {
-                new(data_ + index + i) T(*it);
+                new(data_ + index + i) value_type(*it);
             }
         }
         catch(...) {
             for(size_type j = i; j > 0; j--) {
-                data_[index + j - 1].~T();
+                data_[index + j - 1].~value_type();
             }
             throw;
         }
@@ -376,8 +379,8 @@ public:
     }
 
     /// @brief Returns this as an STL vector.
-    std::vector<T> vec() {
-        return std::vector<T>(begin(), end());
+    std::vector<value_type> vec() {
+        return std::vector<value_type>(begin(), end());
     }
 
     /// @brief Compares elements of the two vectors.

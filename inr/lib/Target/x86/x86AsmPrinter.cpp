@@ -5,9 +5,6 @@
 #include <inr/DAG/DAGNode.h>
 #include <inr/Target/ISel.h>
 #include <inr/Target/x86/x86AsmPrinter.h>
-#define x86_NEED_STRTABLE
-#define x86_NEED_OPCODES
-#include <inr/Target/x86/x86Instructions.inc>
 
 namespace inr::x86 {
 
@@ -35,13 +32,15 @@ static inline void emitMOP(raw_stream& os, const MachineOperand& mo,
 
 void x86AsmPrinter::emitMI(raw_stream& os, const MachineInst& mi) const {
     os << '\t';
-    if(!ISel::isTargetInst(mi.getOp())) {
-        os << "error inst\n";
-        return;
-    }
 
-    const char* asmstr =
-        OpcodeAsmStr[(mi.getOp() - (uint32_t)Opcodes::OPCODE_START) - 1];
+    uint32_t asmidx = mi.getOp();
+    const char* asmstr = getTriple().getTIRAsmStr();
+
+    while(asmidx) {
+        while(*asmstr) asmstr++;
+        asmstr++;
+        asmidx--;
+    }
 
     os << asmstr << ' ';
 

@@ -99,7 +99,7 @@ std::string Triple::str() const {
     return result;
 }
 
-raw_stream& operator<<(raw_stream& os, const Triple& T) {
+raw_stream& operator<<(raw_stream& os, Triple T) {
     return os << Triple::getArchStr(T.getArch()) << '-'
               << Triple::getOSStr(T.getOS()) << '-'
               << Triple::getABIStr(T.getABI());
@@ -124,6 +124,77 @@ std::endian Triple::getEndian() const noexcept {
 
 } // namespace inr
 
+#include <inr/TIR/TIRLowering.h>
+#define x86_TIR_HEADER
+#include <inr/Target/x86/x86TIR.inc>
+
+// TIR
+namespace inr {
+
+class TIRInstInfoTableHelper {
+    constexpr static unsigned TABLE_SIZE =
+        (unsigned)TIRInstID::TIR_INST_END - (unsigned)TIRInstID::TIR_INST_START;
+    TIRInstInfo info_[TABLE_SIZE];
+
+public:
+    constexpr TIRInstInfoTableHelper() noexcept : info_() {
+        for(unsigned i = 0; i < TABLE_SIZE; i++) {
+            info_[i] = TIRInstInfo(true);
+        }
+    }
+
+    constexpr TIRInstInfoTableHelper(
+        std::initializer_list<std::pair<TIRInstID, TIRInstInfo>>
+            exceptions) noexcept :
+        TIRInstInfoTableHelper() {
+        for(auto it = exceptions.begin(); it != exceptions.end(); ++it) {
+            info_[(unsigned)it->first] = it->second;
+        }
+    }
+
+    constexpr arrview<TIRInstInfo> getInfo() const noexcept {
+        return arrview<TIRInstInfo>(info_, TABLE_SIZE);
+    }
+};
+
+namespace x86 {
+constexpr unsigned x86_integer_words[4] = {8, 16, 32, 64};
+constexpr TIRInstInfoTableHelper x86_inst_info_table{
+    {TIRInstID::ADD_DEST_SRC_SRC, TIRInstInfo(false)}};
+constexpr TIRTargetDesc x86TargetDesc(x86_integer_words,
+                                      x86_inst_info_table.getInfo());
+
+} // namespace x86
+
+const char* Triple::getTIRAsmStr(Arch arch) noexcept {
+    switch(arch) {
+        case Arch::Unknown:
+            return nullptr;
+        case Arch::x86_64:
+            return x86::x86_TIRAsmStr;
+    }
+}
+
+const TIRTargetDesc* Triple::getTIRTargetDesc(Arch arch) noexcept {
+    switch(arch) {
+        case Arch::Unknown:
+            return nullptr;
+        case Arch::x86_64:
+            return &x86::x86TargetDesc;
+    }
+}
+
+Triple::TIRMatcherFunc Triple::getTIRMatchingFunc(Arch arch) noexcept {
+    switch(arch) {
+        case Arch::Unknown:
+            return nullptr;
+        case Arch::x86_64:
+            return x86::x86TIRMatchEmit;
+    }
+}
+
+} // namespace inr
+
 // clang-format off
 #include <inr/Target/x86/x86Registers.h>
 #include <inr/Target/x86/x86CallingConv.h>
@@ -143,12 +214,15 @@ const RegisterInfo* Triple::getRegisterInfo(Arch arch) noexcept {
 static inline CallingConv getx86_64CC(Triple::OS os, Triple::ABI abi) noexcept {
     switch(os) {
         case Triple::OS::Unknown:
-            return CallingConv::C;
+            switch(abi) {
+                case Triple::ABI::Unknown: // x86_64-unknown-unknown
+                case Triple::ABI::GNU:     // x86_64-unknown-gnu
+                    return CallingConv::SysV;
+            }
         case Triple::OS::Linux:
             switch(abi) {
-                case Triple::ABI::Unknown:
-                    return CallingConv::C;
-                case Triple::ABI::GNU:
+                case Triple::ABI::Unknown: // x86_64-linux-unknown
+                case Triple::ABI::GNU:     // x86_64-linux-gnu
                     return CallingConv::SysV;
             }
     }

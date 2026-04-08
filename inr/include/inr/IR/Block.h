@@ -42,7 +42,7 @@ public:
         return name_;
     }
 
-    ~Block() noexcept {
+    ~Block() noexcept override {
         instructions_.freeUsingDelete();
     }
 

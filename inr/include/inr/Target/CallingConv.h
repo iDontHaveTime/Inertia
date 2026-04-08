@@ -103,8 +103,8 @@ public:
     }
 };
 
-class CCState {
-    MachineFunction* mfunc_;
+class CCStateGeneric {
+protected:
     bool vararg_;
     const RegisterInfo* regInfo_;
     std::vector<CCAssign> assigns_;
@@ -113,9 +113,8 @@ class CCState {
     int64_t stackOffset_ = 0;
 
 public:
-    CCState(MachineFunction* mfunc, bool vararg, const RegisterInfo* regInfo,
-            arrview<Register> allocateable) :
-        mfunc_(mfunc),
+    CCStateGeneric(bool vararg, const RegisterInfo* regInfo,
+                   arrview<Register> allocateable) :
         vararg_(vararg),
         regInfo_(regInfo),
         availableRegs_(allocateable.begin(), allocateable.end()) {}
@@ -126,14 +125,6 @@ public:
 
     bool isVararg() const noexcept {
         return vararg_;
-    }
-
-    const MachineFunction* getMFunc() const noexcept {
-        return mfunc_;
-    }
-
-    MachineFunction* getMFunc() noexcept {
-        return mfunc_;
     }
 
     arrview<Register> getAvailableRegs() const noexcept {
@@ -189,6 +180,24 @@ public:
 
     void addAssign(CCAssign assign) {
         assigns_.emplace_back(assign);
+    }
+};
+
+/// @brief DAG CCState.
+class CCState : public CCStateGeneric {
+    MachineFunction* mfunc_;
+
+public:
+    CCState(MachineFunction* mfunc, bool vararg, const RegisterInfo* regInfo,
+            arrview<Register> allocateable) :
+        CCStateGeneric(vararg, regInfo, allocateable), mfunc_(mfunc) {}
+
+    const MachineFunction* getMFunc() const noexcept {
+        return mfunc_;
+    }
+
+    MachineFunction* getMFunc() noexcept {
+        return mfunc_;
     }
 };
 

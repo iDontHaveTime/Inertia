@@ -11,7 +11,11 @@
 #include <inr/MIR/MachineModule.h>
 #include <inr/Support/Stream.h>
 #include <inr/Support/Version.h>
+#include <inr/TIR/TIRISel.h>
+#include <inr/TIR/TIRLowering.h>
+#include <inr/TIR/TIRModule.h>
 #include <inr/Target/Triple.h>
+#include <inr/Target/x86/x86AsmPrinter.h>
 
 #include <cstdio>
 
@@ -49,6 +53,23 @@ int main(int argc, char** argv) {
 
     inr::outs() << "Default triple: " << inr::Triple::getDefaultTriple()
                 << '\n';
+
+    inr::TIRLowering tir(inr::Triple::getDefaultTriple());
+
+    auto tirmod = tir.lowerSSA(mod);
+    inr::standard_file_stream tirexampleStream(
+        fopen("inr/example/module_example.tir", "w"), true, 0);
+
+    tir.print(tirmod.get(), tirexampleStream);
+
+    inr::TIRISel isel(tir);
+    auto mmod = isel.select(tirmod.get());
+
+    inr::x86::x86AsmPrinter asmPrinter(tir.getTriple());
+
+    inr::standard_file_stream asmexampleStream(
+        fopen("inr/example/module_example.s", "w"), true, 0);
+    asmPrinter.emit(asmexampleStream, mmod.get());
 
     return 0;
 }

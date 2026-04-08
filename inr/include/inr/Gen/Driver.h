@@ -54,7 +54,8 @@ class GenDriver {
         None,
         Register,
         CallingConv,
-        ISel
+        ISel,
+        TIR
     } selectedBackend_ = Backends::None;
     int argc_; ///< Original argc.
 
@@ -96,6 +97,9 @@ private:
                 break;
             case Backends::ISel:
                 emitter = new ISelBackend(os);
+                break;
+            case Backends::TIR:
+                emitter = new TIRBackend(os);
                 break;
         }
         return emitter == nullptr;
@@ -248,6 +252,9 @@ private:
         }
         else if(arg == "--backend-isel") {
             selectedBackend_ = Backends::ISel;
+        }
+        else if(arg == "--backend-tir") {
+            selectedBackend_ = Backends::TIR;
         }
         else return true;
 

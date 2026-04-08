@@ -29,3 +29,8 @@ add_inertia_library(Option ${OptionSources})
 file(GLOB GenSources "Gen/*.cpp")
 
 add_inertia_library(Gen ${GenSources})
+
+# TIR Library
+file(GLOB TIRSources "TIR/*.cpp")
+
+add_inertia_library(TIR ${TIRSources})
