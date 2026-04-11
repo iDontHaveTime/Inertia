@@ -4,6 +4,8 @@
 
 // This file is for defining calling conventions.
 
+include "inr/Target/TargetRegister.ing";
+
 class CCAction;
 
 class CCAssignToReg<list<Register> regs> : CCAction {
@@ -25,4 +27,8 @@ class CCIfType<list<irtype> types, CCAction action> : CCPredicate<action> {
 
 class CallingConv<list<CCAction> actions> {
     list<CCAction> Actions = actions;
+}
+
+class CCRegInfo<list<Register> regs> {
+    list<Register> Regs = regs;
 }

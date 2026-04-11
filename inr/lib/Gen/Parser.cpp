@@ -188,79 +188,6 @@ another_list:
     else return nullptr;
 }
 
-const Init* parseDagInit(TokenStream& ts, RecordStorage& result,
-                         std::unordered_map<sview, size_t>& symbolMap,
-                         const InrContext& ctx) {
-    if(advanceIfNotUnexpected(ts)) return nullptr;
-    const Record* dagOp = result.findClass("DagNodeOperator");
-    const Record* dagNode = result.findClass("DagNode");
-    if(!dagOp || !dagNode) {
-        ts.errorpos(
-            "you must include \"inr/Target/TargetDAG.ing\" to use 'dag'");
-        return nullptr;
-    }
-
-    const Init* op =
-        parseInit(ts, result, false, symbolMap, result.getDefTy(dagOp), ctx);
-    if(!op) {
-        ts.errorpos("failed parsing init 'dag'");
-        return nullptr;
-    }
-
-    if(!op->matches(RecordType::Kind::Def)) {
-        ts.errorpos("'dag' must have a 'def' operator");
-        return nullptr;
-    }
-
-    DagInit* dinit =
-        (DagInit*)result.newInit<DagInit>(result, ((const DefInit*)op));
-
-    if(ts.expect(token::ID::RightParen)) {
-        return dinit;
-    }
-
-another_operand:
-    const Init* lhs =
-        parseInit(ts, result, false, symbolMap, result.getDefTy(dagNode), ctx);
-    if(!lhs) {
-        ts.errorpos("failed to get lhs of the operand in 'dag'");
-        return nullptr;
-    }
-
-    if(!lhs->matches(RecordType::Kind::Dag) &&
-       !lhs->matches(RecordType::Kind::Def)) {
-        ts.errorpos("operand's lhs must be either 'def' or 'dag'");
-        return nullptr;
-    }
-
-    const StringInit* rhs = nullptr;
-
-    if(ts.consume(token::ID::Colon)) {
-        if(!ts.consume(token::ID::Dollar)) {
-            ts.errorpos("expected '$' after ':' in 'dag'");
-            return nullptr;
-        }
-        const Init* name =
-            parseInit(ts, result, true, symbolMap, result.getStringTy(), ctx);
-        if(!name->matches(RecordType::Kind::String)) {
-            ts.errorpos("operand's rhs must be an identifier in 'dag'");
-            return nullptr;
-        }
-        rhs = (const StringInit*)name;
-    }
-
-    dinit->addArg(lhs, rhs);
-
-    if(ts.consume(token::ID::Comma)) goto another_operand;
-
-    if(!ts.expect(token::ID::RightParen)) {
-        ts.errorpos("expected ')' to close 'dag'");
-        return nullptr;
-    }
-
-    return dinit;
-}
-
 /// @brief Parses an init from the current token.
 /// @param ts Token stream.
 /// @param result Required for storage.
@@ -291,9 +218,6 @@ const Init* parseInit(TokenStream& ts, RecordStorage& result, bool allowIdent,
             break;
         case token::ID::LeftSquare:
             init = parseListInit(ts, result, symbolMap, expectedType, ctx);
-            break;
-        case token::ID::LeftParen:
-            init = parseDagInit(ts, result, symbolMap, ctx);
             break;
         default:
             break;
@@ -342,8 +266,6 @@ const RecordType* parseRecordType(TokenStream& ts, RecordStorage& result) {
             return parseIdentifierType(tokAsView, result);
         case token::ID::IRType:
             return result.getIRTy();
-        case token::ID::Dag:
-            return result.getDagTy();
         default:
             return nullptr;
     }

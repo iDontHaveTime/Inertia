@@ -8,6 +8,7 @@
 /// @file Target/AsmPrinter.h
 /// @brief Prints out textual assembly.
 
+#include <inr/IR/Global.h>
 #include <inr/MIR/MachineBlock.h>
 #include <inr/MIR/MachineFunction.h>
 #include <inr/MIR/MachineInst.h>
@@ -23,6 +24,10 @@ class AsmPrinter {
     const RegisterInfo* regInfo_;
 
 public:
+    enum class ELFTypeDirective { NoType, Function, Object, TLSObject, Common };
+
+    enum class SectionType { Text, BSS, Data, Rodata };
+
     AsmPrinter(Triple triple) noexcept :
         triple_(triple), regInfo_(triple.getRegisterInfo()) {}
 
@@ -33,6 +38,17 @@ public:
     void emitMB(raw_stream& os, const MachineBlock& mb) const;
 
     virtual void emitMI(raw_stream& os, const MachineInst& mi) const = 0;
+
+    void emitELFTypeDirective(raw_stream& os, ELFTypeDirective type,
+                              sview label) const;
+    void emitLinkage(raw_stream& os, Global::Linkage linkage,
+                     sview label) const;
+
+    void emitCommon(raw_stream& os, sview label, size_t size,
+                    Alignment align) const;
+
+    void emitSection(raw_stream& os, SectionType sect) const;
+    void emitAlignment(raw_stream& os, Alignment alignment) const;
 
     const RegisterInfo* getRegisterInfo() const noexcept {
         return regInfo_;

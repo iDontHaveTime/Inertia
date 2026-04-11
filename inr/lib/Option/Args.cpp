@@ -11,8 +11,7 @@ namespace inr::opt {
 
 Option OPT_INPUT(Option::OptionID::Input, nullptr, "<input>", nullptr);
 
-ArgList OptionTable::parseArgs(int argc, char* const* argv,
-                               unsigned missingArgsCount) {
+ArgList OptionTable::parseArgs(int argc, char* const* argv, unsigned) {
     ArgList newList;
 
     int i = 1;

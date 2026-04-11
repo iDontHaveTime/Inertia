@@ -190,6 +190,10 @@ void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
             }
             err = binaryInstVerify((const BinaryInst&)inst);
             break;
+        case Instruction::InstructionID::ALLOCA:
+        case Instruction::InstructionID::LOAD:
+        case Instruction::InstructionID::STORE:
+            break;
     }
     if(err) errs.addError(err);
 }

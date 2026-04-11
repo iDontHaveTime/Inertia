@@ -76,7 +76,7 @@ bool bigint::bigintAddLimb(Limb* dest, Limb src, size_t limbs) noexcept {
 
 namespace inr {
 #ifndef USE_SECOND_BASE10IMPL
-void bigint::base10Impl(bigint& tmp, raw_stream& os) {
+void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
     std::string str;
     str.push_back(0);
     const Limb* limbs = tmp.heap_;
@@ -114,7 +114,7 @@ void bigint::base10Impl(bigint& tmp, raw_stream& os) {
 #else
 #include <alloca.h>
 
-void bigint::base10Impl(bigint& tmp, raw_stream& os) {
+void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
     uint32_t* chunks = nullptr;
     size_t maxChunks = tmp.bits_ >> 3;
     size_t chunkCount = 0;
@@ -194,7 +194,7 @@ bigint& bigint::operator+=(const bigint& other) {
 }
 
 void bigint::print(raw_stream& os, unsigned radix, bool isSigned,
-                   bool addPrefix, bool upperCase) const {
+                   bool addPrefix, bool upperCase) const noexcept {
     if(radix != 2 && radix != 8 && radix != 10 && radix != 16) {
         os << "(bigint: radix is not 2, 8, 10, or 16)";
         return;

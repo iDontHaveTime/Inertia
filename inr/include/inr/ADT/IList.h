@@ -112,24 +112,28 @@ public:
     }
 
     /// @brief IList's forward iterator.
-    struct iterator {
-        pointer current;
+    template<typename ptrT, typename refT>
+    struct ilist_iterator {
+        ptrT current;
 
-        iterator(pointer c) noexcept : current(c) {}
+        ilist_iterator(ptrT c) noexcept : current(c) {}
 
-        iterator& operator++() noexcept {
+        ilist_iterator& operator++() noexcept {
             if(current) current = current->next_;
             return *this;
         }
 
-        bool operator!=(const iterator& other) const noexcept {
+        bool operator!=(const ilist_iterator& other) const noexcept {
             return current != other.current;
         }
 
-        reference operator*() noexcept {
+        refT operator*() noexcept {
             return *current;
         }
     };
+
+    using iterator = ilist_iterator<pointer, reference>;
+    using const_iterator = ilist_iterator<const_pointer, const_reference>;
 
     iterator begin() noexcept {
         return iterator(head_);
@@ -138,11 +142,11 @@ public:
         return iterator(nullptr);
     }
 
-    iterator begin() const noexcept {
-        return iterator(head_);
+    const_iterator begin() const noexcept {
+        return const_iterator(head_);
     }
-    iterator end() const noexcept {
-        return iterator(nullptr);
+    const_iterator end() const noexcept {
+        return const_iterator(nullptr);
     }
 
     /// @brief Returns the head of the list.
@@ -166,7 +170,7 @@ public:
     }
 
     /// @brief Iterates the list and gives the pointer at that index.
-    pointer operator[](size_t n) noexcept {
+    pointer operator[](size_type n) noexcept {
         iterator it = begin();
         while(n--) {
             ++it;
@@ -193,11 +197,86 @@ public:
 
     /// @brief Frees all the nodes using `delete`.
     void freeUsingDelete() noexcept {
-        for(pointer i = front(); i != nullptr;) {
-            pointer next = i->getNext();
+        pointer i = head_;
+
+        head_ = nullptr;
+        tail_ = nullptr;
+
+        while(i) {
+            pointer next = i->next_;
             delete i;
             i = next;
         }
+    }
+
+    void detach(pointer node) noexcept {
+        if(node->prev_) node->prev_->next_ = node->next_;
+        else if(head_ == node) head_ = node->next_;
+
+        if(node->next_) node->next_->prev_ = node->prev_;
+        else if(tail_ == node) tail_ = node->prev_;
+
+        node->prev_ = nullptr;
+        node->next_ = nullptr;
+    }
+
+    pointer insertBefore(pointer pos, pointer node) noexcept {
+        if(!pos || !node) return node;
+
+        detach(node);
+
+        node->next_ = pos;
+        node->prev_ = pos->prev_;
+
+        if(pos->prev_) {
+            pos->prev_->next_ = node;
+        }
+        else {
+            head_ = node;
+        }
+
+        pos->prev_ = node;
+        return node;
+    }
+
+    pointer insertAfter(pointer pos, pointer node) noexcept {
+        if(!pos || !node) return node;
+
+        detach(node);
+
+        node->prev_ = pos;
+        node->next_ = pos->next_;
+
+        if(pos->next_) {
+            pos->next_->prev_ = node;
+        }
+        else {
+            tail_ = node;
+        }
+
+        pos->next_ = node;
+        return node;
+    }
+
+    iterator erase(iterator pos) noexcept {
+        pointer node = pos.current;
+        pointer next = node ? node->next_ : nullptr;
+
+        detach(node);
+
+        return iterator(next);
+    }
+
+    iterator erase_delete(iterator it) noexcept {
+        pointer node = it.current;
+        if(!node) return end();
+
+        pointer next = node->next_;
+
+        detach(node);
+        delete node;
+
+        return iterator(next);
     }
 };
 

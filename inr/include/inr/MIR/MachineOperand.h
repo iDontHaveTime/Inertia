@@ -9,6 +9,7 @@
 /// @brief Contains the machine operand class.
 
 #include <inr/IR/Constant.h>
+#include <inr/IR/Global.h>
 #include <inr/MIR/Register.h>
 
 #include <cstdint>
@@ -20,24 +21,27 @@ namespace inr {
 class MachineOperand {
 public:
     enum class Kind : uint8_t {
-        Reg,        ///< Physical or virtual register.
-        Imm,        ///< Immediate integer value.
-        FrameIndex, ///< Stack slot, resolved to [rbp +/- N] during frame
-                    ///< lowering.
-        BlockAddr   ///< Basic block address, for branches.
+        Reg,            ///< Physical or virtual register.
+        Imm,            ///< Immediate integer value.
+        DereferenceReg, ///< Dereferenced register, for example 8(%rsp).
+        Global          ///< Global variable.
     };
 
 private:
     Kind kind_; ///< Kind of the operand.
 
-    std::variant<Register, const ConstantInt*, uint32_t> data_;
+    std::variant<Register, const ConstantInt*, MemOperand, const Global*> data_;
 
     explicit MachineOperand(Register reg) noexcept :
         kind_(Kind::Reg), data_(reg) {}
     explicit MachineOperand(const ConstantInt* imm) noexcept :
         kind_(Kind::Imm), data_(imm) {}
-    explicit MachineOperand(uint32_t idx, Kind kind) noexcept :
-        kind_(kind), data_(idx) {}
+    explicit MachineOperand(Register reg, int64_t off) noexcept :
+        kind_(Kind::DereferenceReg), data_(MemOperand(reg, off)) {}
+    explicit MachineOperand(MemOperand mem) noexcept :
+        kind_(Kind::DereferenceReg), data_(mem) {}
+    explicit MachineOperand(const Global* global) noexcept :
+        kind_(Kind::Global), data_(global) {}
 
 public:
     static MachineOperand createReg(Register reg) noexcept {
@@ -48,12 +52,16 @@ public:
         return MachineOperand(imm);
     }
 
-    static MachineOperand createFrameIndex(uint32_t offset) noexcept {
-        return MachineOperand(offset, Kind::FrameIndex);
+    static MachineOperand createMem(Register reg, int64_t offset) noexcept {
+        return MachineOperand(reg, offset);
     }
 
-    static MachineOperand createBlockAddr(uint32_t idx) noexcept {
-        return MachineOperand(idx, Kind::BlockAddr);
+    static MachineOperand createMem(MemOperand mem) noexcept {
+        return MachineOperand(mem);
+    }
+
+    static MachineOperand createGlobal(const Global* global) noexcept {
+        return MachineOperand(global);
     }
 
     Kind getKind() const noexcept {
@@ -68,11 +76,12 @@ public:
         return std::get<const ConstantInt*>(data_);
     }
 
-    uint32_t getFrameIndex() const noexcept {
-        return std::get<uint32_t>(data_);
+    MemOperand getMem() const noexcept {
+        return std::get<MemOperand>(data_);
     }
-    uint32_t getBlockAddr() const noexcept {
-        return std::get<uint32_t>(data_);
+
+    const Global* getGlobal() const noexcept {
+        return std::get<const Global*>(data_);
     }
 };
 

@@ -15,8 +15,7 @@ std::unique_ptr<MachineModule> TIRISel::select(const TIRModule* mod) {
         usedLowering_.getTriple().getTIRMatchingFunc();
 
     for(const TIRFunction& tfunc : mod->getFunctions()) {
-        MachineFunction* mfunc =
-            mmod->newFunction(tfunc.getFunction()->getName());
+        MachineFunction* mfunc = mmod->newFunction(tfunc.getFunction());
 
         for(const TIRBlock& tblock : tfunc.getBlocks()) {
             MachineBlock* mblock =

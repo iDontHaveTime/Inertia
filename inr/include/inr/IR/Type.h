@@ -8,6 +8,9 @@
 /// @file IR/Type.h
 /// @brief Contains the type class.
 
+#include <inr/Support/Align.h>
+#include <inr/Target/Triple.h>
+
 #include <cstdint>
 #include <initializer_list>
 #include <string>
@@ -80,6 +83,22 @@ public:
     unsigned getWidth() const noexcept {
         return width_;
     }
+
+    constexpr static Alignment getAlignment(unsigned width) noexcept {
+        return Alignment::fromBits(width);
+    }
+
+    static Alignment getAlignment(const IntegerType* intType) noexcept {
+        return getAlignment(intType->width_);
+    }
+
+    constexpr static unsigned getSize(unsigned width) noexcept {
+        return (width + 7) >> 3;
+    }
+
+    static unsigned getSize(const IntegerType* intType) noexcept {
+        return getSize(intType->width_);
+    }
 };
 
 class FunctionType : public Type {
@@ -100,15 +119,49 @@ public:
     const std::vector<const Type*>& getArgs() const noexcept {
         return args_;
     }
+
+    constexpr static Alignment getAlignment() noexcept {
+        return Alignment(16);
+    }
 };
 
 class PointerType : public Type {
 public:
     PointerType() noexcept : Type(TypeID::Pointer) {}
+
+    static Alignment getAlignment(Triple triple) noexcept {
+        return Alignment::fromBits(triple.getPointerWidth());
+    }
+
+    static unsigned getSize(Triple triple) noexcept {
+        return triple.getPointerWidth() >> 3;
+    }
 };
 
 const Type* strToType(const class InrContext& ctx, class sview str);
 std::string typeToStr(const Type* t);
+
+static inline Alignment getTypeAlignment(const Type* t, Triple triple) {
+    switch(t->getTypeID()) {
+        case Type::TypeID::Integer:
+            return IntegerType::getAlignment((const IntegerType*)t);
+        case Type::TypeID::Pointer:
+            return PointerType::getAlignment(triple);
+        default:
+            return {};
+    }
+}
+
+static inline unsigned getTypeSizeInBytes(const Type* t, Triple triple) {
+    switch(t->getTypeID()) {
+        case Type::TypeID::Integer:
+            return IntegerType::getSize((const IntegerType*)t);
+        case Type::TypeID::Pointer:
+            return PointerType::getSize(triple);
+        default:
+            return {};
+    }
+}
 
 /// @brief Be able to print out the type to a stream.
 class raw_stream& operator<<(raw_stream&, const Type&);

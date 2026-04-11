@@ -20,31 +20,39 @@ namespace inr {
 
 /// @brief Represents a TIR function.
 class TIRFunction : public ilist_node<TIRFunction> {
-    const Function* func_;
-    ilist<TIRBlock> blocks_;
-    unsigned vregC_;
+    const Function* func_;   ///< Original function.
+    ilist<TIRBlock> blocks_; ///< List of blocks.
+    unsigned vregC_;         ///< Current vreg count.
 
+    /// @brief Constructs a function.
+    ///
+    /// Only modules can construct functions.
     TIRFunction(const Function* func) : func_(func) {}
 
     friend class TIRModule;
 
 public:
+    /// @brief Allocates and pushes back a new block.
     TIRBlock* newBlock(const Block* block) {
         return blocks_.push_back(new TIRBlock(block, this));
     }
 
+    /// @brief Returns the original SSA function.
     const Function* getFunction() const noexcept {
         return func_;
     }
 
+    /// @brief Returns a const reference to the block ilist.
     const ilist<TIRBlock>& getBlocks() const noexcept {
         return blocks_;
     }
 
+    /// @brief Returns a reference to the block ilist.
     ilist<TIRBlock>& getBlocks() noexcept {
         return blocks_;
     }
 
+    /// @brief Returns the vregC and increments it.
     unsigned allocateVreg() noexcept {
         return vregC_++;
     }

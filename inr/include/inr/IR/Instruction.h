@@ -12,12 +12,14 @@
 #include <inr/ADT/IVector.h>
 #include <inr/IR/Value.h>
 
+#include "inr/Support/Align.h"
+
 namespace inr {
 
 /// @brief The base instruction class for all instructions.
 class Instruction : public Value, public ilist_node<Instruction> {
 public:
-    enum class InstructionID { RETURN, ADD };
+    enum class InstructionID { RETURN, ADD, ALLOCA, LOAD, STORE };
 
     static sview getInstructionIDStr(InstructionID);
 
@@ -132,6 +134,32 @@ public:
     /// @return The instruction.
     static ReturnInst* create(Value* retVal, Block* parent) {
         return new ReturnInst(retVal, parent);
+    }
+};
+
+class AllocaInst : public Instruction {
+    const Type* typeToAllocate_;
+    const Value* numberOfElements_;
+    Alignment alignment_;
+
+    AllocaInst(const Type* ptrtype, Block* parent, const Type* typeToAllocate,
+               const Value* numberOfElements, Alignment alignment) noexcept :
+        Instruction(InstructionID::ALLOCA, ptrtype, parent, {}),
+        typeToAllocate_(typeToAllocate),
+        numberOfElements_(numberOfElements),
+        alignment_(alignment) {}
+
+public:
+    const Type* getTypeToAllocate() const noexcept {
+        return typeToAllocate_;
+    }
+
+    const Value* getNumberOfElements() const noexcept {
+        return numberOfElements_;
+    }
+
+    Alignment getAlignment() const noexcept {
+        return alignment_;
     }
 };
 

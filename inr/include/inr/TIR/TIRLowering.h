@@ -14,6 +14,7 @@
 #include <inr/TIR/TIRFunction.h>
 #include <inr/TIR/TIRModule.h>
 #include <inr/Target/CallingConv.h>
+#include <inr/Target/Flags.h>
 #include <inr/Target/Triple.h>
 
 #include <forward_list>
@@ -27,11 +28,17 @@ class TIRTargetDesc {
     /// For example on x86-64 it would be 64, 32, 16, 8.
     arrview<unsigned> intWords_;
     arrview<TIRInstInfo> instInfo_;
+    Register stackRegister_; ///< Stack register, assume callee saved.
+    Register frameRegister_; ///< Frame register, assume callee saved.
 
 public:
     constexpr TIRTargetDesc(arrview<unsigned> intWords,
-                            arrview<TIRInstInfo> table) noexcept :
-        intWords_(intWords), instInfo_(table) {}
+                            arrview<TIRInstInfo> table, Register stackRegister,
+                            Register frameRegister = {}) noexcept :
+        intWords_(intWords),
+        instInfo_(table),
+        stackRegister_(stackRegister),
+        frameRegister_(frameRegister) {}
 
     constexpr arrview<unsigned> getIntWords() const noexcept {
         return intWords_;
@@ -50,27 +57,57 @@ public:
         return instInfo_;
     }
 
+    constexpr TIRInstInfo getInfo(TIRInstID id) const noexcept {
+        return getInfoTable()[(unsigned)id];
+    }
+
     constexpr bool enabledInst(TIRInstID id) const noexcept {
-        return getInfoTable()[(unsigned)id].enabled;
+        return getInfo(id).getEnabled();
     }
 };
 
 class TIRLowering {
     Triple triple_;
+    Flags flags_;
     const TIRTargetDesc* targetDesc_;
     std::forward_list<TIROperand> operandList_;
     std::unordered_map<const Value*, TIROperand*> operandMap_;
 
     void lowerSSAFunction(const Function& func, TIRModule* mod);
     void lowerSSABlock(const Block& block, TIRBlock* tblock,
-                       CCStateGeneric& state, CallingConv cc);
-    void lowerSSAValue(const Value* val, TIRBlock* block, CCStateGeneric& state,
-                       CallingConv cc);
+                       CCStateGeneric& state);
+    void lowerSSAValue(const Value* val, TIRBlock* block,
+                       CCStateGeneric& state);
     void lowerSSAInstruction(const Instruction* inst, TIRBlock* block,
-                             CCStateGeneric& state, CallingConv cc);
+                             CCStateGeneric& state);
     void lowerSSABinaryInst(const BinaryInst* inst, TIRBlock* block);
     void lowerSSAAdd(const BinaryInst* inst, TIRBlock* block);
-    void lowerSSARet(const Instruction* inst, TIRBlock* block, CallingConv cc);
+    void lowerSSARet(const Instruction* inst, TIRBlock* block);
+    void emitStore(const Type* type, TIROperand* dest, TIROperand* src,
+                   TIRBlock* block);
+    void emitAdd(const Type* type, TIROperand* dest, TIROperand* lhs,
+                 TIROperand* rhs, TIRBlock* block);
+    void emitSub(const Type* type, TIROperand* dest, TIROperand* lhs,
+                 TIROperand* rhs, TIRBlock* block);
+
+    /// @brief Any variant of the same operation will work.
+    ///
+    /// For example it would accept both ADD_DEST_SRC and ADD_DEST_SRC_SRC as
+    /// ADD.
+    void emitArithmetic(TIRInstID op, const Type* type, TIROperand* dest,
+                        TIROperand* lhs, TIROperand* rhs, TIRBlock* block);
+
+    void lowerSSAAlloca(const AllocaInst* inst, TIRBlock* block);
+
+    void solveOperands(const Type* type, TIROperand*& dest,
+                       ncarrview<TIROperand*> srcs, TIRInstID tirInst,
+                       TIRBlock* block);
+    TIROperand* solveOperand(const Type* type, TIROperand* operand,
+                             TIRInstInfo::OperandAllowed allowed,
+                             TIRBlock* block);
+
+    static bool isAllowed(TIROperand* op,
+                          TIRInstInfo::OperandAllowed allowed) noexcept;
 
     TIROperand* newOperand(TIROperand op) {
         return &operandList_.emplace_front(op);
@@ -80,11 +117,28 @@ class TIRLowering {
         return operandMap_[key] = op;
     }
 
+    TIROperand* newVreg(TIRFunction* func) {
+        return newOperand(Register::createVirtual(func->allocateVreg()));
+    }
+
+    TIROperand* newVreg(TIRBlock* block) {
+        return newVreg(block->getParent());
+    }
+
+    bool linearRegallocFunction(TIRFunction* func);
+
 public:
-    TIRLowering(Triple triple) noexcept :
-        triple_(triple), targetDesc_(triple.getTIRTargetDesc()) {}
+    TIRLowering(Triple triple, Flags flags) noexcept :
+        triple_(triple),
+        flags_(flags),
+        targetDesc_(triple.getTIRTargetDesc()) {}
 
     std::unique_ptr<TIRModule> lowerSSA(const Module* mod);
+    void linearRegallocPass(TIRModule* mod);
+
+    void linearRegallocPass(std::unique_ptr<TIRModule>& mod) {
+        linearRegallocPass(mod.get());
+    }
 
     void print(const TIRModule* mod, raw_stream& os) const;
 

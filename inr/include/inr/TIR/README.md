@@ -2,4 +2,4 @@
 
 ## Purpose
 
-Contains Inertia's target IR classes.
+Contains Inertia's Target IR classes.

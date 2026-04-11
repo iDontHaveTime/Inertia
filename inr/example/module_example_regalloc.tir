@@ -1,0 +1,12 @@
+; TIRModule = main_module
+; target = x86_64-linux-gnu
+proc i32 @main(i32 %argc, ptr %argv) {
+entry:
+	%0 = reg eax
+	%1 = reg edi
+	store i32 %0, %1
+	%2 = reg eax
+	%3 = imm 20
+	add i32 %2, %3
+	ret
+}

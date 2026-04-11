@@ -8,6 +8,7 @@
 /// @file Target/Triple.h
 /// @brief Contains the target triple class.
 
+#include <inr/ADT/ArrView.h>
 #include <inr/ADT/StrView.h>
 #define INR_CCFUNC
 #include <inr/Target/CCFunc.h>
@@ -155,6 +156,48 @@ public:
 
     /// @brief Returns the triple as a string.
     std::string str() const;
+
+    enum class FileType { ELF, MachO, COFF };
+
+    /// @brief Returns what file type does the target choose.
+    static FileType getFileType(OS os) noexcept;
+
+    /// @brief Returns the file type the target uses.
+    constexpr FileType getFileType() const noexcept {
+        return getFileType(os_);
+    }
+
+    /// @brief Returns callee saved registers.
+    static arrview<class Register> getCalleeSaved(Arch arch,
+                                                  CallingConv cc) noexcept;
+    /// @brief Returns caller saved registers.
+    static arrview<Register> getCallerSaved(Arch arch, CallingConv cc) noexcept;
+
+    arrview<Register> getCalleeSaved(CallingConv cc) const noexcept {
+        return getCalleeSaved(arch_, cc);
+    }
+
+    arrview<Register> getCallerSaved(CallingConv cc) const noexcept {
+        return getCallerSaved(arch_, cc);
+    }
+
+    static CallingConv getDefaultCC(Triple triple) noexcept;
+
+    CallingConv getDefaultCC() const noexcept {
+        return getDefaultCC(*this);
+    }
+
+    /// @brief What should the stack be aligned to on calls.
+    ///
+    /// Function assumes that stack size 0 is the same alignment as
+    /// `getCallAlignment()` result.
+    unsigned getCallAlignment() const noexcept;
+    /// @brief What stack size does the function start with.
+    ///
+    /// On x86-64 this would be 8, as calls should be aligned to 16 but then
+    /// "call" pushes the return address, thus at function entry we end up with
+    /// 8 byte aligned stack.
+    unsigned getFunctionEntryStackSize() const noexcept;
 };
 
 class raw_stream& operator<<(raw_stream&, Triple);

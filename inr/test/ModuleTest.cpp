@@ -11,9 +11,12 @@
 #include <inr/MIR/MachineModule.h>
 #include <inr/Support/Stream.h>
 #include <inr/Support/Version.h>
+#include <inr/TIR/StoreCleanup.h>
 #include <inr/TIR/TIRISel.h>
 #include <inr/TIR/TIRLowering.h>
 #include <inr/TIR/TIRModule.h>
+#include <inr/TIR/TIRPass.h>
+#include <inr/Target/Flags.h>
 #include <inr/Target/Triple.h>
 #include <inr/Target/x86/x86AsmPrinter.h>
 
@@ -21,6 +24,12 @@
 
 int main(int argc, char** argv) {
     (inr::outs() << inr::reportInertiaVersion << '\n').flush();
+
+    inr::Flags compFlags;
+
+    if(argc > 1) {
+        compFlags.setFrameRegister(inr::sview(argv[1]) == "frame");
+    }
 
     inr::InrContext ctx;
 
@@ -54,13 +63,24 @@ int main(int argc, char** argv) {
     inr::outs() << "Default triple: " << inr::Triple::getDefaultTriple()
                 << '\n';
 
-    inr::TIRLowering tir(inr::Triple::getDefaultTriple());
+    inr::TIRLowering tir(inr::Triple::getDefaultTriple(), compFlags);
 
     auto tirmod = tir.lowerSSA(mod);
     inr::standard_file_stream tirexampleStream(
         fopen("inr/example/module_example.tir", "w"), true, 0);
 
     tir.print(tirmod.get(), tirexampleStream);
+
+    inr::standard_file_stream tirregallocexampleStream(
+        fopen("inr/example/module_example_regalloc.tir", "w"), true, 0);
+
+    tir.linearRegallocPass(tirmod);
+
+    inr::TIRPassManager pm(tirmod.get());
+    inr::StoreCleanup storepass;
+    pm.run(&storepass);
+
+    tir.print(tirmod.get(), tirregallocexampleStream);
 
     inr::TIRISel isel(tir);
     auto mmod = isel.select(tirmod.get());

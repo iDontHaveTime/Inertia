@@ -12,17 +12,21 @@
 #include <inr/ADT/StrView.h>
 #include <inr/IR/Argument.h>
 #include <inr/IR/Block.h>
+#include <inr/IR/Global.h>
 #include <inr/IR/Type.h>
-#include <inr/IR/Value.h>
+#include <inr/Support/Align.h>
+#include <inr/Target/Triple.h>
 
 namespace inr {
 
-class Function : public Value, public ilist_node<Function> {
+class Function : public Global, public ilist_node<Function> {
     ilist<Block> blocks_;
     std::vector<Argument> args_;
+    CallingConv cc_ = CallingConv::C;
 
     Function(const FunctionType* signature, sview name) noexcept :
-        Value(ValueID::Function, signature, name) {
+        Global(External, signature->getAlignment(), ValueID::Function,
+               signature, name) {
         for(size_t i = 0; i < signature->getArgs().size(); i++) {
             args_.emplace_back(this, signature->getArgs()[i], i);
         }
@@ -43,6 +47,14 @@ public:
 
     const std::vector<Argument>& getArgs() const noexcept {
         return args_;
+    }
+
+    CallingConv getCC() const noexcept {
+        return cc_;
+    }
+
+    void setCC(CallingConv cc) noexcept {
+        cc_ = cc;
     }
 
     void setArgName(unsigned arg, sview name) {

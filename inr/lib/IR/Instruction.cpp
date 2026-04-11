@@ -14,6 +14,12 @@ sview Instruction::getInstructionIDStr(InstructionID id) {
             return "ret";
         case InstructionID::ADD:
             return "add";
+        case InstructionID::ALLOCA:
+            return "alloca";
+        case InstructionID::LOAD:
+            return "load";
+        case InstructionID::STORE:
+            return "store";
     }
 }
 

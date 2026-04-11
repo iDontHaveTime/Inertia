@@ -35,6 +35,9 @@ public:
     static MachineInst* create(uint32_t op, MachineBlock* parent,
                                ivec<MachineOperand, 3> operands = {});
 
+    static MachineInst* create(uint32_t op, MachineBlock* parent,
+                               ivec<const class TIROperand*, 3> top);
+
     MachineBlock* getParent() const noexcept {
         return parent_;
     }

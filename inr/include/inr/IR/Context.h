@@ -51,8 +51,6 @@ class InrContext {
     BlockType blockType_;
     /// @brief Storage of pointers to different types.
     mutable std::vector<std::unique_ptr<Type>> storage_;
-    /// @brief Storage of pointers to constant types.
-    mutable std::vector<std::unique_ptr<Constant>> constantStorage_;
     /// @brief Map of integers with the width as the key.
     mutable std::unordered_map<unsigned, const Type*> integers_;
     /// @brief A list of function signatures.
@@ -66,7 +64,7 @@ class InrContext {
     const IntegerType* i32_ = getInt(32); ///< Cache i32 (common integer type).
     const IntegerType* i64_ = getInt(64); ///< Cache i64 (common integer type).
 public:
-    InrContext() = default;
+    InrContext() noexcept = default;
 
     InrContext(const InrContext&) = delete;
     InrContext& operator=(const InrContext&) = delete;

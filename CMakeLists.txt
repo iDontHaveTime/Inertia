@@ -14,3 +14,5 @@ project(Inertia
 
 # The backend
 add_subdirectory(inr)
+# C frontend
+add_subdirectory(inrcc)

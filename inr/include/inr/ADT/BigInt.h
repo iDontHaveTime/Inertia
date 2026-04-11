@@ -9,12 +9,12 @@
 /// @brief Provides an arbitrary precision integer class.
 
 #include <inr/ADT/ArrView.h>
+#include <inr/Support/Compiler.h>
 #include <inr/Support/Stream.h>
 
 #include <bit>
 #include <climits>
 #include <cstddef>
-#include <stdexcept>
 
 namespace inr {
 
@@ -47,7 +47,7 @@ private:
     }
 
     /// @brief Resize the integer.
-    void setNewSize() {
+    void setNewSize() noexcept {
         if(bits_ <= LIMB_BITS) {
             return;
         }
@@ -94,7 +94,7 @@ public:
 
     /// @brief Basic constructor for bigint.
     /// @param bits Width of the integer.
-    explicit bigint(size_t bits) : bits_(bits) {
+    explicit bigint(size_t bits) noexcept : bits_(bits) {
         setNewSize();
     }
 
@@ -102,7 +102,7 @@ public:
     /// given.
     /// @param bits Width of the integer.
     /// @param limbs Limbs, most significant limb first.
-    bigint(size_t bits, arrview<Limb> limbs) : bigint(bits) {
+    bigint(size_t bits, arrview<Limb> limbs) noexcept : bigint(bits) {
         if(onStack()) {
             Limb val = limbs.back();
             val &= (Limb(1) << bits) - 1;
@@ -121,7 +121,8 @@ public:
     /// @param bits Width of the integer.
     /// @param val Value for the limb.
     /// @param isSigned Should it sign extend.
-    bigint(size_t bits, Limb val, bool isSigned = false) : bigint(bits) {
+    bigint(size_t bits, Limb val, bool isSigned = false) noexcept :
+        bigint(bits) {
         if(onStack()) {
             val &= (Limb(1) << bits) - 1;
 
@@ -142,7 +143,7 @@ public:
     }
 
     /// @brief Copy constructor.
-    bigint(const bigint& other) : bits_(other.bits_) {
+    bigint(const bigint& other) noexcept : bits_(other.bits_) {
         if(onStack()) {
             stack_ = other.stack_;
             return;
@@ -154,7 +155,7 @@ public:
     }
 
     /// @brief Copy operator.
-    bigint& operator=(const bigint& other) {
+    bigint& operator=(const bigint& other) noexcept {
         if(this != &other) {
             if(onHeap()) delete[] heap_;
             bits_ = other.bits_;
@@ -240,9 +241,8 @@ public:
     /// @throws std::out_of_range() if the bit is out of range.
     ///
     /// For example if this bigint has 65 bits, bit 65 would be: `getBit(64)`.
-    bool getBit(size_t bit) const {
-        if(bit >= bits_)
-            throw std::out_of_range("The selected bit is out of range.");
+    bool getBit(size_t bit) const noexcept {
+        inr_assert(bit < bits_, "The selected bit is out of range.");
         if(onStack()) {
             return stack_ & (Limb(1) << bit);
         }
@@ -258,7 +258,7 @@ public:
     }
 
     /// @brief Flips all bits, just the ~ operator.
-    void flipAllBits() {
+    void flipAllBits() noexcept {
         if(onStack()) {
             stack_ = ~stack_;
         }
@@ -273,7 +273,7 @@ public:
     /// @brief Returns the value as a string.
     /// @see print() for explanation of the args.
     std::string toString(unsigned radix, bool isSigned, bool addPrefix,
-                         bool upperCase) const {
+                         bool upperCase) const noexcept {
         string_stream ss;
         print(ss, radix, isSigned, addPrefix, upperCase);
         return ss.str();
@@ -286,18 +286,19 @@ public:
     /// @param addPrefix Should this add a prefix (e.g. 0b, 0x, etc..).
     /// @param upperCase Should the letters be uppercase (applies to radix 16).
     void print(raw_stream&, unsigned radix, bool isSigned, bool addPrefix,
-               bool upperCase) const;
+               bool upperCase) const noexcept;
 
-    friend raw_stream& operator<<(raw_stream& os, const bigint& bi) {
+    friend raw_stream& operator<<(raw_stream& os, const bigint& bi) noexcept {
         bi.print(os, 10, false, true, true);
         return os;
     }
 
 private:
     /// @brief Checks whether or not bits match.
-    void checkBitWidths(const bigint& other) const {
-        if(bits_ != other.bits_)
-            throw std::runtime_error("bigint bits must match in operators");
+    void checkBitWidths(const bigint& other) const noexcept {
+        inr_assert(bits_ == other.bits_,
+                   "bigint bits must match in operators.");
+        (void)other;
     }
 
     static bool bigintAdd(Limb* dest, const Limb* src, bool c,
@@ -305,7 +306,7 @@ private:
     static bool bigintAddLimb(Limb* dest, Limb src, size_t limbs) noexcept;
     static void bigintShiftRight(Limb* dest, size_t limbs,
                                  unsigned shiftN) noexcept;
-    static void base10Impl(bigint& tmp, raw_stream&);
+    static void base10Impl(bigint& tmp, raw_stream&) noexcept;
 
 public:
     /// @brief Shifts the bits right N amount of times.
@@ -320,7 +321,7 @@ public:
     }
 
     /// @brief Compares the values of two bigints.
-    bool operator==(const bigint& other) const {
+    bool operator==(const bigint& other) const noexcept {
         checkBitWidths(other);
 
         if(onStack()) {
@@ -335,7 +336,7 @@ public:
     }
 
     /// @brief Are the values of the bigints different.
-    bool operator!=(const bigint& other) const {
+    bool operator!=(const bigint& other) const noexcept {
         return !(*this == other);
     }
 
@@ -343,7 +344,7 @@ public:
     bigint& operator+=(const bigint&);
 
     /// @brief Creates a new addition result of two bigints.
-    bigint operator+(const bigint& other) const {
+    bigint operator+(const bigint& other) const noexcept {
         return bigint(*this) += other;
     }
 
@@ -359,14 +360,14 @@ public:
     }
 
     /// @brief Increases the bigint by one and returns a copy.
-    bigint operator++(int) {
+    bigint operator++(int) noexcept {
         bigint cpy(*this);
         ++*this;
         return cpy;
     }
 
     /// @brief Same as -N.
-    void negate() {
+    void negate() noexcept {
         flipAllBits();
         ++*this;
     }

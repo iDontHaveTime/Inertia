@@ -1,6 +1,8 @@
+.section .text
+.globl main
+.type main, @function
+.p2align 4
 main:
-	movl %edi, %vreg0
-	movl %vreg0, %vreg1
-	addl $20, %vreg1
-	movl %vreg1, %eax
+	movl %edi, %eax
+	addl $20, %eax
 	ret 

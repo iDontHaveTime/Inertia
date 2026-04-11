@@ -17,6 +17,14 @@ def SysV : CallingConv<[
 def RetSysV : CallingConv<[
     CCIfType<[i8], CCAssignToReg<[AL]>>,
     CCIfType<[i16], CCAssignToReg<[AX]>>,
-    CCIfType<[i32], CCAssignToReg<[EAX, EDX]>>,
-    CCIfType<[i64, ptr], CCAssignToReg<[RAX, RDX]>>
+    CCIfType<[i32], CCAssignToReg<[EAX]>>,
+    CCIfType<[i64, ptr], CCAssignToReg<[RAX]>>
+]>;
+
+def SysVCallee : CCRegInfo<[
+    RBX, RSP, RBP, R12, R13, R14, R15
+]>;
+
+def SysVCaller : CCRegInfo<[
+    RAX, RDI, RSI, RDX, RCX, R8, R9, R10, R11
 ]>;

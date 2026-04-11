@@ -11,11 +11,11 @@
 #include <inr/ADT/ArrView.h>
 #include <inr/ADT/StrView.h>
 #include <inr/IR/Type.h>
+#include <inr/Support/Compiler.h>
 
 #include <bit>
 #include <cstdint>
 #include <memory>
-#include <stdexcept>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -36,8 +36,7 @@ public:
         Endian,  ///< Either little or big endian.
         List,    ///< List type.
         Def,     ///< Points to a def.
-        IRType,  ///< Points to an IR type.
-        Dag      ///< DAG pattern.
+        IRType   ///< Points to an IR type.
     };
 
 private:
@@ -56,16 +55,6 @@ public:
     virtual std::string getAsString() const = 0;
 
     virtual ~RecordType() noexcept = default;
-};
-
-/// @brief Represents a DAG record type.
-class RecordDag : public RecordType {
-public:
-    std::string getAsString() const override {
-        return "dag";
-    }
-
-    RecordDag() noexcept : RecordType(Kind::Dag) {}
 };
 
 /// @brief Represents an integer record type.
@@ -152,7 +141,6 @@ class RecordStorage {
     RecordString string_;
     RecordEndian endian_;
     RecordIRType irtype_;
-    RecordDag dag_;
 
     std::vector<std::unique_ptr<RecordType>> typeStorage_;
 
@@ -195,10 +183,6 @@ public:
         return &integer_;
     }
 
-    const RecordDag* getDagTy() const noexcept {
-        return &dag_;
-    }
-
     const RecordDef* getDefTy(const Record* def) {
         return (const RecordDef*)typeStorage_
             .emplace_back(std::make_unique<RecordDef>(def))
@@ -236,8 +220,7 @@ public:
         Arg,
         List,
         Def,
-        IRType,
-        Dag
+        IRType
     };
     static sview kindAsString(Kind kind) {
         switch(kind) {
@@ -255,8 +238,6 @@ public:
                 return "record";
             case Kind::IRType:
                 return "irtype";
-            case Kind::Dag:
-                return "dag";
         }
     }
 
@@ -284,8 +265,6 @@ public:
                 return kind_ == Kind::Def;
             case RecordType::Kind::IRType:
                 return kind_ == Kind::IRType;
-            case RecordType::Kind::Dag:
-                return kind_ == Kind::Dag;
             default:
                 return false;
         }
@@ -396,30 +375,6 @@ public:
     }
 };
 
-/// @brief Initializes a dag field.
-///
-/// dag foo = (ADD GR32:$lhs, GR32:$rhs);
-class DagInit : public TypeInit {
-    const DefInit* operator_;
-    std::vector<std::pair<const Init*, const StringInit*>> args_;
-
-public:
-    DagInit(RecordStorage& s, const DefInit* op) noexcept :
-        TypeInit(Kind::Dag, s.getDagTy()), operator_(op) {}
-
-    void addArg(const Init* lhs, const StringInit* rhs) {
-        args_.emplace_back(std::make_pair(lhs, rhs));
-    }
-
-    const DefInit* getOperator() const noexcept {
-        return operator_;
-    }
-    const std::vector<std::pair<const Init*, const StringInit*>>& getArgs()
-        const noexcept {
-        return args_;
-    }
-};
-
 /// @brief Initializes an endian field.
 ///
 /// endian foo = little;
@@ -483,9 +438,8 @@ public:
     RecordIdent(const Init* name) noexcept : name_(name) {}
 
     sview getName() const {
-        if(name_->getKind() != Init::Kind::String)
-            throw std::runtime_error(
-                "Record identifier name is not a string type");
+        inr_assert(name_->getKind() == Init::Kind::String,
+                   "Record identifier name must be a string.");
         return ((const StringInit*)name_)->getValue();
     }
 };
@@ -659,9 +613,8 @@ private:
 
 public:
     const Init* getField(sview name) const {
-        if(kind_ != Kind::Def)
-            throw std::runtime_error(
-                "Fields can only be accessed from defs not classes");
+        inr_assert(kind_ == Kind::Def,
+                   "Fields can only be accessed from defs.");
         return getFieldImpl(name);
     }
 

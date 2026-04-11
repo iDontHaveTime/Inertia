@@ -120,7 +120,7 @@ public:
 
     /// @brief Returns this as a heap string.
     /// @return C++ std::string.
-    std::string str() const {
+    std::string str() const noexcept {
         return std::string(str_, len_);
     }
 

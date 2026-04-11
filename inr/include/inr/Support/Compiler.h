@@ -28,4 +28,22 @@
 #define __has_warning(x) 0
 #endif
 
+#ifndef NDEBUG
+#include <cassert>
+
+#define inr_assert(expr, str) assert((expr) && (str))
+#define inr_notpossible(str) inr_assert(false, str)
+
+#else
+
+#define inr_assert(expr, str) ((void)0)
+
+#if __has_builtin(__builtin_unreachable)
+#define inr_notpossible(str) __builtin_unreachable()
+#else
+#define inr_notpossible(str) ((void)0)
+#endif
+
+#endif
+
 #endif // INERTIA_SUPPORT_COMPILER_H

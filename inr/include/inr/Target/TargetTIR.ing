@@ -7,7 +7,10 @@ class TIRInstID;
 def STORE            : TIRInstID;
 def ADD_DEST_SRC     : TIRInstID;
 def ADD_DEST_SRC_SRC : TIRInstID;
+def SUB_DEST_SRC     : TIRInstID;
+def SUB_DEST_SRC_SRC : TIRInstID;
 def RET              : TIRInstID;
+def NONE             : TIRInstID;
 
 class TIROp;
 
@@ -15,16 +18,20 @@ def TIRReg : TIROp;
 def TIRImm : TIROp;
 def TIRMem : TIROp;
 
-class TIRPatternIn<TIRInstID inst, irtype type, list<TIROp> operands> {
-    TIRInstID Inst = inst;
-    irtype Type = type;
-    list<TIROp> Operands = operands;
+class TIROperand<TIROp op, string name> {
+    TIROp Op = op;
+    string Name = name;
 }
 
-class TIRTargetInst;
+class TIRPatternIn<TIRInstID inst, irtype type, list<TIROperand> operands> {
+    TIRInstID Inst = inst;
+    irtype Type = type;
+    list<TIROperand> Operands = operands;
+}
 
-class TIRPatternOut<string asmStr> {
+class TIRPatternOut<string asmStr, list<string> operands> {
     string AsmStr = asmStr;
+    list<string> Operands = operands;
 }
 
 class TIRInstruction<TIRPatternIn in, TIRPatternOut out> {

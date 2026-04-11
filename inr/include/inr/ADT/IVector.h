@@ -8,11 +8,13 @@
 /// @file ADT/IVector.h
 /// @brief Provides the inline vector class.
 
+#include <inr/Support/Compiler.h>
+
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <initializer_list>
 #include <iterator>
-#include <stdexcept>
 #include <utility>
 #include <vector>
 
@@ -59,33 +61,22 @@ private:
     /// @brief Grows memory, moves to heap if needed.
     /// @param minCapacity Minimum capacity needed.
     /// @note May allocate more than minCapacity.
-    void growMemory(size_type minCapacity) {
+    void growMemory(size_type minCapacity) noexcept {
         if(minCapacity <= capacity_) return;
 
-        size_type newCapacity = 16;
-        while(newCapacity < minCapacity) {
-            newCapacity <<= 1;
-        }
-
+        size_type newCapacity =
+            std::bit_ceil(std::max<size_type>(minCapacity, 16));
         pointer newData =
             (pointer) operator new[](newCapacity * sizeof(value_type));
 
-        size_type i = 0;
-        try {
-            for(; i < size_; i++) {
-                new(newData + i) value_type(std::move_if_noexcept(data_[i]));
-            }
+        if constexpr(std::is_trivially_copyable_v<value_type>) {
+            std::memcpy(newData, data_, size_ * sizeof(value_type));
         }
-        catch(...) {
-            for(size_type j = i; j > 0; j--) {
-                newData[j - 1].~value_type();
+        else {
+            for(size_type i = 0; i < size_; i++) {
+                new(newData + i) value_type(std::move(data_[i]));
+                data_[i].~value_type();
             }
-            operator delete[](newData);
-            throw;
-        }
-
-        for(size_type i = size_; i > 0; i--) {
-            data_[i - 1].~value_type();
         }
 
         if(isHeap()) {
@@ -101,12 +92,12 @@ public:
     ivec() noexcept = default;
 
     /// @brief Copy constructor.
-    ivec(const ivec& other) {
+    ivec(const ivec& other) noexcept {
         insert(begin(), other.begin(), other.end());
     }
 
     /// @brief Copy operator.
-    ivec& operator=(const ivec& other) {
+    ivec& operator=(const ivec& other) noexcept {
         if(this != &other) {
             freeMemory();
             insert(begin(), other.begin(), other.end());
@@ -115,8 +106,7 @@ public:
     }
 
     /// @brief Move constructor.
-    ivec(ivec&& other) noexcept(
-        std::is_nothrow_move_constructible_v<value_type>) {
+    ivec(ivec&& other) noexcept {
         size_ = other.size_;
         capacity_ = other.capacity_;
 
@@ -128,23 +118,20 @@ public:
         }
         else {
             data_ = (pointer)inlineStorage_;
-            size_type i = 0;
-            try {
-                for(; i < size_; i++) {
+            if constexpr(std::is_trivially_copyable_v<value_type>) {
+                std::memcpy(data_, other.data_, size_ * sizeof(value_type));
+            }
+            else {
+                for(size_type i = 0; i < size_; ++i) {
                     new(data_ + i) value_type(std::move(other.data_[i]));
                 }
-            }
-            catch(...) {
-                for(size_type j = i; j > 0; j--) data_[j - 1].~value_type();
-                throw;
             }
             other.clear();
         }
     }
 
     /// @brief Move operator.
-    ivec& operator=(ivec&& other) noexcept(
-        std::is_nothrow_move_constructible_v<value_type>) {
+    ivec& operator=(ivec&& other) noexcept {
         if(this == &other) return *this;
 
         freeMemory();
@@ -155,20 +142,18 @@ public:
         if(other.isHeap()) {
             data_ = other.data_;
             other.data_ = (pointer)other.inlineStorage_;
-            other.capacity_ = N;
             other.size_ = 0;
+            other.capacity_ = N;
         }
         else {
             data_ = (pointer)inlineStorage_;
-            size_type i = 0;
-            try {
-                for(; i < size_; i++) {
+            if constexpr(std::is_trivially_copyable_v<value_type>) {
+                std::memcpy(data_, other.data_, size_ * sizeof(value_type));
+            }
+            else {
+                for(size_type i = 0; i < size_; ++i) {
                     new(data_ + i) value_type(std::move(other.data_[i]));
                 }
-            }
-            catch(...) {
-                for(size_type j = i; j > 0; j--) data_[j - 1].~value_type();
-                throw;
             }
             other.clear();
         }
@@ -177,13 +162,13 @@ public:
     }
 
     /// @brief Initializer list constructor.
-    ivec(std::initializer_list<value_type> init) {
+    ivec(std::initializer_list<value_type> init) noexcept {
         growMemory(init.size());
         insert(begin(), init.begin(), init.end());
     }
 
     /// @brief Initializer list operator.
-    ivec& operator=(std::initializer_list<value_type> init) {
+    ivec& operator=(std::initializer_list<value_type> init) noexcept {
         freeMemory();
         growMemory(init.size());
         insert(begin(), init.begin(), init.end());
@@ -217,16 +202,14 @@ public:
 
     /// @brief Safely accesses an element at an index.
     /// @param n Index to access it at.
-    /// @throws std::out_of_range()
-    reference at(size_type n) {
-        if(n >= size_) throw std::out_of_range("at position out of range");
+    reference at(size_type n) noexcept {
+        inr_assert(n < size_, "ivec's at() is out of range.");
         return data_[n];
     }
 
     /// @brief Same as `at(size_type)` but const.
-    /// @see `at(size_type)` for info.
-    const_reference at(size_type n) const {
-        if(n >= size_) throw std::out_of_range("at position out of range");
+    const_reference at(size_type n) const noexcept {
+        inr_assert(n < size_, "ivec's at() is out of range.");
         return data_[n];
     }
 
@@ -235,10 +218,9 @@ public:
     /// @param args Args to pass in to the constructor.
     /// @return Slot it was placed in.
     template<typename... Args>
-    iterator emplace(iterator pos, Args&&... args) {
+    iterator emplace(iterator pos, Args&&... args) noexcept {
         size_type index = pos - data_;
-        if(index > size_)
-            throw std::out_of_range("emplace position out of range");
+        inr_assert(index <= size_, "ivec's emplace position is out of range.");
 
         growMemory(size_ + 1);
 
@@ -256,21 +238,21 @@ public:
     /// @param args Args to pass to the constructor.
     /// @return Reference to the new object.
     template<typename... Args>
-    reference emplace_back(Args&&... args) {
+    reference emplace_back(Args&&... args) noexcept {
         return *emplace(end(), std::forward<Args>(args)...);
     }
 
     /// @brief Copies the object to the back of the vector.
     /// @param v Object to copy.
     /// @return Reference to the new object.
-    reference push_back(const_reference v) {
+    reference push_back(const_reference v) noexcept {
         return emplace_back(v);
     }
 
     /// @brief Moves the object to the back of the vector.
     /// @param v Object to move.
     /// @return Reference to the new object.
-    reference push_back(value_type&& v) {
+    reference push_back(value_type&& v) noexcept {
         return emplace_back(std::move(v));
     }
 
@@ -278,7 +260,7 @@ public:
     /// @param pos The position to copy it to.
     /// @param v Object to copy.
     /// @return The slot it was placed.
-    iterator insert(iterator pos, const_reference v) {
+    iterator insert(iterator pos, const_reference v) noexcept {
         return emplace(pos, v);
     }
 
@@ -286,7 +268,7 @@ public:
     /// @param pos The position to move it to.
     /// @param v Object to move.
     /// @return The slot it was placed.
-    iterator insert(iterator pos, value_type&& v) {
+    iterator insert(iterator pos, value_type&& v) noexcept {
         return emplace(pos, std::move(v));
     }
 
@@ -296,30 +278,27 @@ public:
     /// @param last Pointer to the end.
     /// @return Slot the first object was placed.
     template<typename InputIt>
-    iterator insert(iterator pos, InputIt first, InputIt last) {
+    iterator insert(iterator pos, InputIt first, InputIt last) noexcept {
         size_type index = pos - data_;
         size_type count = std::distance(first, last);
         if(count == 0) return pos;
 
         growMemory(size_ + count);
 
-        for(size_type i = size_; i > index; i--) {
-            new(data_ + i + count - 1)
-                value_type(std::move_if_noexcept(data_[i - 1]));
-            data_[i - 1].~value_type();
+        if constexpr(std::is_trivially_copyable_v<value_type>) {
+            std::memmove(data_ + index + count, data_ + index,
+                         (size_ - index) * sizeof(value_type));
+        }
+        else {
+            for(size_type i = size_; i > index; i--) {
+                new(data_ + i + count - 1) value_type(std::move(data_[i - 1]));
+                data_[i - 1].~value_type();
+            }
         }
 
         size_type i = 0;
-        try {
-            for(auto it = first; it != last; ++it, i++) {
-                new(data_ + index + i) value_type(*it);
-            }
-        }
-        catch(...) {
-            for(size_type j = i; j > 0; j--) {
-                data_[index + j - 1].~value_type();
-            }
-            throw;
+        for(auto it = first; it != last; ++it, i++) {
+            new(data_ + index + i) value_type(*it);
         }
 
         size_ += count;
@@ -379,7 +358,7 @@ public:
     }
 
     /// @brief Returns this as an STL vector.
-    std::vector<value_type> vec() {
+    std::vector<value_type> vec() noexcept {
         return std::vector<value_type>(begin(), end());
     }
 

@@ -28,8 +28,8 @@ public:
         return functions_.push_back(func);
     }
 
-    MachineFunction* newFunction(sview name) {
-        return addFunction(new MachineFunction(name, this));
+    MachineFunction* newFunction(const Function* function) {
+        return addFunction(new MachineFunction(function, this));
     }
 
     sview getName() const noexcept {

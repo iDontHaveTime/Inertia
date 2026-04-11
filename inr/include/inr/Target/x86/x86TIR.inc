@@ -5,11 +5,13 @@ namespace inr::x86 {
 enum class x86TIROpcodes {
 	MOV32rr,
 	MOV32ri,
+	MOV32rm,
+	MOV32mr,
 	RETx86,
 	ADD32rr,
 	ADD32ri,
 };
-constexpr const char* x86_TIRAsmStr = "movl\0movl\0ret\0addl\0addl\0";
+constexpr const char* x86_TIRAsmStr = "movl\0movl\0movl\0movl\0ret\0addl\0addl\0";
 void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
     if(inst.getInstID() == TIRInstID::STORE) {
         const Type* type = inst.getType();
@@ -18,10 +20,7 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
             if(op0->isReg()) {
                 const TIROperand* op1 = inst.getOperand(1);
                 if(op1->isReg()) {
-                    MachineInst::create((uint32_t)x86TIROpcodes::MOV32rr, block, {
-                            MachineOperand::createReg(op0->getReg()),
-                            MachineOperand::createReg(op1->getReg())
-                        });
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV32rr, block, {op1, op0});
                 }
             }
         }
@@ -33,16 +32,37 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
             if(op0->isReg()) {
                 const TIROperand* op1 = inst.getOperand(1);
                 if(op1->isImm()) {
-                    MachineInst::create((uint32_t)x86TIROpcodes::MOV32ri, block, {
-                            MachineOperand::createReg(op0->getReg()),
-                            MachineOperand::createImm(op1->getImm())
-                        });
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV32ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isMem()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV32rm, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isMem()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV32mr, block, {op1, op0});
                 }
             }
         }
     }
     if(inst.getInstID() == TIRInstID::RET) {
-        MachineInst::create((uint32_t)x86TIROpcodes::RETx86, block, {});
+        MachineInst::create((uint32_t)x86TIROpcodes::RETx86, block);
     }
     if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
         const Type* type = inst.getType();
@@ -51,10 +71,7 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
             if(op0->isReg()) {
                 const TIROperand* op1 = inst.getOperand(1);
                 if(op1->isReg()) {
-                    MachineInst::create((uint32_t)x86TIROpcodes::ADD32rr, block, {
-                            MachineOperand::createReg(op0->getReg()),
-                            MachineOperand::createReg(op1->getReg())
-                        });
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD32rr, block, {op1, op0});
                 }
             }
         }
@@ -66,10 +83,7 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
             if(op0->isReg()) {
                 const TIROperand* op1 = inst.getOperand(1);
                 if(op1->isImm()) {
-                    MachineInst::create((uint32_t)x86TIROpcodes::ADD32ri, block, {
-                            MachineOperand::createReg(op0->getReg()),
-                            MachineOperand::createImm(op1->getImm())
-                        });
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD32ri, block, {op1, op0});
                 }
             }
         }

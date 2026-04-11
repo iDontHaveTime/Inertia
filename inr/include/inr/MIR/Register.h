@@ -47,6 +47,8 @@ public:
         return index_;
     }
 
+    constexpr Register() noexcept : index_(NONE), kind_(Kind::None) {}
+
     constexpr Register(uint32_t index, Kind kind) noexcept :
         index_(index), kind_(kind) {}
 
@@ -73,6 +75,24 @@ public:
     constexpr Register& operator=(Register&&) noexcept = default;
 };
 
+class MemOperand {
+    Register reg_;   ///< Underlying register.
+    int64_t offset_; ///< Offset of the memory.
+public:
+    MemOperand(Register reg, int64_t offset) noexcept :
+        reg_(reg), offset_(offset) {}
+
+    int64_t getOffset() const noexcept {
+        return offset_;
+    }
+
+    Register getRegister() const noexcept {
+        return reg_;
+    }
+
+    bool operator==(const MemOperand&) const noexcept = default;
+};
+
 class RegisterClass {
     uint32_t regStart_;
     uint32_t regEnd_;
@@ -97,10 +117,6 @@ class RegisterClass {
         return *(regarray + regStart_ + reg);
     }
 
-    constexpr unsigned getSize() const noexcept {
-        return size_;
-    }
-
     constexpr uint32_t getName() const noexcept {
         return name_;
     }
@@ -109,6 +125,10 @@ public:
     constexpr RegisterClass(uint32_t start, uint32_t end, unsigned size,
                             uint32_t name) noexcept :
         regStart_(start), regEnd_(end), size_(size), name_(name) {}
+
+    constexpr unsigned getSize() const noexcept {
+        return size_;
+    }
 
     friend class RegisterInfo;
 };
@@ -177,33 +197,34 @@ public:
         descArray_(descArray),
         classArray_(classArray) {}
 
-    constexpr bool checkReg(Register reg) const noexcept {
-        if(reg.isVirtual() || reg.getIndex() >= regNum_) return true;
-
-        return false;
+    constexpr void checkReg(Register reg) const noexcept {
+        inr_assert(!reg.isVirtual(),
+                   "Virtual register is not a physical register.");
+        inr_assert(reg.getIndex() < regNum_, "Register is out of bounds.");
+        (void)reg;
     }
 
     constexpr arrview<Register> getSubRegs(Register reg) const noexcept {
-        if(checkReg(reg)) return {};
+        checkReg(reg);
 
         RegisterDesc desc = descArray_[reg.getIndex()];
         return {regsArray_.data() + desc.getSubRegs(), desc.getSubRegC()};
     }
 
     constexpr arrview<Register> getSuperRegs(Register reg) const noexcept {
-        if(checkReg(reg)) return {};
+        checkReg(reg);
 
         RegisterDesc desc = descArray_[reg.getIndex()];
         return {regsArray_.data() + desc.getSuperRegs(), desc.getSuperRegC()};
     }
 
     constexpr bool hasSuperRegs(Register reg) const noexcept {
-        if(checkReg(reg)) return false;
+        checkReg(reg);
         return descArray_[reg.getIndex()].hasSuperRegs();
     }
 
     constexpr bool hasSubRegs(Register reg) const noexcept {
-        if(checkReg(reg)) return false;
+        checkReg(reg);
         return descArray_[reg.getIndex()].hasSubRegs();
     }
 
@@ -213,7 +234,7 @@ public:
     }
 
     constexpr sview getName(Register reg) const noexcept {
-        if(checkReg(reg)) return {};
+        checkReg(reg);
 
         return {strArray_.data() + descArray_[reg.getIndex()].getName()};
     }
@@ -231,6 +252,15 @@ public:
             if((strArray_.data() + regclass.getName()) == name) return regclass;
         }
         return {0, 0, 0, 0};
+    }
+
+    constexpr RegisterClass getRegClass(Register reg) const noexcept {
+        for(const RegisterClass& regclass : classArray_) {
+            auto rarray = regclass.getRegs(regsArray_.data());
+            if(std::find(rarray.begin(), rarray.end(), reg) != rarray.end())
+                return regclass;
+        }
+        inr_notpossible("Register class not found.");
     }
 
     constexpr Register getByName(sview name) const noexcept {

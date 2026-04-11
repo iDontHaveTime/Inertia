@@ -2,4 +2,4 @@
 
 ## Purpose
 
-Contains target related headers, such as AsmPrinter, DAG ISel, and Target `inr-gen` classes.
+Contains target related headers, such as Triple, AsmPrinter, and target `inr-gen` files.

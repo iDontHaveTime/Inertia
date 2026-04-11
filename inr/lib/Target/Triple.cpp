@@ -125,53 +125,17 @@ std::endian Triple::getEndian() const noexcept {
 } // namespace inr
 
 #include <inr/TIR/TIRLowering.h>
-#define x86_TIR_HEADER
-#include <inr/Target/x86/x86TIR.inc>
 
-// TIR
+#include "../Target/x86/x86Triple.h"
+
 namespace inr {
-
-class TIRInstInfoTableHelper {
-    constexpr static unsigned TABLE_SIZE =
-        (unsigned)TIRInstID::TIR_INST_END - (unsigned)TIRInstID::TIR_INST_START;
-    TIRInstInfo info_[TABLE_SIZE];
-
-public:
-    constexpr TIRInstInfoTableHelper() noexcept : info_() {
-        for(unsigned i = 0; i < TABLE_SIZE; i++) {
-            info_[i] = TIRInstInfo(true);
-        }
-    }
-
-    constexpr TIRInstInfoTableHelper(
-        std::initializer_list<std::pair<TIRInstID, TIRInstInfo>>
-            exceptions) noexcept :
-        TIRInstInfoTableHelper() {
-        for(auto it = exceptions.begin(); it != exceptions.end(); ++it) {
-            info_[(unsigned)it->first] = it->second;
-        }
-    }
-
-    constexpr arrview<TIRInstInfo> getInfo() const noexcept {
-        return arrview<TIRInstInfo>(info_, TABLE_SIZE);
-    }
-};
-
-namespace x86 {
-constexpr unsigned x86_integer_words[4] = {8, 16, 32, 64};
-constexpr TIRInstInfoTableHelper x86_inst_info_table{
-    {TIRInstID::ADD_DEST_SRC_SRC, TIRInstInfo(false)}};
-constexpr TIRTargetDesc x86TargetDesc(x86_integer_words,
-                                      x86_inst_info_table.getInfo());
-
-} // namespace x86
 
 const char* Triple::getTIRAsmStr(Arch arch) noexcept {
     switch(arch) {
         case Arch::Unknown:
             return nullptr;
         case Arch::x86_64:
-            return x86::x86_TIRAsmStr;
+            return x86::getTIRAsmStr();
     }
 }
 
@@ -180,7 +144,7 @@ const TIRTargetDesc* Triple::getTIRTargetDesc(Arch arch) noexcept {
         case Arch::Unknown:
             return nullptr;
         case Arch::x86_64:
-            return &x86::x86TargetDesc;
+            return x86::getTIRTargetDesc();
     }
 }
 
@@ -189,25 +153,24 @@ Triple::TIRMatcherFunc Triple::getTIRMatchingFunc(Arch arch) noexcept {
         case Arch::Unknown:
             return nullptr;
         case Arch::x86_64:
-            return x86::x86TIRMatchEmit;
+            return x86::getTIRMatchingFunc();
     }
 }
 
-} // namespace inr
-
-// clang-format off
-#include <inr/Target/x86/x86Registers.h>
-#include <inr/Target/x86/x86CallingConv.h>
-// clang-format on
-
-namespace inr {
+Triple::FileType Triple::getFileType(OS os) noexcept {
+    switch(os) {
+        case OS::Unknown:
+        case OS::Linux:
+            return FileType::ELF;
+    }
+}
 
 const RegisterInfo* Triple::getRegisterInfo(Arch arch) noexcept {
     switch(arch) {
         case Arch::Unknown:
             return nullptr;
         case Arch::x86_64:
-            return &x86::RegInfo;
+            return x86::getRegisterInfo();
     }
 }
 
@@ -229,7 +192,7 @@ static inline CallingConv getx86_64CC(Triple::OS os, Triple::ABI abi) noexcept {
 }
 
 static inline bool getCC(Triple::Arch arch, Triple::OS os, Triple::ABI abi,
-                         CallingConv& cc) {
+                         CallingConv& cc) noexcept {
     if(cc == CallingConv::C) {
         switch(arch) {
             case Triple::Arch::x86_64:
@@ -245,23 +208,15 @@ static inline bool getCC(Triple::Arch arch, Triple::OS os, Triple::ABI abi,
     return false;
 }
 
-static inline CCFunc getx86CCFunc(CallingConv cc, bool ret) {
-    switch(cc) {
-        case CallingConv::SysV:
-            return ret ? x86::CCRetSysV : x86::CCSysV;
-        case CallingConv::C:
-            __builtin_unreachable();
-    }
-}
-
 static inline CCFunc getFinalCC(Triple::Arch arch, Triple::OS os,
-                                Triple::ABI abi, CallingConv cc, bool ret) {
+                                Triple::ABI abi, CallingConv cc,
+                                bool ret) noexcept {
     if(getCC(arch, os, abi, cc)) return nullptr;
     switch(arch) {
         case Triple::Arch::x86_64:
-            return getx86CCFunc(cc, ret);
+            return x86::getCCFunc(cc, ret);
         case Triple::Arch::Unknown:
-            __builtin_unreachable();
+            inr_notpossible("Unknown architecture isn't a thing.");
     }
 }
 
@@ -271,6 +226,50 @@ CCFunc Triple::getCCArgs(Arch arch, OS os, ABI abi, CallingConv cc) noexcept {
 
 CCFunc Triple::getCCRet(Arch arch, OS os, ABI abi, CallingConv cc) noexcept {
     return getFinalCC(arch, os, abi, cc, true);
+}
+
+arrview<Register> Triple::getCalleeSaved(Arch arch, CallingConv cc) noexcept {
+    if(cc == CallingConv::C) return {};
+
+    switch(arch) {
+        case Arch::Unknown:
+            return {};
+        case Arch::x86_64:
+            return x86::getCalleeSaved(cc);
+    }
+}
+
+arrview<Register> Triple::getCallerSaved(Arch arch, CallingConv cc) noexcept {
+    if(cc == CallingConv::C) return {};
+
+    switch(arch) {
+        case Arch::Unknown:
+            return {};
+        case Arch::x86_64:
+            return x86::getCallerSaved(cc);
+    }
+}
+
+CallingConv Triple::getDefaultCC(Triple triple) noexcept {
+    CallingConv cc = CallingConv::C;
+    getCC(triple.getArch(), triple.getOS(), triple.getABI(), cc);
+    return cc;
+}
+
+unsigned Triple::getCallAlignment() const noexcept {
+    switch(arch_) {
+        case Arch::Unknown:
+        case Arch::x86_64:
+            return 16;
+    }
+}
+
+unsigned Triple::getFunctionEntryStackSize() const noexcept {
+    switch(arch_) {
+        case Arch::Unknown:
+        case Arch::x86_64:
+            return 8;
+    }
 }
 
 } // namespace inr

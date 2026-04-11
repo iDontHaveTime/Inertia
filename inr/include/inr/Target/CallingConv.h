@@ -183,24 +183,6 @@ public:
     }
 };
 
-/// @brief DAG CCState.
-class CCState : public CCStateGeneric {
-    MachineFunction* mfunc_;
-
-public:
-    CCState(MachineFunction* mfunc, bool vararg, const RegisterInfo* regInfo,
-            arrview<Register> allocateable) :
-        CCStateGeneric(vararg, regInfo, allocateable), mfunc_(mfunc) {}
-
-    const MachineFunction* getMFunc() const noexcept {
-        return mfunc_;
-    }
-
-    MachineFunction* getMFunc() noexcept {
-        return mfunc_;
-    }
-};
-
 } // namespace inr
 
 #endif // INERTIA_TARGET_CALLINGCONV_H
