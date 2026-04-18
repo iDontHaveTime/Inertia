@@ -1,0 +1,49 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+include "inr/Target/Target.ing";
+
+// Reg to reg
+
+def ADD8rr : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i8, [TIROperand<TIRReg, "dest">, TIROperand<TIRReg, "src">]>,
+    TIRPatternOut<"addb", ["src", "dest"]>
+>;
+
+def ADD16rr : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i16, [TIROperand<TIRReg, "dest">, TIROperand<TIRReg, "src">]>,
+    TIRPatternOut<"addw", ["src", "dest"]>
+>;
+
+def ADD32rr : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i32, [TIROperand<TIRReg, "dest">, TIROperand<TIRReg, "src">]>,
+    TIRPatternOut<"addl", ["src", "dest"]>
+>;
+
+def ADD64rr : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i64, [TIROperand<TIRReg, "dest">, TIROperand<TIRReg, "src">]>,
+    TIRPatternOut<"addq", ["src", "dest"]>
+>;
+
+// Imm to reg
+
+def ADD8ri : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i8, [TIROperand<TIRReg, "dest">, TIROperand<TIRImm, "src">]>,
+    TIRPatternOut<"addb", ["src", "dest"]>
+>;
+
+def ADD16ri : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i16, [TIROperand<TIRReg, "dest">, TIROperand<TIRImm, "src">]>,
+    TIRPatternOut<"addw", ["src", "dest"]>
+>;
+
+def ADD32ri : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i32, [TIROperand<TIRReg, "dest">, TIROperand<TIRImm, "src">]>,
+    TIRPatternOut<"addl", ["src", "dest"]>
+>;
+
+def ADD64ri : TIRInstruction<
+    TIRPatternIn<ADD_DEST_SRC, i64, [TIROperand<TIRReg, "dest">, TIROperand<TIRImm, "src">]>,
+    TIRPatternOut<"addq", ["src", "dest"]>
+>;

@@ -160,7 +160,8 @@ public:
         /// @brief Provided type is not allowed in instructions.
         ///
         /// For example: %x = add void 1, 2; You cannot add void.
-        TypeNotAllowed
+        TypeNotAllowed,
+        DestinationIsNotPointer ///< Destination is not a pointer.
     };
 
 private:

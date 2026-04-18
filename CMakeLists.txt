@@ -6,13 +6,15 @@ set(INERTIA_CMAKE_UTILS ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # Include the version
 include(${INERTIA_CMAKE_UTILS}/InertiaVersion.cmake)
+# Include mapping function
+include(${INERTIA_CMAKE_UTILS}/InertiaLibraries.cmake)
 
 # Set the project
 project(Inertia
     VERSION ${INERTIA_VERSION_MAJOR}.${INERTIA_VERSION_MINOR}.${INERTIA_VERSION_PATCH}
     LANGUAGES C CXX ASM)
 
-# The backend
+# Inertia
 add_subdirectory(inr)
-# C frontend
+# inrcc
 add_subdirectory(inrcc)

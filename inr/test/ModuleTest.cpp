@@ -47,8 +47,13 @@ int main(int argc, char** argv) {
 
     inr::Block* entry = func->newBlock(ctx, "entry");
 
+    auto alloc = inr::AllocaInst::createAlloca(ctx.getPointer(), "slot", entry,
+                                               ctx.getI32());
+
     auto add = inr::BinaryInst::createAdd(
         func->getArg(0), ctx.getIntConstant(ctx.getI32(), 20), "sum", entry);
+
+    inr::StoreInst::createStore(alloc, add, entry);
 
     inr::ReturnInst::create(add, entry);
 
@@ -63,7 +68,7 @@ int main(int argc, char** argv) {
     inr::outs() << "Default triple: " << inr::Triple::getDefaultTriple()
                 << '\n';
 
-    inr::TIRLowering tir(inr::Triple::getDefaultTriple(), compFlags);
+    inr::TIRLowering tir(ctx, inr::Triple::getDefaultTriple(), compFlags);
 
     auto tirmod = tir.lowerSSA(mod);
     inr::standard_file_stream tirexampleStream(

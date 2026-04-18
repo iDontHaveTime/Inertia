@@ -1,6 +1,8 @@
 ; Module = main_module
 define i32 @main(i32 %argc, ptr %argv) {
 entry:
-	%sum = add i32 %argc, 20;
-	ret i32 %sum;
+	%slot = alloca i32
+	%sum = add i32 %argc, 20
+	store ptr %slot, i32 %sum
+	ret i32 %sum
 }

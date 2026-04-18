@@ -2,11 +2,18 @@
 ; target = x86_64-linux-gnu
 proc i32 @main(i32 %argc, ptr %argv) {
 entry:
-	%0 = reg eax
-	%1 = reg edi
-	store i32 %0, %1
+	%0 = reg rsp
+	%1 = imm 4
+	sub i64 %0, %1
 	%2 = reg eax
-	%3 = imm 20
-	add i32 %2, %3
+	%3 = reg edi
+	store i32 %2, %3
+	%4 = reg eax
+	%5 = imm 20
+	add i32 %4, %5
+	%6 = mem (reg rsp)
+	store i32 %6, %4
+	%7 = imm 4
+	add i64 %0, %7
 	ret
 }

@@ -111,6 +111,10 @@ public:
         return flags_ & decltype(flags_)(ValueFlags::Volatile);
     }
 
+    bool knownAtCT() const noexcept {
+        return valueID_ == ValueID::ConstantInt;
+    }
+
     virtual ~Value() noexcept = default;
 };
 

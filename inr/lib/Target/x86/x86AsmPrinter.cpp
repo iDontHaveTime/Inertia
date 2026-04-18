@@ -31,7 +31,10 @@ static inline void emitMOP(raw_stream& os, const MachineOperand& mo,
             break;
         case MachineOperand::Kind::DereferenceReg:
             MemOperand memop = mo.getMem();
-            os << memop.getOffset() << '(';
+            if(memop.getOffset()) {
+                os << memop.getOffset();
+            }
+            os << '(';
             emitReg(os, memop.getRegister(), regInfo);
             os << ')';
             break;

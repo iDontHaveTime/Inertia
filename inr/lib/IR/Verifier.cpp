@@ -123,7 +123,8 @@ void ModuleVerifier::blockVerify(ModuleErrors& errs, const Function& func,
     }
 }
 
-InstructionError* checkOperands(const Instruction& inst, const Type* expect) {
+static inline InstructionError* checkOperands(const Instruction& inst,
+                                              const Type* expect) {
     for(const Value* val : inst.getOperands()) {
         if(val->getType() != expect)
             return new InstructionError(
@@ -132,7 +133,8 @@ InstructionError* checkOperands(const Instruction& inst, const Type* expect) {
     return nullptr;
 }
 
-InstructionError* returnVerify(const Function& func, const ReturnInst& ret) {
+static inline InstructionError* returnVerify(const Function& func,
+                                             const ReturnInst& ret) {
     const Type* type = ret.getType();
 
     if(func.getType()->getReturn() != type) {
@@ -160,7 +162,7 @@ InstructionError* returnVerify(const Function& func, const ReturnInst& ret) {
     return checkOperands(ret, type);
 }
 
-InstructionError* binaryInstVerify(const BinaryInst& inst) {
+static inline InstructionError* binaryInstVerify(const BinaryInst& inst) {
     if(inst.getNumOperands() > 2) {
         return new InstructionError(&inst,
                                     InstructionError::SubKind::TooManyOperands);
@@ -173,6 +175,30 @@ InstructionError* binaryInstVerify(const BinaryInst& inst) {
     const Type* type = inst.getType();
 
     return checkOperands(inst, type);
+}
+
+static inline InstructionError* allocaInstVerify(const AllocaInst& inst) {
+    switch(inst.getTypeToAllocate()->getTypeID()) {
+        case Type::TypeID::Integer:
+        case Type::TypeID::Pointer:
+            break;
+        case Type::TypeID::Void:
+        case Type::TypeID::Function:
+        case Type::TypeID::Block:
+            return new InstructionError(
+                &inst, InstructionError::SubKind::TypeNotAllowed);
+    }
+
+    return nullptr;
+}
+
+static inline InstructionError* storeInstVerify(const StoreInst& inst) {
+    if(!inst.getOperand(0)->getType()->isPointer()) {
+        return new InstructionError(
+            &inst, InstructionError::SubKind::DestinationIsNotPointer);
+    }
+
+    return nullptr;
 }
 
 void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
@@ -191,8 +217,11 @@ void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
             err = binaryInstVerify((const BinaryInst&)inst);
             break;
         case Instruction::InstructionID::ALLOCA:
+            err = allocaInstVerify((const AllocaInst&)inst);
+            break;
         case Instruction::InstructionID::LOAD:
         case Instruction::InstructionID::STORE:
+            err = storeInstVerify((const StoreInst&)inst);
             break;
     }
     if(err) errs.addError(err);
@@ -269,6 +298,9 @@ void InstructionError::strerr(raw_stream& os) const {
         case SubKind::TypeNotAllowed:
             vError(os, instName,
                    " contains a disallowed type for that instruction");
+            break;
+        case SubKind::DestinationIsNotPointer:
+            vError(os, instName, "'s destination is not a pointer type");
             break;
     }
 }

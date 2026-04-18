@@ -77,13 +77,13 @@ private:
 
     /// @brief Clear the top bits.
     bigint& zeroOutTopBits() noexcept {
-        if(!(bits_ & ((2 << LIMB_DIV) - 1))) return *this;
+        if(!(bits_ & ((1 << LIMB_DIV) - 1))) return *this;
 
         if(onStack()) {
             stack_ &= (Limb(1) << bits_) - 1;
         }
         else {
-            *heapLast() &= (Limb(1) << bits_) - 1;
+            *heapLast() &= (Limb(1) << (bits_ & ((1 << LIMB_DIV) - 1))) - 1;
         }
         return *this;
     }
@@ -105,7 +105,7 @@ public:
     bigint(size_t bits, arrview<Limb> limbs) noexcept : bigint(bits) {
         if(onStack()) {
             Limb val = limbs.back();
-            val &= (Limb(1) << bits) - 1;
+            if(bits != LIMB_BITS) val &= (Limb(1) << bits) - 1;
 
             stack_ = val;
             return;
@@ -124,7 +124,7 @@ public:
     bigint(size_t bits, Limb val, bool isSigned = false) noexcept :
         bigint(bits) {
         if(onStack()) {
-            val &= (Limb(1) << bits) - 1;
+            if(bits != LIMB_BITS) val &= (Limb(1) << bits) - 1;
 
             if(isSigned && bits > 0) {
                 Limb sign_bit = Limb(1) << (bits - 1);
@@ -370,6 +370,17 @@ public:
     void negate() noexcept {
         flipAllBits();
         ++*this;
+    }
+
+    template<typename T>
+    T getAs() const noexcept {
+        if(onStack()) return (T)stack_;
+        return (T)*heap_;
+    }
+
+    Limb getAs() const noexcept {
+        if(onStack()) return stack_;
+        return *heap_;
     }
 };
 

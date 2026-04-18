@@ -26,12 +26,8 @@ class TIRInstruction;
 /// @brief Represents an instruction operand.
 class TIROperand {
 private:
-    /// @brief Can contain either a register, or an integer.
-    ///
-    /// The integer represents a frame index.
-    /// The constant integer represents an immediate.
-    /// nullptr_t exists for "none" operands, mainly used for describing
-    /// instructions.
+    /// @brief Can contain either a register, integer, memory, global, or
+    /// nothing.
     std::variant<Register, MemOperand, const ConstantInt*, const Global*,
                  std::monostate>
         data_;
@@ -48,6 +44,10 @@ public:
     TIROperand& operator=(const TIROperand&) noexcept = default;
     TIROperand(TIROperand&&) noexcept = default;
     TIROperand& operator=(TIROperand&&) noexcept = default;
+
+    const auto& getData() const noexcept {
+        return data_;
+    }
 
     bool isReg() const noexcept {
         return std::holds_alternative<Register>(data_);

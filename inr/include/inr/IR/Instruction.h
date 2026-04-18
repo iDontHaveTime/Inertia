@@ -12,6 +12,7 @@
 #include <inr/ADT/IVector.h>
 #include <inr/IR/Value.h>
 
+#include "inr/IR/Type.h"
 #include "inr/Support/Align.h"
 
 namespace inr {
@@ -141,15 +142,46 @@ class AllocaInst : public Instruction {
     const Type* typeToAllocate_;
     const Value* numberOfElements_;
     Alignment alignment_;
+    bool aligmentSet_; ///< Whether or not the alignment was set or auto.
 
-    AllocaInst(const Type* ptrtype, Block* parent, const Type* typeToAllocate,
-               const Value* numberOfElements, Alignment alignment) noexcept :
-        Instruction(InstructionID::ALLOCA, ptrtype, parent, {}),
+    AllocaInst(const Type* ptrtype, sview name, Block* parent,
+               const Type* typeToAllocate, const Value* numberOfElements,
+               Alignment alignment, bool alignSet) noexcept :
+        Instruction(InstructionID::ALLOCA, ptrtype, parent, {}, name),
         typeToAllocate_(typeToAllocate),
         numberOfElements_(numberOfElements),
-        alignment_(alignment) {}
+        alignment_(alignment),
+        aligmentSet_(alignSet) {}
 
 public:
+    static AllocaInst* createAlloca(const Type* ptrT, sview name, Block* parent,
+                                    const Type* typeToAllocate) {
+        return new AllocaInst(ptrT, name, parent, typeToAllocate, nullptr, 1,
+                              false);
+    }
+
+    static AllocaInst* createAlloca(const Type* ptrT, sview name, Block* parent,
+                                    const Type* typeToAllocate,
+                                    const Value* numberOfElements) {
+        return new AllocaInst(ptrT, name, parent, typeToAllocate,
+                              numberOfElements, 1, false);
+    }
+
+    static AllocaInst* createAlloca(const Type* ptrT, sview name, Block* parent,
+                                    const Type* typeToAllocate,
+                                    const Value* numberOfElements,
+                                    Alignment alignment) {
+        return new AllocaInst(ptrT, name, parent, typeToAllocate,
+                              numberOfElements, alignment, true);
+    }
+
+    static AllocaInst* createAlloca(const Type* ptrT, sview name, Block* parent,
+                                    const Type* typeToAllocate,
+                                    Alignment alignment) {
+        return new AllocaInst(ptrT, name, parent, typeToAllocate, nullptr,
+                              alignment, true);
+    }
+
     const Type* getTypeToAllocate() const noexcept {
         return typeToAllocate_;
     }
@@ -160,6 +192,21 @@ public:
 
     Alignment getAlignment() const noexcept {
         return alignment_;
+    }
+
+    bool explicitAlignment() const noexcept {
+        return aligmentSet_;
+    }
+};
+
+class StoreInst : public Instruction {
+    StoreInst(Value* dest, Value* src, Block* parent) :
+        Instruction(InstructionID::STORE, dest->getType(), parent,
+                    {dest, src}) {}
+
+public:
+    static StoreInst* createStore(Value* dest, Value* src, Block* parent) {
+        return new StoreInst(dest, src, parent);
     }
 };
 

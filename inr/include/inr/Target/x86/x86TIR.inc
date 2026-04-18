@@ -3,16 +3,66 @@
 #undef x86_TIR_HEADER
 namespace inr::x86 {
 enum class x86TIROpcodes {
+	MOV8rr,
+	MOV16rr,
 	MOV32rr,
+	MOV64rr,
+	MOV8ri,
+	MOV16ri,
 	MOV32ri,
+	MOV64ri,
+	MOV8rm,
+	MOV16rm,
 	MOV32rm,
+	MOV64rm,
+	MOV8mr,
+	MOV16mr,
 	MOV32mr,
-	RETx86,
+	MOV64mr,
+	ADD8rr,
+	ADD16rr,
 	ADD32rr,
+	ADD64rr,
+	ADD8ri,
+	ADD16ri,
 	ADD32ri,
+	ADD64ri,
+	SUB8rr,
+	SUB16rr,
+	SUB32rr,
+	SUB64rr,
+	SUB8ri,
+	SUB16ri,
+	SUB32ri,
+	SUB64ri,
+	RETx86,
 };
-constexpr const char* x86_TIRAsmStr = "movl\0movl\0movl\0movl\0ret\0addl\0addl\0";
+constexpr const char* x86_TIRAsmStr = "movb\0movw\0movl\0movq\0movb\0movw\0movl\0movq\0movb\0movw\0movl\0movq\0movb\0movw\0movl\0movq\0addb\0addw\0addl\0addq\0addb\0addw\0addl\0addq\0subb\0subw\0subl\0subq\0subb\0subw\0subl\0subq\0ret\0";
 void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV8rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV16rr, block, {op1, op0});
+                }
+            }
+        }
+    }
     if(inst.getInstID() == TIRInstID::STORE) {
         const Type* type = inst.getType();
         if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
@@ -21,6 +71,42 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
                 const TIROperand* op1 = inst.getOperand(1);
                 if(op1->isReg()) {
                     MachineInst::create((uint32_t)x86TIROpcodes::MOV32rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV64rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV8ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV16ri, block, {op1, op0});
                 }
             }
         }
@@ -39,12 +125,84 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
     }
     if(inst.getInstID() == TIRInstID::STORE) {
         const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV64ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isMem()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV8rm, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isMem()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV16rm, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
         if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
             const TIROperand* op0 = inst.getOperand(0);
             if(op0->isReg()) {
                 const TIROperand* op1 = inst.getOperand(1);
                 if(op1->isMem()) {
                     MachineInst::create((uint32_t)x86TIROpcodes::MOV32rm, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isMem()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV64rm, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isMem()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV8mr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isMem()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV16mr, block, {op1, op0});
                 }
             }
         }
@@ -61,8 +219,41 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
             }
         }
     }
-    if(inst.getInstID() == TIRInstID::RET) {
-        MachineInst::create((uint32_t)x86TIROpcodes::RETx86, block);
+    if(inst.getInstID() == TIRInstID::STORE) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isMem()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::MOV64mr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD8rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD16rr, block, {op1, op0});
+                }
+            }
+        }
     }
     if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
         const Type* type = inst.getType();
@@ -78,6 +269,42 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
     }
     if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
         const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD64rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD8ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD16ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
+        const Type* type = inst.getType();
         if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
             const TIROperand* op0 = inst.getOperand(0);
             if(op0->isReg()) {
@@ -87,6 +314,117 @@ void x86TIRMatchEmit(const TIRInstruction& inst, MachineBlock* block) {
                 }
             }
         }
+    }
+    if(inst.getInstID() == TIRInstID::ADD_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::ADD64ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB8rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB16rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB32rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isReg()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB64rr, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB8ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB16ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB32ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::SUB_DEST_SRC) {
+        const Type* type = inst.getType();
+        if((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) {
+            const TIROperand* op0 = inst.getOperand(0);
+            if(op0->isReg()) {
+                const TIROperand* op1 = inst.getOperand(1);
+                if(op1->isImm()) {
+                    MachineInst::create((uint32_t)x86TIROpcodes::SUB64ri, block, {op1, op0});
+                }
+            }
+        }
+    }
+    if(inst.getInstID() == TIRInstID::RET) {
+        MachineInst::create((uint32_t)x86TIROpcodes::RETx86, block);
     }
 }
 }

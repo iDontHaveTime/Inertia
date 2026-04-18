@@ -64,11 +64,26 @@ public:
     constexpr bool enabledInst(TIRInstID id) const noexcept {
         return getInfo(id).getEnabled();
     }
+
+    constexpr Register getFrameRegister() const noexcept {
+        return frameRegister_;
+    }
+
+    constexpr Register getStackRegister() const noexcept {
+        return stackRegister_;
+    }
 };
 
 class TIRLowering {
+    InrContext& ctx_;
     Triple triple_;
     Flags flags_;
+    bool stackKnownAtCT_ =
+        true; ///< Whether or not the stack size is known at compile time.
+    TIROperand* stackRegister_;
+    TIROperand*
+        pointerConstant_; ///< Integer with the same byte size as the pointer.
+    const IntegerType* ptrAsInteger_;
     const TIRTargetDesc* targetDesc_;
     std::forward_list<TIROperand> operandList_;
     std::unordered_map<const Value*, TIROperand*> operandMap_;
@@ -89,6 +104,9 @@ class TIRLowering {
                  TIROperand* rhs, TIRBlock* block);
     void emitSub(const Type* type, TIROperand* dest, TIROperand* lhs,
                  TIROperand* rhs, TIRBlock* block);
+    void emitPrologue(TIRBlock* block);
+    void emitEpilogue(TIRBlock* block);
+    void scanFunction(TIRFunction* func);
 
     /// @brief Any variant of the same operation will work.
     ///
@@ -113,6 +131,14 @@ class TIRLowering {
         return &operandList_.emplace_front(op);
     }
 
+    TIROperand* newRegOp(Register reg) {
+        return newOperand(reg);
+    }
+
+    TIROperand* newMemReg(Register reg, int64_t off = 0) {
+        return newOperand(MemOperand(reg, off));
+    }
+
     TIROperand* mapOperand(const Value* key, TIROperand* op) {
         return operandMap_[key] = op;
     }
@@ -128,7 +154,8 @@ class TIRLowering {
     bool linearRegallocFunction(TIRFunction* func);
 
 public:
-    TIRLowering(Triple triple, Flags flags) noexcept :
+    TIRLowering(InrContext& ctx, Triple triple, Flags flags) noexcept :
+        ctx_(ctx),
         triple_(triple),
         flags_(flags),
         targetDesc_(triple.getTIRTargetDesc()) {}

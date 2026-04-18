@@ -33,10 +33,35 @@ raw_stream& operator<<(raw_stream& os, const Instruction& ins) {
             else {
                 return os << " void";
             }
+        case Instruction::InstructionID::ALLOCA: {
+            const AllocaInst& ainst = (const AllocaInst&)ins;
+            os << '%' << ins.getName() << " = "
+               << Instruction::getInstructionIDStr(ins.getID()) << ' '
+               << *ainst.getTypeToAllocate();
+
+            if(ainst.getNumberOfElements()) {
+                os << ", " << *ainst.getNumberOfElements();
+                if(ainst.getAlignment().getAlignment() != 1) {
+                    os << ", " << ainst.getAlignment().getAlignment();
+                }
+            }
+            else {
+                if(ainst.getAlignment().getAlignment() != 1) {
+                    os << ", 1, " << ainst.getAlignment().getAlignment();
+                }
+            }
+        }
+            return os;
         case Instruction::InstructionID::ADD:
             return os << '%' << ins.getName() << " = "
                       << Instruction::getInstructionIDStr(ins.getID()) << ' '
                       << *ins.getType() << ' ' << *ins.getOperand(0) << ", "
+                      << *ins.getOperand(1);
+        case Instruction::InstructionID::STORE:
+            return os << Instruction::getInstructionIDStr(ins.getID()) << ' '
+                      << *ins.getOperand(0)->getType() << ' '
+                      << *ins.getOperand(0) << ", "
+                      << *ins.getOperand(1)->getType() << ' '
                       << *ins.getOperand(1);
         default:
             return os;

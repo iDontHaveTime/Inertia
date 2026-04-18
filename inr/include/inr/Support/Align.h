@@ -46,6 +46,12 @@ public:
         return *this;
     }
 
+    /// @brief Aligns the number to this alignment.
+    template<std::unsigned_integral T>
+    constexpr T align(T n) const noexcept {
+        return (n + align_ - 1) & ~(align_ - 1);
+    }
+
     constexpr Alignment() noexcept = default;
 
     constexpr Alignment(const Alignment&) noexcept = default;

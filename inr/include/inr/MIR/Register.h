@@ -20,52 +20,66 @@ class Register {
 public:
     enum class Kind : uint8_t { None, Physical, Virtual };
 
+    constexpr static uint32_t VIRT_START = 0x0000FFFF;
     constexpr static uint32_t NONE = ~0;
 
 private:
+    /// @brief Used for virtual and physical registers.
+    ///
+    /// Physical is less than 0x0000FFFF.
+    /// Virtual is more equals 0x0000FFFF.
+    /// None is 0xFFFFFFFF.
     uint32_t index_;
-    Kind kind_;
+
+    constexpr Register(uint32_t index) noexcept : index_(index) {}
 
 public:
     constexpr Kind getKind() const noexcept {
-        return kind_;
+        if(isPhysical()) return Kind::Physical;
+        if(isVirtual()) return Kind::Virtual;
+        return Kind::None;
     }
 
     constexpr bool isVirtual() const noexcept {
-        return kind_ == Kind::Virtual;
+        return index_ >= VIRT_START;
     }
 
     constexpr bool isPhysical() const noexcept {
-        return kind_ == Kind::Physical;
+        return index_ < VIRT_START;
     }
 
     constexpr bool isNone() const noexcept {
-        return kind_ == Kind::None || index_ == NONE;
+        return index_ == NONE;
     }
 
     constexpr uint32_t getIndex() const noexcept {
+        if(isVirtual()) return index_ - VIRT_START;
         return index_;
     }
 
-    constexpr Register() noexcept : index_(NONE), kind_(Kind::None) {}
+    constexpr uint32_t getRawIndex() const noexcept {
+        return index_;
+    }
+
+    constexpr Register() noexcept : index_(NONE) {}
 
     constexpr Register(uint32_t index, Kind kind) noexcept :
-        index_(index), kind_(kind) {}
+        index_(kind == Kind::Virtual ? index + VIRT_START : index) {}
 
     constexpr static Register createPhysical(uint32_t index) noexcept {
-        return Register(index, Kind::Physical);
+        return Register(index);
     }
 
     constexpr static Register createVirtual(uint32_t index) noexcept {
-        return Register(index, Kind::Virtual);
+        return Register(index + VIRT_START);
     }
 
     constexpr static Register createNone() noexcept {
-        return Register(NONE, Kind::None);
+        return Register(NONE);
     }
 
     constexpr bool operator==(Register other) const noexcept {
-        return other.index_ == index_ && other.kind_ == kind_;
+        return other.index_ == index_;
     }
 
     constexpr Register(const Register&) noexcept = default;

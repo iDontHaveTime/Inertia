@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/IR/Context.h>
 #include <inr/Support/Compiler.h>
 #include <inr/TIR/TIRInstruction.h>
 #include <inr/TIR/TIRLowering.h>
@@ -241,7 +242,8 @@ void TIRLowering::emitArithmetic(TIRInstID op, const Type* type,
             }
         }
         else {
-            emitStore(type, currentDest, operands[0], block);
+            if(currentDest != operands[0])
+                emitStore(type, currentDest, operands[0], block);
 
             solveOperands(type, currentDest,
                           ncarrview<TIROperand*>(operands + 1, 1), finalID,
@@ -307,10 +309,48 @@ void TIRLowering::lowerSSARet(const Instruction* inst, TIRBlock* block) {
         }
     }
 
+    emitEpilogue(block);
     block->addInstruction(new TIRRet(block, inst->getType()));
 }
 
-void TIRLowering::lowerSSAAlloca(const AllocaInst* inst, TIRBlock* block) {}
+void TIRLowering::emitPrologue(TIRBlock* block) {
+    TIRFunction* func = block->getParent();
+
+    if(func->needsFP_) {
+        emitSub(ptrAsInteger_, stackRegister_, stackRegister_, pointerConstant_,
+                block);
+        emitStore(ptrAsInteger_, newMemReg(stackRegister_->getReg()),
+                  func->frameReg_, block);
+        emitStore(ptrAsInteger_, func->frameReg_, stackRegister_, block);
+    }
+    if(func->stackSize_)
+        emitSub(
+            ptrAsInteger_, stackRegister_, stackRegister_,
+            newOperand(ctx_.getIntConstant(ptrAsInteger_, func->stackSize_)),
+            block);
+}
+
+void TIRLowering::emitEpilogue(TIRBlock* block) {
+    TIRFunction* func = block->getParent();
+
+    if(func->needsFP_) {
+        emitStore(ptrAsInteger_, stackRegister_, func->frameReg_, block);
+        emitStore(ptrAsInteger_, func->frameReg_,
+                  newMemReg(stackRegister_->getReg()), block);
+        emitAdd(ptrAsInteger_, stackRegister_, stackRegister_, pointerConstant_,
+                block);
+    }
+    else {
+        emitAdd(
+            ptrAsInteger_, stackRegister_, stackRegister_,
+            newOperand(ctx_.getIntConstant(ptrAsInteger_, func->stackSize_)),
+            block);
+    }
+}
+
+void TIRLowering::lowerSSAAlloca(const AllocaInst* inst, TIRBlock*) {
+    if(operandMap_.count(inst)) return;
+}
 
 void TIRLowering::lowerSSAInstruction(const Instruction* inst, TIRBlock* block,
                                       CCStateGeneric& state) {
@@ -330,8 +370,12 @@ void TIRLowering::lowerSSAInstruction(const Instruction* inst, TIRBlock* block,
             break;
         case Instruction::InstructionID::LOAD:
             break;
-        case Instruction::InstructionID::STORE:
-            break;
+        case Instruction::InstructionID::STORE: {
+            const Type* t = inst->getOperand(1)->getType();
+            if(t->isPointer()) t = ptrAsInteger_;
+            emitStore(t, operandMap_[inst->getOperand(0)],
+                      operandMap_[inst->getOperand(1)], block);
+        } break;
     }
 }
 
@@ -372,6 +416,88 @@ void TIRLowering::lowerSSABlock(const Block& block, TIRBlock* tblock,
     }
 }
 
+void TIRLowering::scanFunction(TIRFunction* func) {
+    const Function* original = func->getFunction();
+
+    bool needsFP = false;
+
+    uint32_t originalOffset =
+        triple_.getCallAlignment() + triple_.getFunctionEntryStackSize();
+    uint32_t currentOffset = originalOffset;
+
+    std::vector<std::pair<const AllocaInst*, uint32_t>> slots;
+
+    for(const Block& block : original->getBlocks()) {
+        for(const Instruction& inst : block.getInstructions()) {
+            if(inst.getID() == Instruction::InstructionID::ALLOCA) {
+                const AllocaInst& alloc = (const AllocaInst&)inst;
+                const Value* numberOfElements = alloc.getNumberOfElements();
+                const Type* elemType = alloc.getTypeToAllocate();
+                // Check for needsFP first, as calling knownAtCT after that
+                // is useless, especially since its 2 calls.
+                if(!needsFP) {
+                    if(numberOfElements && !numberOfElements->knownAtCT()) {
+                        needsFP = true;
+                        func->stackKnown_ = false;
+                        continue;
+                    }
+                }
+
+                uint32_t elemN = numberOfElements
+                                     ? ((const ConstantInt*)numberOfElements)
+                                           ->getValue()
+                                           .getAs()
+                                     : 1;
+
+                uint32_t elemSize = getTypeSizeInBytes(elemType, triple_);
+
+                uint32_t finalSize = elemSize * elemN;
+                Alignment align = alloc.explicitAlignment()
+                                      ? alloc.getAlignment()
+                                      : getTypeAlignment(elemType, triple_);
+
+                uint32_t newOffset = align.align(currentOffset + finalSize);
+                uint32_t diff = newOffset - currentOffset;
+
+                for(auto& p : slots) {
+                    p.second += diff;
+                }
+
+                currentOffset = newOffset;
+
+                slots.emplace_back(&alloc, 0);
+            }
+        }
+    }
+
+    needsFP = needsFP || flags_.getFrameRegister();
+
+    if(needsFP) {
+        if(!func->frameReg_) {
+            func->frameReg_ = targetDesc_->getFrameRegister().isNone()
+                                  ? newVreg(func)
+                                  : newOperand(targetDesc_->getFrameRegister());
+        }
+        func->needsFP_ = true;
+    }
+
+    uint32_t totalAllocated = currentOffset - originalOffset;
+    func->stackSize_ = totalAllocated;
+
+    if(needsFP) {
+        for(const auto& p : slots) {
+            operandMap_[p.first] = newMemReg(
+                func->frameReg_->getReg(), -int64_t(totalAllocated - p.second));
+        }
+    }
+    else {
+        for(const auto& p : slots) {
+            operandMap_[p.first] =
+                newMemReg(stackRegister_->getReg(), p.second);
+        }
+    }
+}
+
 void TIRLowering::lowerSSAFunction(const Function& func, TIRModule* mod) {
     TIRFunction* tfunc = mod->newFunction(&func);
     CCStateGeneric state(false, triple_.getRegisterInfo(),
@@ -379,15 +505,26 @@ void TIRLowering::lowerSSAFunction(const Function& func, TIRModule* mod) {
 
     state.analyzeArgs(func.getType()->getArgs(),
                       triple_.getCCArgs(func.getCC()));
+
+    scanFunction(tfunc);
+
     for(const Block& block : func.getBlocks()) {
-        lowerSSABlock(block, tfunc->newBlock(&block), state);
+        TIRBlock* tblock = tfunc->newBlock(&block);
+        if(&block == func.getBlocks().front()) {
+            emitPrologue(tblock);
+        }
+
+        lowerSSABlock(block, tblock, state);
     }
 }
 
 std::unique_ptr<TIRModule> TIRLowering::lowerSSA(const Module* mod) {
     if(!mod) return {};
-    operandMap_.clear();
     TIRModule* tirmod = new TIRModule(mod);
+    stackRegister_ = newOperand(targetDesc_->getStackRegister());
+    ptrAsInteger_ = ctx_.getInt(triple_.getPointerWidth());
+    pointerConstant_ = newOperand(
+        ctx_.getIntConstant(ptrAsInteger_, triple_.getPointerWidth() >> 3));
 
     for(const Function& func : mod->getFunctions()) {
         lowerSSAFunction(func, tirmod);
@@ -419,6 +556,27 @@ static inline void printTIROp(
     }
     else if(op.isImm()) {
         os << "imm " << op.getImm()->getValue();
+    }
+    else if(op.isMemReg()) {
+        os << "mem ";
+        if(op.getMemReg().getOffset()) {
+            os << op.getMemReg().getOffset();
+        }
+        os << '(';
+        Register reg = op.getMemReg().getRegister();
+        if(reg.isPhysical()) {
+            os << "reg " << regInfo->getName(reg);
+        }
+        else if(reg.isVirtual()) {
+            os << "vreg " << reg.getIndex();
+        }
+        else {
+            os << '?';
+        }
+        os << ')';
+    }
+    else if(op.isGlobal()) {
+        os << "globl " << op.getGlobal()->getName();
     }
 
     os << '\n';

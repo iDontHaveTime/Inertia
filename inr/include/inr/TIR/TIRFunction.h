@@ -22,7 +22,11 @@ namespace inr {
 class TIRFunction : public ilist_node<TIRFunction> {
     const Function* func_;   ///< Original function.
     ilist<TIRBlock> blocks_; ///< List of blocks.
-    unsigned vregC_;         ///< Current vreg count.
+    TIROperand* frameReg_ = nullptr;
+    uint32_t stackSize_ = 0;
+    unsigned vregC_; ///< Current vreg count.
+    bool needsFP_ = false;
+    bool stackKnown_ = true;
 
     /// @brief Constructs a function.
     ///
@@ -30,6 +34,7 @@ class TIRFunction : public ilist_node<TIRFunction> {
     TIRFunction(const Function* func) : func_(func) {}
 
     friend class TIRModule;
+    friend class TIRLowering;
 
 public:
     /// @brief Allocates and pushes back a new block.

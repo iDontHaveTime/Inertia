@@ -26,7 +26,7 @@ void Module::print(raw_stream& os) const {
             os << b.getName() << ":\n";
 
             for(const Instruction& ins : b.instructions_) {
-                os << '\t' << ins << ";\n";
+                os << '\t' << ins << '\n';
             }
         }
 
