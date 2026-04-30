@@ -1,0 +1,128 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+// C/C++ keywords
+// Assume that ident = how the token is written.
+// Just because a keyword is defined does not mean it is being or is implemented.
+
+#ifndef INRCC_KEYWORD
+#define INRCC_KEYWORD(...)
+#define INRCC_KEYWORD_UNDEF
+#endif
+
+#ifndef INRCC_KEYWORD_C89
+#define INRCC_KEYWORD_C89(...)
+#define INRCC_KEYWORD_C89_UNDEF
+#endif
+
+#ifndef INRCC_SHARED_KEYWORD
+#define INRCC_SHARED_KEYWORD(...)
+#define INRCC_SHARED_KEYWORD_UNDEF
+#endif
+
+// Macros
+INRCC_KEYWORD(define)
+INRCC_KEYWORD(defined)
+INRCC_KEYWORD(include)
+INRCC_KEYWORD(include_next)
+INRCC_KEYWORD(ifdef)
+INRCC_KEYWORD(ifndef)
+INRCC_KEYWORD(elif)
+INRCC_KEYWORD(endif)
+INRCC_KEYWORD(undef)
+
+// C89
+INRCC_KEYWORD(auto)
+INRCC_KEYWORD(const)
+INRCC_KEYWORD(double)
+INRCC_KEYWORD(float)
+INRCC_KEYWORD(int)
+INRCC_KEYWORD(short)
+INRCC_KEYWORD(struct)
+INRCC_KEYWORD(unsigned)
+INRCC_KEYWORD(break)
+INRCC_KEYWORD(continue)
+INRCC_KEYWORD(else)
+INRCC_KEYWORD(for)
+INRCC_KEYWORD(long)
+INRCC_KEYWORD(signed)
+INRCC_KEYWORD(switch)
+INRCC_KEYWORD(void)
+INRCC_KEYWORD(case)
+INRCC_KEYWORD(default)
+INRCC_KEYWORD(enum)
+INRCC_KEYWORD(goto)
+INRCC_KEYWORD(register)
+INRCC_KEYWORD(sizeof)
+INRCC_KEYWORD(typedef)
+INRCC_KEYWORD(volatile)
+INRCC_KEYWORD(char)
+INRCC_KEYWORD(do)
+INRCC_KEYWORD(extern)
+INRCC_KEYWORD(if)
+INRCC_KEYWORD(return)
+INRCC_KEYWORD(static)
+INRCC_KEYWORD(union)
+INRCC_KEYWORD(while)
+
+// C89 keywords
+INRCC_KEYWORD_C89(auto)
+INRCC_KEYWORD_C89(const)
+INRCC_KEYWORD_C89(double)
+INRCC_KEYWORD_C89(float)
+INRCC_KEYWORD_C89(int)
+INRCC_KEYWORD_C89(short)
+INRCC_KEYWORD_C89(struct)
+INRCC_KEYWORD_C89(unsigned)
+INRCC_KEYWORD_C89(break)
+INRCC_KEYWORD_C89(continue)
+INRCC_KEYWORD_C89(for)
+INRCC_KEYWORD_C89(long)
+INRCC_KEYWORD_C89(signed)
+INRCC_KEYWORD_C89(switch)
+INRCC_KEYWORD_C89(void)
+INRCC_KEYWORD_C89(case)
+INRCC_KEYWORD_C89(default)
+INRCC_KEYWORD_C89(enum)
+INRCC_KEYWORD_C89(goto)
+INRCC_KEYWORD_C89(register)
+INRCC_KEYWORD_C89(sizeof)
+INRCC_KEYWORD_C89(typedef)
+INRCC_KEYWORD_C89(volatile)
+INRCC_KEYWORD_C89(char)
+INRCC_KEYWORD_C89(do)
+INRCC_KEYWORD_C89(extern)
+INRCC_KEYWORD_C89(return)
+INRCC_KEYWORD_C89(static)
+INRCC_KEYWORD_C89(union)
+INRCC_KEYWORD_C89(while)
+
+INRCC_SHARED_KEYWORD(define)
+INRCC_SHARED_KEYWORD(defined)
+INRCC_SHARED_KEYWORD(include)
+INRCC_SHARED_KEYWORD(include_next)
+INRCC_SHARED_KEYWORD(ifdef)
+INRCC_SHARED_KEYWORD(ifndef)
+INRCC_SHARED_KEYWORD(elif)
+INRCC_SHARED_KEYWORD(endif)
+INRCC_SHARED_KEYWORD(undef)
+INRCC_SHARED_KEYWORD(if)
+INRCC_SHARED_KEYWORD(else)
+
+// Special keywords
+
+#ifdef INRCC_SHARED_KEYWORD_UNDEF
+#undef INRCC_SHARED_KEYWORD_UNDEF
+#undef INRCC_SHARED_KEYWORD
+#endif
+
+#ifdef INRCC_KEYWORD_UNDEF
+#undef INRCC_KEYWORD_UNDEF
+#undef INRCC_KEYWORD
+#endif
+
+#ifdef INRCC_KEYWORD_C89_UNDEF
+#undef INRCC_KEYWORD_C89_UNDEF
+#undef INRCC_KEYWORD_C89
+#endif

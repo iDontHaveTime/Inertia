@@ -13,7 +13,7 @@
 #include <cstddef>
 #include <cstring>
 
-#if !__has_builtin(strlen)
+#if !__has_builtin(strlen) || !__has_builtin(memcmp) || !__has_builtin(memchr)
 #include <type_traits>
 #endif
 
@@ -37,10 +37,48 @@ constexpr size_t length(const char* str) noexcept {
         return len;
     }
     else {
-        return strlen(str);
+        return std::strlen(str);
     }
 #endif
 }
+
+constexpr int compare(const void* s1, const void* s2, size_t n) noexcept {
+#if __has_builtin(memcmp)
+    return __builtin_memcmp(s1, s2, n);
+#else
+    if(std::is_constant_evaluated()) {
+        const unsigned char* a = (const unsigned char*)s1;
+        const unsigned char* b = (const unsigned char*)s2;
+        for(size_t i = 0; i < n; i++) {
+            if(a[i] != b[i]) {
+                return (a[i] < b[i]) ? -1 : 1;
+            }
+        }
+        return 0;
+    }
+    else {
+        return std::memcmp(s1, s2, n);
+    }
+#endif
+}
+
+constexpr const void* findc(const void* s, int c, size_t n) noexcept {
+#if __has_builtin(memchr)
+    return __builtin_memchr(s, c, n);
+#else
+    if(std::is_constant_evaluated()) {
+        const char* str = (const char*)s;
+        for(size_t i = 0; i < n; i++) {
+            if(str[i] == (unsigned char)c) return &str[i];
+        }
+        return nullptr;
+    }
+    else {
+        return std::memchr(s, c, n);
+    }
+#endif
+}
+
 } // namespace inr::str
 
 #endif // INERTIA_SUPPORT_STRING_H

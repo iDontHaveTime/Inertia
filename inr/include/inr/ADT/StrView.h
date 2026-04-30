@@ -67,11 +67,11 @@ public:
     constexpr sview(std::string_view sv) noexcept :
         str_(sv.data()), len_(sv.size()) {}
 
-    constexpr sview(const sview&) = default;
-    constexpr sview& operator=(const sview&) = default;
+    constexpr sview(const sview&) noexcept = default;
+    constexpr sview& operator=(const sview&) noexcept = default;
 
-    constexpr sview(sview&&) = default;
-    constexpr sview& operator=(sview&&) = default;
+    constexpr sview(sview&&) noexcept = default;
+    constexpr sview& operator=(sview&&) noexcept = default;
 
     constexpr iterator begin() const noexcept {
         return str_;
@@ -145,15 +145,16 @@ public:
         return os.write(sw.data(), sw.size());
     }
 
+    /// @brief Compares two string views.
+    constexpr bool operator==(sview other) const {
+        return len_ == other.len_ &&
+               inr::str::compare(str_, other.str_, len_) == 0;
+    }
+
     /// @brief Compares a string lexicographically.
     constexpr std::strong_ordering operator<=>(sview other) const {
         return std::lexicographical_compare_three_way(
             str_, str_ + len_, other.str_, other.str_ + other.len_);
-    }
-
-    /// @brief Compares two string views.
-    constexpr bool operator==(sview other) const {
-        return (*this <=> other) == std::strong_ordering::equal;
     }
 
     /// @brief Finds a character in the string and returns its index.
@@ -163,12 +164,22 @@ public:
     constexpr size_t find(char c, size_t from = 0) const noexcept {
         if(from >= len_) return len_;
 
+        const char* ptr =
+            (const char*)inr::str::findc(str_, (unsigned char)c, len_ - from);
+
+        return ptr ? ptr - str_ : 0;
+    }
+
+    constexpr size_t findLast(char c, size_t from = 0) const noexcept {
+        if(from >= len_) return len_;
+
+        size_t foundAt = 0;
         while(from < len_) {
-            if(str_[from] == c) return from;
+            if(str_[from] == c) foundAt = from;
             from++;
         }
 
-        return from;
+        return foundAt;
     }
 
     /// @brief Same as find(char, size_t) but case insensitive.
@@ -224,6 +235,8 @@ public:
     size_t hash() const noexcept {
         return std::hash<std::string_view>{}(strv());
     }
+
+    constexpr ~sview() noexcept = default;
 };
 
 } // namespace inr

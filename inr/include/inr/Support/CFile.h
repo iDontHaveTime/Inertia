@@ -36,6 +36,8 @@ public:
     /// @brief Move operator.
     CFile& operator=(CFile&& other) noexcept {
         if(this != &other) {
+            close();
+
             f_ = other.f_;
             close_ = other.close_;
 
@@ -68,6 +70,14 @@ public:
             f_ = nullptr;
             close_ = false;
         }
+    }
+
+    /// @brief Assumes read pointer is 0.
+    long readFileSizeFromStart() {
+        fseek(f_, 0, SEEK_END);
+        long n = ftell(f_);
+        fseek(f_, 0, SEEK_SET);
+        return n;
     }
 
     /// @brief Gets the FILE pointer stored in the class.

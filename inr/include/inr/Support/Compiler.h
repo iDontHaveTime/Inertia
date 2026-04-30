@@ -28,6 +28,12 @@
 #define __has_warning(x) 0
 #endif
 
+#ifdef __GNUC__
+#define inr_useattr(x) [[gnu::x]]
+#else
+#define inr_useattr(x)
+#endif
+
 #ifndef NDEBUG
 #include <cassert>
 

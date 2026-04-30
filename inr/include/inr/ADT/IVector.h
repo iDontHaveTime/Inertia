@@ -386,6 +386,36 @@ public:
     const_reference back() const noexcept {
         return data_[size_ - 1];
     }
+
+    void pop_back() noexcept {
+        inr_assert(size_ > 0, "Size must not be 0.");
+        if constexpr(!std::is_trivially_destructible_v<value_type>)
+            data_[size_ - 1].~value_type();
+        size_--;
+    }
+
+    const_iterator find(const_reference val) const noexcept {
+        const_iterator it = begin();
+        for(; it != end(); ++it) {
+            if(*it == val) return it;
+        }
+        return it;
+    }
+
+    iterator find(const_reference val) noexcept {
+        iterator it = begin();
+        for(; it != end(); ++it) {
+            if(*it == val) return it;
+        }
+        return it;
+    }
+
+    bool bfind(const T& val) const noexcept {
+        for(const_pointer i = data_; i != data_ + size_; ++i) {
+            if(*i == val) return true;
+        }
+        return false;
+    }
 };
 
 } // namespace inr

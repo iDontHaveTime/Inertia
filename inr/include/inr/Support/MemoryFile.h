@@ -31,13 +31,17 @@ private:
 
 public:
     MemoryFile() noexcept = default;
+
+    MemoryFile(FILE* f, long len, bool insertC, char c) {
+        openFromFILE(f, len, insertC, c);
+    }
+
     /// @brief Reads the file into memory, does not reset read pointer.
     /// @param f File to read from, must be opened with "r".
     /// @param len How many bytes to read.
     /// @param insertNL whether it should insert a new line.
-    MemoryFile(FILE* f, long len, bool insertNL = false) {
-        openFromFILE(f, len, insertNL);
-    }
+    MemoryFile(FILE* f, long len, bool insertNL = false) :
+        MemoryFile(f, len, insertNL, '\n') {}
 
     MemoryFile(const MemoryFile&) = delete;
     MemoryFile& operator=(const MemoryFile&) = delete;
@@ -49,6 +53,8 @@ public:
 
     MemoryFile& operator=(MemoryFile&& other) noexcept {
         if(this != &other) {
+            delete[] start_;
+
             start_ = other.start_;
             end_ = other.end_;
 
@@ -57,20 +63,23 @@ public:
         return *this;
     }
 
+    MemoryFile(CFile& f, long len, bool insertC, char c) :
+        MemoryFile(f.getFile(), len, insertC, c) {}
+
     /// @brief Same as the one with FILE*.
     MemoryFile(CFile& f, long len, bool insertNL = false) :
         MemoryFile(f.getFile(), len, insertNL) {}
 
     /// @see `MemoryFile(FILE*, long, bool)` for more info.
-    void openFromFILE(FILE* f, long len, bool insertNL = false) {
+    void openFromFILE(FILE* f, long len, bool insertC, char c) {
         clear();
-        if(insertNL) len++;
+        if(insertC) len++;
 
         start_ = new char[len];
         fread(start_, 1, len, f);
 
-        if(insertNL) {
-            start_[len - 1] = '\n';
+        if(insertC) {
+            start_[len - 1] = c;
         }
 
         end_ = start_ + len;
