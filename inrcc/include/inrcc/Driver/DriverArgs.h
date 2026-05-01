@@ -16,6 +16,7 @@
 
 namespace inrcc {
 
+/// @brief Represents an arg for the driver.
 class Arg {
 public:
     enum class Kind : unsigned {
@@ -29,38 +30,52 @@ public:
     };
 
 private:
-    inr::sview original_;
+    inr::sview original_;  ///< Original string of the arg.
     std::string optional_; ///< Processed string, optional.
 
-    Kind kind_;
+    Kind kind_; ///< Arg kind.
 
 public:
     Arg(inr::sview original, std::string optional, Kind kind) :
         original_(original), optional_(optional), kind_(kind) {}
 
+    /// @brief Returns the optional string, valid in some cases.
     const std::string& getOptional() const noexcept {
         return optional_;
     }
 
+    /// @brief Moves the optional string, used for reducing copying.
     std::string moveOptional() noexcept {
         return std::move(optional_);
     }
 
+    /// @brief Returns the original string.
     inr::sview getOriginal() const noexcept {
         return original_;
     }
 
+    /// @brief Returns the arg's kind.
     Kind getKind() const noexcept {
         return kind_;
     }
 };
 
+/// @brief Represents an arg option.
+///
+/// Its mostly about telling how this arg should act, for example
+/// `OptKind::Flag` would mean this arg is a flag, no value before or after.
 class ArgOpt {
 public:
-    enum class OptKind { Flag, Joined, Separate, JoinedOrSeparate };
+    /// @brief Represents on how should this arg get parsed.
+    enum class OptKind {
+        Flag,            ///< Standalone arg, e.g. --help, --version.
+        Joined,          ///< Joined arg, e.g. -std=, --target=.
+        Separate,        ///< Separate arg, e.g. -target.
+        JoinedOrSeparate ///< Joined or separate arg, e.g. -I, -o, -D.
+    };
 
-    Arg::Kind kind_;
-    OptKind optKind_;
+    Arg::Kind kind_;  ///< What kind of arg this option represents.
+    OptKind optKind_; ///< What option kind is this.
 
     constexpr ArgOpt() noexcept = default;
 
@@ -76,6 +91,7 @@ public:
     }
 };
 
+/// @brief Wraps an std::vector of Arg into a more abstract interface.
 class ArgVec {
     std::vector<Arg>& args_;
     unsigned argPos_[(unsigned)Arg::Kind::ArgsEnd]{};

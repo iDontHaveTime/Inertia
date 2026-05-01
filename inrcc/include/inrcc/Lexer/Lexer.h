@@ -20,6 +20,7 @@
 
 namespace inrcc {
 
+/// @brief Represents a token kind.
 enum class TokenKind : unsigned {
     TOKEN_UNKNOWN = 0,
     TOKEN_UNKNOWN_BYTES = 0,

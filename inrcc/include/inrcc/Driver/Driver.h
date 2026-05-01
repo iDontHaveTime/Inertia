@@ -17,11 +17,13 @@
 
 namespace inrcc {
 
+/// @brief Possible modes the driver can be in.
 enum class DriverMode {
     Unknown, ///< Unknown mode.
     CC       ///< C compiler.
 };
 
+/// @brief Represents file types that the driver knows.
 enum class FileType {
     Unknown,        ///< Unknown file type.
     C,              ///< C files: .c
@@ -30,28 +32,40 @@ enum class FileType {
     PassToAssembler ///< Assembly files: .s, .S, .asm
 };
 
+/// @brief The main entry point handler for inrcc.
 class Driver {
-    int argc_;
-    DriverMode mode_;
-    char** argv_;
-    inr::Triple target_;
+    int argc_;           ///< Original argc.
+    DriverMode mode_;    ///< Current mode.
+    char** argv_;        ///< Original argv.
+    inr::Triple target_; ///< Compilation target.
 
     std::string toolName_; ///< Name of the tool, typically inrcc.
 
+    /// @brief Gets the default language for current mode.
     Language getDefaultLanguage();
+    /// @brief An internal function that parses the args from argc and argv.
     std::vector<class Arg> parseArgs(bool& err);
+    /// @brief An internal function for parseArgs().
     bool matchJoined(int i, std::vector<Arg>& args);
+    /// @brief An internal function that verifies args correctness.
     bool verifyArgs(class ArgVec&);
 
+    /// @brief Prints out help, for --help.
     void printHelp();
+    /// @brief Prints out the version, for --version.
     void printVersion();
 
+    /// @brief Resolves the mode based on the args.
     bool resolveMode(ArgVec& args);
+    /// @brief Resolves the language based on the args.
     bool resolveLanguage(ArgVec& args, Language& lang);
+    /// @brief Resolves the target based on the args.
     bool resolveTarget(ArgVec& args);
 
+    /// @brief Gets the file type based on the arg's suffix.
     FileType getFileType(Arg* arg);
 
+    /// @brief Internal function for the compilation step.
     int sourceFileCompilation(ArgVec& args, Language lang);
 
 public:
@@ -61,6 +75,7 @@ public:
         argv_(argv),
         target_(inr::Triple::getDefaultTriple()) {}
 
+    /// @brief Should be called in main().
     int driverMain();
 
     template<typename... Args>
