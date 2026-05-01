@@ -28,9 +28,9 @@ enum LexerLookup : uint8_t {
 
 enum LexerNumber : uint8_t {
     LNumNone = 0,
-    LHexadecimal = 0x1,
-    LOctal = 0x2,
-    LBinary = 0x4
+    LBinary = 0x2,
+    LOctal = 0x8,
+    LHexadecimal = 0x10
 };
 
 class LexerLookupTable {
@@ -91,6 +91,8 @@ public:
         tokenKind_[(unsigned char)'}'] = (uint8_t)TokenKind::SYMBOL_RBRACE;
         tokenKind_[(unsigned char)'~'] = (uint8_t)TokenKind::SYMBOL_TILDE;
         tokenKind_[(unsigned char)'#'] = (uint8_t)TokenKind::PREPROCESS_HASH;
+        tokenKind_[(unsigned char)'\\'] =
+            (uint8_t)TokenKind::PREPROCESS_BACKSLASH;
 
         numberKind_[(unsigned char)'0'] = LBinary | LOctal | LHexadecimal;
         numberKind_[(unsigned char)'1'] = LBinary | LOctal | LHexadecimal;
@@ -218,6 +220,21 @@ void Lexer::caseNum(Token& tok) {
     }
 }
 
+inrcc_inline bool Lexer::lexUntilCOrNL(char c, bool escape) {
+    while(true) {
+        if(skipWhitespacePreProcess()) return true;
+        char f = *ptr_;
+        if(f == '\0') return true;
+        if(f == '\\') {
+            if(escape && jump(c)) continue;
+        }
+        else if(f == c) {
+            return false;
+        }
+        skip();
+    }
+}
+
 void Lexer::handleInclude() {
     if(skipWhitespacePreProcess()) return;
 
@@ -225,28 +242,29 @@ void Lexer::handleInclude() {
 
     if(tok.getKind() == TokenKind::SYMBOL_LESS) {
         const char* start = ptr_;
+        if(lexUntilCOrNL('>', false))
+            return; // ERROR. expected '>' to close include
+        DriverFMan::File f =
+            fman_.openFileBufferNoLocalDir(inr::sview(start, ptr_));
+        skipLine();
 
-        while(true) {
-            if(skipWhitespacePreProcess())
-                return; // ERROR. expected '>' to close include
-            tok = nextNoPreProcessingDirective();
-            if(tok.getKind() == TokenKind::SYMBOL_GREATER) {
-                DriverFMan::File f = fman_.openFileBufferNoLocalDir(
-                    inr::sview(start, tok.getStart()));
-
-                skipLine();
-
-                if(f.file) {
-                    pushFilePtr(f.file->memfile.data(), f);
-                }
-                // else ERROR. file not found
-                return;
-            }
-            else if(tok.getKind() == TokenKind::TOKEN_END)
-                return; // ERROR. expected '>' to close include
+        if(f.file) {
+            pushFilePtr(f.file->memfile.data(), f);
         }
+        // else ERROR. file not found
+        return;
     }
     else if(tok.getKind() == TokenKind::LITERAL_STRING) {
+        DriverFMan::File f =
+            fman_.openFileBufferYesLocalDir(getCurrentFile(), tok.getView());
+        skipLine();
+
+        if(f.file) {
+            pushFilePtr(f.file->memfile.data(), f);
+        }
+        // else ERROR. file not found
+
+        return;
     }
     else {
         skipLine();
@@ -415,7 +433,6 @@ void Lexer::handlePreprocessing() {
                 skipLine();
                 return;
             }
-            // TODO: Handle include next
             break;
         case TokenKind::KEYWORD_elif:
             if(skipElse()) {

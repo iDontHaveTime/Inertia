@@ -14,6 +14,7 @@
 #include <inr/Target/Triple.h>
 #include <inrcc/ADT/StringMap.h>
 #include <inrcc/Driver/DriverFileManager.h>
+#include <inrcc/Options/Data.h>
 #include <inrcc/Options/LangOptions.h>
 #include <inrcc/Support/Arena.h>
 
@@ -70,6 +71,7 @@ enum class TokenKind : unsigned {
     SYMBOL_SHIFTRIGHTEQUAL,
     SYMBOL_ELLIPSIS,
     SYMBOL_SPACESHIP,
+    PREPROCESS_BACKSLASH,
     PREPROCESS_HASH,
     PREPROCESS_HASHHASH,
     LITERAL_INTEGER,
@@ -189,6 +191,12 @@ public:
         kind_(tk), len_(ln), start_(st), info_(in) {}
     constexpr Token() noexcept = default;
 
+    constexpr Token(IdentInfo* info) noexcept :
+        kind_(info->getKind()),
+        len_(info->getLength()),
+        start_(info->getStart()),
+        info_(info) {}
+
     constexpr void setKind(TokenKind kind) noexcept {
         kind_ = kind;
     }
@@ -239,11 +247,15 @@ public:
 };
 
 class MacroInfo {
+public:
+    using MacroReplacements = inr::ivec<Token, 4>;
+
+private:
     bool functionLike_ = false;
     bool isVararg_ = false;
     IdentInfo* defaultVarargIdent_ = nullptr;
 
-    inr::ivec<Token, 4> replacements_;
+    MacroReplacements replacements_;
     inr::ivec<IdentInfo*, 4> args_;
 
 public:
@@ -365,6 +377,9 @@ private:
 
     int parseIfExpr();
 
+    /// @brief Returns true if encountered a new line.
+    bool lexUntilCOrNL(char c, bool escape);
+
     bool preprocess(const Token&, LexerTokenStack&);
 
     void pushFilePtr(const char* ptr, DriverFMan::File file) noexcept {
@@ -481,6 +496,7 @@ public:
 
     void setMacrosBasedOnTriple(inr::Triple);
     void addMacroWithPredefOne(inr::sview);
+    void setTypeMacros(const CData&);
 };
 
 inline TokenCharIterator& TokenCharIterator::operator++() noexcept {

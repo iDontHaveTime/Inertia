@@ -2,13 +2,13 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/Target/Triple.h>
 #include <inrcc/Lexer/Lexer.h>
-
-#include "inr/Target/Triple.h"
-
-namespace inrcc {
+#include <inrcc/Options/Data.h>
 
 #include <inrcc/Lexer/Macros.inc>
+
+namespace inrcc {
 
 MACRO_WITH_INTEGER_VALUE(MacroN1, 1);
 MACRO_WITH_INTEGER_VALUE(C99N, 199901L);
@@ -67,18 +67,218 @@ void Lexer::setMacros() {
     ENDIF()
 }
 
+struct IdentMapTypes {
+    using IdentPtr = IdentInfo*;
+    IdentPtr chart, shortt, intt, longt, signedt, unsignedt;
+
+    IdentMapTypes(IdentMap& map) {
+        auto c = map.find("char", 4);
+        auto s = map.find("short", 5);
+        auto i = map.find("int", 3);
+        auto l = map.find("long", 4);
+        auto ss = map.find("signed", 6);
+        auto us = map.find("unsigned", 8);
+
+        if(c) chart = *c;
+        if(s) shortt = *s;
+        if(i) intt = *i;
+        if(l) longt = *l;
+        if(ss) signedt = *ss;
+        if(us) unsignedt = *us;
+    }
+};
+
+static inline void setBasedOnClosestType(const IdentMapTypes& types,
+                                         MacroInfo::MacroReplacements& to,
+                                         const CData& data, unsigned request,
+                                         int sign) {
+    // sign is 0 none, -1 signed, 1 unsigned
+    if(request == data.getCharWidth()) {
+        if(sign == 0) {
+            to.emplace_back(types.chart);
+        }
+        else if(sign < 0) {
+            to.emplace_back(types.signedt);
+            to.emplace_back(types.chart);
+        }
+        else if(sign > 0) {
+            to.emplace_back(types.unsignedt);
+            to.emplace_back(types.chart);
+        }
+    }
+    else if(request == data.getShortWidth()) {
+        if(sign == 0) {
+            to.emplace_back(types.shortt);
+        }
+        else if(sign < 0) {
+            to.emplace_back(types.signedt);
+            to.emplace_back(types.shortt);
+        }
+        else if(sign > 0) {
+            to.emplace_back(types.unsignedt);
+            to.emplace_back(types.shortt);
+        }
+    }
+    else if(request == data.getIntWidth()) {
+        if(sign == 0) {
+            to.emplace_back(types.intt);
+        }
+        else if(sign < 0) {
+            to.emplace_back(types.signedt);
+            to.emplace_back(types.intt);
+        }
+        else if(sign > 0) {
+            to.emplace_back(types.unsignedt);
+            to.emplace_back(types.intt);
+        }
+    }
+    else if(request == data.getLongWidth()) {
+        if(sign == 0) {
+            to.emplace_back(types.longt);
+            to.emplace_back(types.intt);
+        }
+        else if(sign < 0) {
+            to.emplace_back(types.signedt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.intt);
+        }
+        else if(sign > 0) {
+            to.emplace_back(types.unsignedt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.intt);
+        }
+    }
+    else if(request == data.getLongLongWidth()) {
+        if(sign == 0) {
+            to.emplace_back(types.longt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.intt);
+        }
+        else if(sign < 0) {
+            to.emplace_back(types.signedt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.intt);
+        }
+        else if(sign > 0) {
+            to.emplace_back(types.unsignedt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.longt);
+            to.emplace_back(types.intt);
+        }
+    }
+}
+
+void Lexer::setTypeMacros(const CData& data) {
+    if(data.getIntWidth() == 32 && data.getPtrWidth() == 64 &&
+       data.getLongLongWidth() == 64 && data.getLongWidth() == 64) {
+        INSERT_MACRO("_LP64", MacroN1);
+        INSERT_MACRO("__LP64__", MacroN1);
+    }
+
+    IdentMapTypes types(infoTable_);
+
+#define SET_TYPE_MACRO_NEW(ID, STR, COND, SIGN) \
+    MacroInfo* ID = arena_.alloc<MacroInfo>();  \
+    macros_.insert(STR, sizeof(STR) - 1, ID);   \
+    setBasedOnClosestType(types, ID->getReplacements(), data, COND, SIGN)
+
+#define ALIAS_TYPE_MACRO(ID, STR) macros_.insert(STR, sizeof(STR) - 1, ID);
+
+    SET_TYPE_MACRO_NEW(sizetype, "__SIZE_TYPE__", data.getSizeWidth(), 1);
+
+    // wchar, wint, intmax, uintmax, sig_atomic, skip for now.
+    SET_TYPE_MACRO_NEW(int8, "__INT8_TYPE__", 8, -1);
+    SET_TYPE_MACRO_NEW(int16, "__INT16_TYPE__", 8, -1);
+    SET_TYPE_MACRO_NEW(int32, "__INT32_TYPE__", 8, -1);
+    SET_TYPE_MACRO_NEW(int64, "__INT64_TYPE__", 8, -1);
+
+    SET_TYPE_MACRO_NEW(uint8, "__UINT8_TYPE__", 8, 1);
+    SET_TYPE_MACRO_NEW(uint16, "__UINT16_TYPE__", 8, 1);
+    SET_TYPE_MACRO_NEW(uint32, "__UINT32_TYPE__", 8, 1);
+    SET_TYPE_MACRO_NEW(uint64, "__UINT64_TYPE__", 8, 1);
+
+    // Alias both least and fast for now.
+    ALIAS_TYPE_MACRO(int8, "__INT_LEAST8_TYPE__");
+    ALIAS_TYPE_MACRO(int16, "__INT_LEAST16_TYPE__");
+    ALIAS_TYPE_MACRO(int32, "__INT_LEAST32_TYPE__");
+    ALIAS_TYPE_MACRO(int64, "__INT_LEAST64_TYPE__");
+
+    ALIAS_TYPE_MACRO(uint8, "__UINT_LEAST8_TYPE__");
+    ALIAS_TYPE_MACRO(uint16, "__UINT_LEAST16_TYPE__");
+    ALIAS_TYPE_MACRO(uint32, "__UINT_LEAST32_TYPE__");
+    ALIAS_TYPE_MACRO(uint64, "__UINT_LEAST64_TYPE__");
+
+    ALIAS_TYPE_MACRO(int8, "__INT_FAST8_TYPE__");
+    ALIAS_TYPE_MACRO(int16, "__INT_FAST16_TYPE__");
+    ALIAS_TYPE_MACRO(int32, "__INT_FAST32_TYPE__");
+    ALIAS_TYPE_MACRO(int64, "__INT_FAST64_TYPE__");
+
+    ALIAS_TYPE_MACRO(uint8, "__UINT_FAST8_TYPE__");
+    ALIAS_TYPE_MACRO(uint16, "__UINT_FAST16_TYPE__");
+    ALIAS_TYPE_MACRO(uint32, "__UINT_FAST32_TYPE__");
+    ALIAS_TYPE_MACRO(uint64, "__UINT_FAST64_TYPE__");
+
+    SET_TYPE_MACRO_NEW(intptr, "__INTPTR_TYPE__", data.getPtrWidth(), 0);
+    SET_TYPE_MACRO_NEW(uintptr, "__UINTPTR_TYPE__", data.getPtrWidth(), 1);
+
+    // use pointer size at least for now
+    ALIAS_TYPE_MACRO(intptr, "__PTRDIFF_TYPE__");
+
+    char* buffer = nullptr;
+    std::to_chars_result cres;
+
+#define NUMERICAL_MACRO_NEW(ID, STR, VAL)                          \
+    buffer = arena_.allocN<char>(16);                              \
+    MacroInfo* ID = arena_.alloc<MacroInfo>();                     \
+    macros_.insert(STR, sizeof(STR) - 1, ID);                      \
+    cres = std::to_chars(buffer, buffer + 16, VAL);                \
+    if(cres.ec == std::errc())                                     \
+    ID->getReplacements().emplace_back(TokenKind::LITERAL_INTEGER, \
+                                       cres.ptr - buffer, buffer, nullptr)
+
+    NUMERICAL_MACRO_NEW(shortw, "__SHRT_WIDTH__", data.getShortWidth());
+    NUMERICAL_MACRO_NEW(intw, "__INT_WIDTH__", data.getIntWidth());
+    NUMERICAL_MACRO_NEW(lw, "__LONG_WIDTH__", data.getLongWidth());
+    NUMERICAL_MACRO_NEW(llw, "__LONG_LONG_WIDTH__", data.getLongLongWidth());
+
+    NUMERICAL_MACRO_NEW(sizew, "__SIZE_WIDTH__", data.getSizeWidth());
+
+    NUMERICAL_MACRO_NEW(intlw8, "__INT_LEAST8_WIDTH__", 8);
+    NUMERICAL_MACRO_NEW(intlw16, "__INT_LEAST16_WIDTH__", 16);
+    NUMERICAL_MACRO_NEW(intlw32, "__INT_LEAST32_WIDTH__", 32);
+    NUMERICAL_MACRO_NEW(intlw64, "__INT_LEAST64_WIDTH__", 64);
+
+    ALIAS_TYPE_MACRO(intlw8, "__INT_FAST8_WIDTH__");
+    ALIAS_TYPE_MACRO(intlw16, "__INT_FAST16_WIDTH__");
+    ALIAS_TYPE_MACRO(intlw32, "__INT_FAST32_WIDTH__");
+    ALIAS_TYPE_MACRO(intlw64, "__INT_FAST64_WIDTH__");
+
+    NUMERICAL_MACRO_NEW(intptrw, "__INTPTR_WIDTH__", data.getPtrWidth());
+
+    // pointer size currently
+    ALIAS_TYPE_MACRO(intptrw, "__PTRDIFF_WIDTH__");
+
+    NUMERICAL_MACRO_NEW(shortsz, "__SIZEOF_SHORT__", data.getShortSize());
+    NUMERICAL_MACRO_NEW(intsz, "__SIZEOF_INT__", data.getIntSize());
+    NUMERICAL_MACRO_NEW(longsz, "__SIZEOF_LONG__", data.getLongSize());
+    NUMERICAL_MACRO_NEW(llsz, "__SIZEOF_LONG_LONG__", data.getLongLongSize());
+    NUMERICAL_MACRO_NEW(ptrsz, "__SIZEOF_POINTER__", data.getPtrSize());
+    NUMERICAL_MACRO_NEW(sizesz, "__SIZEOF_SIZE_T__", data.getSizeSize());
+
+    // same scenario here
+    ALIAS_TYPE_MACRO(ptrsz, "__SIZEOF_PTRDIFF_T__");
+}
+
 void Lexer::setMacrosBasedOnTriple(inr::Triple target) {
     inr::Triple::FileType format = target.getFileType();
+
     STARTIF(ARCH(x86_64))
     INSERT_MACRO("__x86_64__", MacroN1);
     INSERT_MACRO("__x86_64", MacroN1);
     INSERT_MACRO("__amd64__", MacroN1);
     INSERT_MACRO("__amd64", MacroN1);
 
-    STARTIF(OS(Linux))
-    INSERT_MACRO("__LP64__", MacroN1);
-    INSERT_MACRO("_LP64", MacroN1);
-    ENDIF()
     ENDIF()
 
     STARTIF(OS(Linux))

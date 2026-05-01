@@ -11,6 +11,7 @@
 #include <inrcc/Driver/DriverArgs.h>
 #include <inrcc/Driver/DriverFileManager.h>
 #include <inrcc/Lexer/Lexer.h>
+#include <inrcc/Options/Data.h>
 #include <inrcc/Options/LangOptions.h>
 #include <inrcc/Support/Arena.h>
 
@@ -186,9 +187,11 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
     Arena arena;
     IdentMap infoTable;
     MacroInfo baseFile({{TokenKind::LITERAL_STRING, 0, nullptr, nullptr}});
+    CData data(target);
 
     Lexer lex(lang, file, fman, arena, infoTable, &baseFile);
     lex.setMacrosBasedOnTriple(target);
+    lex.setTypeMacros(data);
 
     auto predefines = args.get(Arg::Kind::Define);
 

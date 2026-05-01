@@ -188,3 +188,21 @@ split);
 
 const char* vararg_str = VARARG_STR(  42,    
      comma,    something, space?   );
+
+#define INRCC_VER(x, y, z) {x, y, z}
+
+struct inrcc_ver {
+    int maj, min, pat;
+};
+
+#ifndef __inrcc__
+#error Not using inrcc
+#endif
+
+struct inrcc_ver using_ver() {
+    return (struct inrcc_ver)INRCC_VER(__inrcc_major__, __inrcc_minor__, __inrcc_patchlevel__);
+}
+
+__SIZE_TYPE__ this_is_the_size_type() {
+    return __SHRT_WIDTH__;
+}
