@@ -155,6 +155,10 @@ int gluem() {
     return glue(1, 2);
 }
 
+int gluem112() {
+    return glue(1 + 2, 3 + 4);
+}
+
 int obj_glue() {
     return -1;
 }
@@ -205,4 +209,20 @@ struct inrcc_ver using_ver() {
 
 __SIZE_TYPE__ this_is_the_size_type() {
     return __SHRT_WIDTH__;
+}
+
+#define 
+#define 67
+#undef
+
+#define __FILE__ 0
+#undef __BASE_FILE__
+
+#error Some error message
+#warning Some warning message
+
+#define INVALID_INTEGER_PASTE 1##X
+
+int invalid() {
+    return INVALID_INTEGER_PASTE;
 }

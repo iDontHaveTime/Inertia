@@ -11,6 +11,7 @@
 #include <inr/ADT/StrView.h>
 #include <inr/Support/Logger.h>
 #include <inr/Target/Triple.h>
+#include <inrcc/Diagnostics/Diagnostics.h>
 #include <inrcc/Options/LangOptions.h>
 
 #include <vector>
@@ -34,10 +35,11 @@ enum class FileType {
 
 /// @brief The main entry point handler for inrcc.
 class Driver {
-    int argc_;           ///< Original argc.
-    DriverMode mode_;    ///< Current mode.
-    char** argv_;        ///< Original argv.
-    inr::Triple target_; ///< Compilation target.
+    int argc_;                ///< Original argc.
+    DriverMode mode_;         ///< Current mode.
+    char** argv_;             ///< Original argv.
+    inr::Triple target_;      ///< Compilation target.
+    Diagnostics diagnostics_; ///< Diagnostics.
 
     std::string toolName_; ///< Name of the tool, typically inrcc.
 

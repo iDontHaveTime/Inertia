@@ -19,3 +19,8 @@ target_compile_definitions(InrccLexer PRIVATE
 file(GLOB DriverSources "Driver/*.cpp")
 
 add_inrcc_library(Driver ${DriverSources})
+
+# Diagnostics library
+file(GLOB DiagSources "Diagnostics/*.cpp")
+
+add_inrcc_library(Diag ${DiagSources})

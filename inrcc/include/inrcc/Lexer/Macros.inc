@@ -3,10 +3,13 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
 #define MACRO_WITH_INTEGER_VALUE(ID, N) \
-static MacroInfo ID{Token(TokenKind::LITERAL_INTEGER, (sizeof(#N)-1), #N, nullptr)}
+static MacroInfo ID{{Token(TokenKind::LITERAL_INTEGER, (sizeof(#N)-1), #N, nullptr)}, true}
+
+#define MACRO_WITH_INTEGER_VALUE_NON_BUILTIN(ID, N) \
+static MacroInfo ID{{Token(TokenKind::LITERAL_INTEGER, (sizeof(#N)-1), #N, nullptr)}}
 
 #define MACRO_WITH_STRING_VALUE(ID, STR) \
-static MacroInfo ID{Token(TokenKind::LITERAL_STRING, (sizeof(STR)-1), STR, nullptr)}
+static MacroInfo ID{{Token(TokenKind::LITERAL_STRING, (sizeof(STR)-1), STR, nullptr)}, true}
 
 #define INSERT_MACRO(STR, MACRO) \
 macros_.insert(STR, sizeof(STR)-1, &MACRO)

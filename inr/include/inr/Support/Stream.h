@@ -262,6 +262,32 @@ public:
         return *this;
     }
 
+    /// @brief Resets or sets boldness.
+    /// @param b True to enable, false to disable.
+    /// @return *this
+    raw_stream& setBold(bool b = true) {
+        if(hasColors()) {
+            *this << (b ? "\033[1m" : "\033[22m");
+        }
+        return *this;
+    }
+
+    /// @brief Resets foreground color.
+    raw_stream& removeFColor() {
+        if(hasColors()) {
+            *this << "\033[39m";
+        }
+        return *this;
+    }
+
+    /// @brief Resets background color.
+    raw_stream& removeBColor() {
+        if(hasColors()) {
+            *this << "\033[49m";
+        }
+        return *this;
+    }
+
     /// @brief Call stream manipulator on this stream.
     /// @param sm Stream manipulator.
     /// @return *this

@@ -8,12 +8,14 @@
 #define INRCC_EXT 0x8000
 
 // C89
-INRCC_LANG(c89, true, "c89", 0x1)
+INRCC_LANG(c89, false, "c89", 0x1)
 // C89 w Extensions
-INRCC_LANG(gnu89, true, "gnu89", 0x1 | INRCC_EXT)
+INRCC_LANG(gnu89, false, "gnu89", 0x1 | INRCC_EXT)
 
 // C99
-INRCC_LANG(c99, false, "c99", 0x2)
+INRCC_LANG(c99, true, "c99", 0x2)
+// C99 w Extensions
+INRCC_LANG(gnu99, true, "gnu99", 0x2 | INRCC_EXT)
 
 // C11
 INRCC_LANG(c11, false, "c11", 0x4)

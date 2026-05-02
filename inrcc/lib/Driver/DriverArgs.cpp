@@ -15,7 +15,7 @@ namespace inrcc {
 Language Driver::getDefaultLanguage() {
     switch(mode_) {
         case DriverMode::CC:
-            return Language::c89; // As of now c89 is the default.
+            return Language::c99; // As of now c99 is the default.
         case DriverMode::Unknown:
             return Language::Unknown;
     }

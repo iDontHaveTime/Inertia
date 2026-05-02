@@ -34,11 +34,20 @@ void Lexer::setKeywords() {
 #include <inrcc/Lexer/TokenKind.inc>
 #undef INRCC_KEYWORD_C89
             break;
+        case Language::gnu99:
+            [[fallthrough]];
         case Language::c99:
+#define INRCC_KEYWORD_C99(ID, ...)                   \
+    infoTable_.insert(inrcc_keyword_##ID.getStart(), \
+                      inrcc_keyword_##ID.getLength(), &inrcc_keyword_##ID);
+#include <inrcc/Lexer/TokenKind.inc>
+#undef INRCC_KEYWORD_C99
+            break;
         case Language::c11:
         case Language::c17:
         case Language::c23:
         case Language::Unknown:
+            break;
             break;
     }
 }

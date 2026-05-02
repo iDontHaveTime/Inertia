@@ -3,6 +3,6 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
 // Tests whether or not inrcc can include files.
-#include <stdio.h>
+#include <stdint.h>
 
 int main() { return 0; }

@@ -13,6 +13,7 @@
 #include <inr/ADT/StrView.h>
 #include <inr/Target/Triple.h>
 #include <inrcc/ADT/StringMap.h>
+#include <inrcc/Diagnostics/Diagnostics.h>
 #include <inrcc/Driver/DriverFileManager.h>
 #include <inrcc/Options/Data.h>
 #include <inrcc/Options/LangOptions.h>
@@ -77,6 +78,7 @@ enum class TokenKind : unsigned {
     PREPROCESS_HASHHASH,
     LITERAL_INTEGER,
     LITERAL_STRING,
+    INVALID_INTEGER,
 #define INRCC_KEYWORD(ID, ...) KEYWORD_##ID,
 #include <inrcc/Lexer/TokenKind.inc>
 #undef INRCC_KEYWORD
@@ -85,14 +87,28 @@ enum class TokenKind : unsigned {
 };
 
 class SourceLoc {
-    unsigned long index_;
+    const char* ptr_;
+    uint32_t len_;
 
 public:
-    SourceLoc() noexcept = default;
-    SourceLoc(long index) noexcept : index_(index) {}
+    constexpr SourceLoc() noexcept = default;
+    constexpr SourceLoc(const char* ptr, uint32_t len) noexcept :
+        ptr_(ptr), len_(len) {}
 
-    unsigned long getIndex() const noexcept {
-        return index_;
+    constexpr const char* getPtr() const noexcept {
+        return ptr_;
+    }
+
+    constexpr uint32_t getLen() const noexcept {
+        return len_;
+    }
+
+    constexpr void setPtr(const char* ptr) noexcept {
+        ptr_ = ptr;
+    }
+
+    constexpr void setLen(uint32_t len) noexcept {
+        len_ = len;
     }
 };
 
@@ -184,13 +200,18 @@ class Token {
     TokenKind kind_;
     uint32_t len_;
     const char* start_;
+    SourceLoc loc_;
     IdentInfo* info_ = nullptr;
 
 public:
+    constexpr Token(TokenKind tk, uint32_t ln, const char* st, SourceLoc loc,
+                    IdentInfo* in) noexcept :
+        kind_(tk), len_(ln), start_(st), loc_(loc), info_(in) {}
+    constexpr Token() noexcept = default;
+
     constexpr Token(TokenKind tk, uint32_t ln, const char* st,
                     IdentInfo* in) noexcept :
-        kind_(tk), len_(ln), start_(st), info_(in) {}
-    constexpr Token() noexcept = default;
+        kind_(tk), len_(ln), start_(st), loc_(st, ln), info_(in) {}
 
     constexpr Token(IdentInfo* info) noexcept :
         kind_(info->getKind()),
@@ -219,6 +240,18 @@ public:
         len_ = str.size();
     }
 
+    constexpr void setLoc(SourceLoc loc) noexcept {
+        loc_ = loc;
+    }
+
+    constexpr void setLocPtr(const char* start) noexcept {
+        loc_.setPtr(start);
+    }
+
+    constexpr void setLocLen(uint32_t len) noexcept {
+        loc_.setLen(len);
+    }
+
     constexpr TokenKind getKind() const noexcept {
         return kind_;
     }
@@ -239,6 +272,18 @@ public:
         return {start_, len_};
     }
 
+    constexpr SourceLoc getLoc() const noexcept {
+        return loc_;
+    }
+
+    constexpr const char* getLocPtr() const noexcept {
+        return loc_.getPtr();
+    }
+
+    constexpr uint32_t getLocLen() const noexcept {
+        return loc_.getLen();
+    }
+
     friend inr::raw_stream& operator<<(inr::raw_stream& os, const Token& tok) {
         if(tok.getKind() == TokenKind::LITERAL_STRING) {
             return os << '"' << tok.getView() << '"';
@@ -254,6 +299,7 @@ public:
 private:
     bool functionLike_ = false;
     bool isVararg_ = false;
+    bool builtin_ = false;
     IdentInfo* defaultVarargIdent_ = nullptr;
 
     MacroReplacements replacements_;
@@ -263,6 +309,8 @@ public:
     MacroInfo() noexcept = default;
     MacroInfo(std::initializer_list<Token> tokens) noexcept :
         replacements_(tokens) {}
+    MacroInfo(std::initializer_list<Token> tokens, bool builtin) noexcept :
+        builtin_(builtin), replacements_(tokens) {}
 
     bool isFunctionLike() const noexcept {
         return functionLike_;
@@ -278,6 +326,14 @@ public:
 
     void enableVararg() noexcept {
         isVararg_ = true;
+    }
+
+    bool isBuiltin() const noexcept {
+        return builtin_;
+    }
+
+    void enableBuiltin() noexcept {
+        builtin_ = true;
     }
 
     IdentInfo* getVarargIdent() const noexcept {
@@ -345,8 +401,10 @@ private:
     DriverFMan& fman_;
     Arena& arena_;
     IdentMap& infoTable_;
+    Diagnostics& diagnostics_;
     MacroMap macros_;
-    MacroInfo fileMacro_{Token(TokenKind::LITERAL_STRING, 0, nullptr, nullptr)};
+    MacroInfo fileMacro_{
+        {Token(TokenKind::LITERAL_STRING, 0, nullptr, nullptr)}, true};
 
     void setKeywords();
     void setMacros();
@@ -363,13 +421,14 @@ private:
     void caseAlpha(Token& tok);
     void caseNum(Token& tok);
     bool caseSymbol(Token& tok, bool preprocess = true);
-    void caseString(Token& tok);
+    void caseString(Token& tok, const char*& ptr);
 
     void routeLexing(uint8_t);
 
     void handlePreprocessing();
 
     void handleInclude();
+    void handleIncludeNext();
 
     void handleDefine();
     void handleUndef();
@@ -414,13 +473,15 @@ private:
 
 public:
     Lexer(Language lang, DriverFMan::File file, DriverFMan& fman, Arena& arena,
-          IdentMap& infoTable, MacroInfo* baseFileMacro) noexcept :
+          IdentMap& infoTable, Diagnostics& diagnostics,
+          MacroInfo* baseFileMacro) noexcept :
         lang_(lang),
         original_(file),
         ptr_(file.file->memfile.data()),
         fman_(fman),
         arena_(arena),
-        infoTable_(infoTable) {
+        infoTable_(infoTable),
+        diagnostics_(diagnostics) {
         setKeywords();
         setFileMacro(file);
         setBaseFileMacro(baseFileMacro);
@@ -467,29 +528,27 @@ public:
         }
     }
 
-    char peek() const noexcept {
-        const char* next = ptr_;
-        reusableSkip(next);
-        return *next;
-    }
-
-    inr_useattr(always_inline) inr_useattr(hot) void skip() noexcept {
-        reusableSkip(ptr_);
-    }
-
-    /// @brief Goes forward if the current char is c.
-    bool forward(char c) noexcept {
-        if(*ptr_ == c) {
-            skip();
+    inr_useattr(always_inline) constexpr static inline bool reusableForward(
+        char c, const char*& ptr) noexcept {
+        if(*ptr == c) {
+            reusableSkip(ptr);
             return true;
         }
         return false;
     }
-    /// @brief Jumps over the next char if its c.
-    bool jump(char c) noexcept {
-        if(peek() == c) {
-            skip();
-            skip();
+
+    inr_useattr(always_inline) constexpr static inline char reusablePeek(
+        const char*& ptr) noexcept {
+        const char* next = ptr;
+        reusableSkip(next);
+        return *next;
+    }
+
+    inr_useattr(always_inline) constexpr static inline bool reusableJump(
+        char c, const char*& ptr) noexcept {
+        if(reusablePeek(ptr) == c) {
+            reusableSkip(ptr);
+            reusableSkip(ptr);
             return true;
         }
         return false;
@@ -498,6 +557,10 @@ public:
     void setMacrosBasedOnTriple(inr::Triple);
     void addMacroWithPredefOne(inr::sview);
     void setTypeMacros(const CData&);
+    Token glueToken(const Token& lhs, const Token& rhs, SourceLoc loc);
+    void handleCaseAlpha(Token& tok, const char*& ptr);
+    void handleCaseNum(Token& tok, const char*& ptr);
+    bool handleCaseSymbol(Token& tok, bool preprocess, const char*& ptr);
 };
 
 inline TokenCharIterator& TokenCharIterator::operator++() noexcept {

@@ -246,7 +246,6 @@ public:
 
         if(foundEntry) {
             eraseEntry(foundEntry);
-            // Clean up entries after it?
         }
 
         return foundEntry != nullptr;
@@ -318,6 +317,8 @@ public:
     size_t capacity() const noexcept {
         return size_;
     }
+
+    friend class Lexer;
 
 private:
     void rehash() noexcept {

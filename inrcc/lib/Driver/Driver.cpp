@@ -7,6 +7,7 @@
 #include <inr/Target/Triple.h>
 #include <inrcc/ADT/CexprStringMap.h>
 #include <inrcc/ADT/StringMap.h>
+#include <inrcc/Diagnostics/Diagnostics.h>
 #include <inrcc/Driver/Driver.h>
 #include <inrcc/Driver/DriverArgs.h>
 #include <inrcc/Driver/DriverFileManager.h>
@@ -183,13 +184,15 @@ static inline bool isSourceFileType(FileType ft) {
 }
 
 bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
-                       DriverFMan& fman, inr::Triple target) {
+                       DriverFMan& fman, Diagnostics& diagnostics,
+                       inr::Triple target) {
     Arena arena;
     IdentMap infoTable;
-    MacroInfo baseFile({{TokenKind::LITERAL_STRING, 0, nullptr, nullptr}});
+    MacroInfo baseFile({{TokenKind::LITERAL_STRING, 0, nullptr, nullptr}},
+                       true);
     CData data(target);
 
-    Lexer lex(lang, file, fman, arena, infoTable, &baseFile);
+    Lexer lex(lang, file, fman, arena, infoTable, diagnostics, &baseFile);
     lex.setMacrosBasedOnTriple(target);
     lex.setTypeMacros(data);
 
@@ -212,7 +215,13 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
     } while(tok.getKind() != TokenKind::TOKEN_END);
     inr::outs() << '\n';
 
-    return false;
+    diagnostics.printall(inr::outs());
+
+    if(diagnostics.hadFatalErrors()) {
+        return true;
+    }
+
+    return diagnostics.hadErrors();
 }
 
 int Driver::sourceFileCompilation(ArgVec& args, Language lang) {
@@ -256,7 +265,7 @@ int Driver::sourceFileCompilation(ArgVec& args, Language lang) {
             return 1;
         }
 
-        if(compileSourceFile(args, file, lang, fman, target_)) {
+        if(compileSourceFile(args, file, lang, fman, diagnostics_, target_)) {
             return 1;
         }
     }

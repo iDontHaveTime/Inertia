@@ -16,6 +16,8 @@ MACRO_WITH_INTEGER_VALUE(C11N, 201112L);
 MACRO_WITH_INTEGER_VALUE(C17N, 201710L);
 MACRO_WITH_INTEGER_VALUE(C23N, 202311L);
 
+MACRO_WITH_INTEGER_VALUE_NON_BUILTIN(MacroN1NB, 1);
+
 MACRO_WITH_INTEGER_VALUE(INRCC_BIG_ENDIAN, 4321);
 MACRO_WITH_INTEGER_VALUE(INRCC_LITTLE_ENDIAN, 1234);
 
@@ -180,6 +182,7 @@ void Lexer::setTypeMacros(const CData& data) {
 
 #define SET_TYPE_MACRO_NEW(ID, STR, COND, SIGN) \
     MacroInfo* ID = arena_.alloc<MacroInfo>();  \
+    ID->enableBuiltin();                        \
     macros_.insert(STR, sizeof(STR) - 1, ID);   \
     setBasedOnClosestType(types, ID->getReplacements(), data, COND, SIGN)
 
@@ -189,14 +192,14 @@ void Lexer::setTypeMacros(const CData& data) {
 
     // wchar, wint, intmax, uintmax, sig_atomic, skip for now.
     SET_TYPE_MACRO_NEW(int8, "__INT8_TYPE__", 8, -1);
-    SET_TYPE_MACRO_NEW(int16, "__INT16_TYPE__", 8, -1);
-    SET_TYPE_MACRO_NEW(int32, "__INT32_TYPE__", 8, -1);
-    SET_TYPE_MACRO_NEW(int64, "__INT64_TYPE__", 8, -1);
+    SET_TYPE_MACRO_NEW(int16, "__INT16_TYPE__", 16, -1);
+    SET_TYPE_MACRO_NEW(int32, "__INT32_TYPE__", 32, -1);
+    SET_TYPE_MACRO_NEW(int64, "__INT64_TYPE__", 64, -1);
 
     SET_TYPE_MACRO_NEW(uint8, "__UINT8_TYPE__", 8, 1);
-    SET_TYPE_MACRO_NEW(uint16, "__UINT16_TYPE__", 8, 1);
-    SET_TYPE_MACRO_NEW(uint32, "__UINT32_TYPE__", 8, 1);
-    SET_TYPE_MACRO_NEW(uint64, "__UINT64_TYPE__", 8, 1);
+    SET_TYPE_MACRO_NEW(uint16, "__UINT16_TYPE__", 16, 1);
+    SET_TYPE_MACRO_NEW(uint32, "__UINT32_TYPE__", 32, 1);
+    SET_TYPE_MACRO_NEW(uint64, "__UINT64_TYPE__", 64, 1);
 
     // Alias both least and fast for now.
     ALIAS_TYPE_MACRO(int8, "__INT_LEAST8_TYPE__");
@@ -231,6 +234,7 @@ void Lexer::setTypeMacros(const CData& data) {
 #define NUMERICAL_MACRO_NEW(ID, STR, VAL)                          \
     buffer = arena_.allocN<char>(16);                              \
     MacroInfo* ID = arena_.alloc<MacroInfo>();                     \
+    ID->enableBuiltin();                                           \
     macros_.insert(STR, sizeof(STR) - 1, ID);                      \
     cres = std::to_chars(buffer, buffer + 16, VAL);                \
     if(cres.ec == std::errc())                                     \
@@ -306,8 +310,9 @@ void Lexer::setMacrosBasedOnTriple(inr::Triple target) {
     INSERT_MACRO("__ORDER_BIG_ENDIAN__", INRCC_BIG_ENDIAN);
 }
 
+// Used for -D
 void Lexer::addMacroWithPredefOne(inr::sview view) {
-    macros_.insert(view.data(), view.size(), &MacroN1);
+    macros_.insert(view.data(), view.size(), &MacroN1NB);
 }
 
 } // namespace inrcc
