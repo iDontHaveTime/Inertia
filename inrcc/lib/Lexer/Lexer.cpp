@@ -324,7 +324,6 @@ void Lexer::handleIncludeNext() {
         for(const LexerContext& ctx : includeStack_) {
             if(ctx.file_.originalName == inr::sview(start, ptr_)) {
                 startAt = ctx.file_.foundIndex + 1;
-                break;
             }
         }
 
@@ -348,7 +347,6 @@ void Lexer::handleIncludeNext() {
         for(const LexerContext& ctx : includeStack_) {
             if(ctx.file_.originalName == tok.getView()) {
                 startAt = ctx.file_.foundIndex + 1;
-                break;
             }
         }
 
@@ -1700,6 +1698,62 @@ public:
                     consume();
                 }
 
+                return result;
+            }
+            else if(cur.getKind() == TokenKind::KEYWORD___has_include ||
+                    cur.getKind() == TokenKind::KEYWORD___has_include_next) {
+                bool inc_next =
+                    cur.getKind() == TokenKind::KEYWORD_include_next;
+                consume();
+
+                if(cur.getKind() != TokenKind::SYMBOL_LPAREN) {
+                    newDiag(cur.getLocPtr(), cur.getLocLen(),
+                            Diagnostics::Diag::macro_expected_lparen);
+                    terminate();
+                    return {};
+                }
+                consume();
+
+                inr::sview path;
+                if(cur.getKind() == TokenKind::LITERAL_STRING) {
+                    path = cur.getView();
+                    consume();
+                }
+                else if(cur.getKind() == TokenKind::SYMBOL_LESS) {
+                    const char* start = cur.getStart() + cur.getLength();
+                    while(cur.getKind() != TokenKind::SYMBOL_GREATER) {
+                        consumeNoPP();
+                        if(cur.getKind() == TokenKind::TOKEN_END) {
+                            newDiag(cur.getLocPtr(), cur.getLocLen(),
+                                    Diagnostics::Diag::expected_right_arrow);
+                            terminate();
+                            return {};
+                        }
+                    }
+
+                    path = {start, cur.getStart()};
+                    consume();
+                }
+
+                ExprInteger result = false;
+                size_t startAt = 0;
+                if(inc_next) {
+                    for(const Lexer::LexerContext& ctx : lexer.includeStack_) {
+                        if(ctx.file_.originalName == path) {
+                            startAt = ctx.file_.foundIndex + 1;
+                        }
+                    }
+                }
+
+                if(lexer.fman_.hasInclude(path, startAt)) result = true;
+
+                if(cur.getKind() != TokenKind::SYMBOL_RPAREN) {
+                    newDiag(cur.getLocPtr(), cur.getLocLen(),
+                            Diagnostics::Diag::macro_expected_rparen);
+                    terminate();
+                    return {};
+                }
+                consume();
                 return result;
             }
             else {

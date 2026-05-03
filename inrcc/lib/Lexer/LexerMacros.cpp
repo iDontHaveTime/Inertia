@@ -67,6 +67,20 @@ void Lexer::setMacros() {
     ELSEIF(STANDARD(c23))
     NEW_STDC_VERSION(C23N);
     ENDIF()
+#define STR_STR_LEN(str) str, (sizeof(str) - 1)
+    auto entry = infoTable_.find(STR_STR_LEN("__has_include"));
+    if(entry) {
+        MacroInfo* has_inc = arena_.alloc<MacroInfo>();
+        has_inc->getReplacements().emplace_back(*entry);
+        macros_.insert(STR_STR_LEN("__has_include"), has_inc);
+    }
+    entry = infoTable_.find(STR_STR_LEN("__has_include_next"));
+    if(entry) {
+        MacroInfo* has_inc = arena_.alloc<MacroInfo>();
+        has_inc->getReplacements().emplace_back(*entry);
+        macros_.insert(STR_STR_LEN("__has_include_next"), has_inc);
+    }
+#undef STR_STR_LEN
 }
 
 struct IdentMapTypes {

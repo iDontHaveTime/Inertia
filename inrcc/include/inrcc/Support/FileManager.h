@@ -42,6 +42,10 @@ private:
     StringMap<size_t> cache_;
 
 public:
+    bool exists(inr::sview fileName) {
+        return std::filesystem::exists(fileName.strv());
+    }
+
     const File* openFileBuffer(inr::sview fileName) {
         if(const size_t* idx = cache_.find(fileName)) {
             return files_[*idx];

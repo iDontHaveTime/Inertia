@@ -43,8 +43,22 @@ public:
         return {fman_.openFileBuffer(name), name, 0};
     }
 
+    bool isAbsolute(inr::sview p) {
+        return std::filesystem::path(p.str()).is_absolute();
+    }
+
+    bool hasInclude(inr::sview name, size_t startAt = 0) {
+        for(size_t i = startAt; i < includePaths_.size(); i++) {
+            std::string tryFor = includePaths_[i];
+            tryFor += name;
+            if(fman_.exists(tryFor)) return true;
+        }
+        return false;
+    }
+
     /// @brief Specifically for <...> includes.
     File openFileBufferNoLocalDir(inr::sview name, size_t startAt = 0) {
+        if(isAbsolute(name)) return openFileBufferNoInclude(name);
         for(size_t i = startAt; i < includePaths_.size(); i++) {
             std::string tryFor = includePaths_[i];
             tryFor += name;
@@ -59,6 +73,7 @@ public:
     /// @brief Specifically for "..." includes.
     File openFileBufferYesLocalDir(File file, inr::sview name,
                                    size_t startAt = 0) {
+        if(isAbsolute(name)) return openFileBufferNoInclude(name);
         if(file.file && !startAt) {
             std::filesystem::path searchP = file.file->path;
             searchP.remove_filename();

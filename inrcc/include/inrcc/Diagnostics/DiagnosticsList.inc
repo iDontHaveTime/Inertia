@@ -76,7 +76,10 @@ NEW_DIAGNOSTIC(if_expr_mod_zero, NoStrID, DefFatal, "modulo 0")
 /// 1234ABC
 NEW_DIAGNOSTIC(invalid_suffix, NoStrID, DefError, "invalid suffix")
 
+/// Expected ':' for ternary expressions in #if
 NEW_DIAGNOSTIC(macro_expected_colon, NoStrID, DefFatal, "expected ':' for '?'")
+
+NEW_DIAGNOSTIC(macro_expected_lparen, NoStrID, DefFatal, "expected '(' for expression")
 
 #ifdef UNDEF_NEW_DIAGNOSTIC
 #undef UNDEF_NEW_DIAGNOSTIC

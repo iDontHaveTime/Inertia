@@ -19,6 +19,8 @@
 #include <inrcc/Options/LangOptions.h>
 #include <inrcc/Support/Arena.h>
 
+#include <initializer_list>
+
 namespace inrcc {
 
 /// @brief Represents a token kind.
@@ -311,6 +313,13 @@ public:
         replacements_(tokens) {}
     MacroInfo(std::initializer_list<Token> tokens, bool builtin) noexcept :
         builtin_(builtin), replacements_(tokens) {}
+    MacroInfo(std::initializer_list<Token> tokens, bool builtin,
+              bool functionLike,
+              std::initializer_list<IdentInfo*> args) noexcept :
+        functionLike_(functionLike),
+        builtin_(builtin),
+        replacements_(tokens),
+        args_(args) {}
 
     bool isFunctionLike() const noexcept {
         return functionLike_;
