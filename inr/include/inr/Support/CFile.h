@@ -14,11 +14,11 @@ namespace inr {
 
 /// @brief Wraps cstdio's FILE pointer.
 class CFile {
-    FILE* f_;
-    bool close_;
+    FILE* f_ = nullptr;
+    bool close_ = false;
 
 public:
-    CFile() = delete;
+    CFile() noexcept = default;
 
     CFile(const CFile&) = delete;
     CFile& operator=(const CFile&) = delete;

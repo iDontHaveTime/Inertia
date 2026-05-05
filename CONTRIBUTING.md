@@ -34,8 +34,7 @@ Include this license comment at the top of any new C++ header or source file:
 
 ### 4 - Documentation
  - Improvements to the README, CONTRIBUTING, etc. are very welcome.
- - Documenting code with doxygen comments is a must, and please follow the project's style.
- - Clear explanations of new instructions or targets are especially useful for future contributors.
+ - Documenting code with doxygen comments is recommended, and please follow the project's style.
 
 ---
 

@@ -35,10 +35,11 @@ enum class FileType {
 
 /// @brief The main entry point handler for inrcc.
 class Driver {
-    int argc_;                ///< Original argc.
-    DriverMode mode_;         ///< Current mode.
-    char** argv_;             ///< Original argv.
-    inr::Triple target_;      ///< Compilation target.
+    int argc_;           ///< Original argc.
+    DriverMode mode_;    ///< Current mode.
+    char** argv_;        ///< Original argv.
+    inr::Triple target_; ///< Compilation target.
+    FileType ftoverride_ = FileType::Unknown;
     Diagnostics diagnostics_; ///< Diagnostics.
 
     std::string toolName_; ///< Name of the tool, typically inrcc.

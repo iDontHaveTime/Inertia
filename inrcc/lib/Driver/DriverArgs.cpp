@@ -53,6 +53,12 @@ bool Driver::verifyArgs(class ArgVec& args) {
         err = true;
     }
 
+    if(args.has(Arg::Kind::Output) && args.has(Arg::Kind::NoLink) &&
+       args.howMany(Arg::Kind::Input) > 1) {
+        logerr("only one input file can be chosen when using '-c' and '-o'");
+        err = true;
+    }
+
     return err;
 }
 
@@ -192,6 +198,9 @@ std::vector<Arg> Driver::parseArgs(bool& err) {
                     err = true;
                 }
             }
+        }
+        else {
+            args.emplace_back(arg, std::string(), Arg::Kind::Input).setOpt(1);
         }
     }
 

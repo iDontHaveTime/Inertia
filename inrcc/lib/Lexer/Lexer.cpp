@@ -1715,7 +1715,8 @@ public:
                 consume();
 
                 inr::sview path;
-                if(cur.getKind() == TokenKind::LITERAL_STRING) {
+                bool searchLocal = (cur.getKind() == TokenKind::LITERAL_STRING);
+                if(searchLocal) {
                     path = cur.getView();
                     consume();
                 }
@@ -1734,6 +1735,12 @@ public:
                     path = {start, cur.getStart()};
                     consume();
                 }
+                else {
+                    newDiag(cur.getLocPtr(), cur.getLocLen(),
+                            Diagnostics::Diag::expected_filename);
+                    terminate();
+                    return {};
+                }
 
                 ExprInteger result = false;
                 size_t startAt = 0;
@@ -1745,7 +1752,15 @@ public:
                     }
                 }
 
-                if(lexer.fman_.hasInclude(path, startAt)) result = true;
+                if(searchLocal) {
+                    if(lexer.fman_.hasIncludeYesLocal(lexer.getCurrentFile(),
+                                                      path, startAt))
+                        result = true;
+                }
+                else {
+                    if(lexer.fman_.hasIncludeNoLocal(path, startAt))
+                        result = true;
+                }
 
                 if(cur.getKind() != TokenKind::SYMBOL_RPAREN) {
                     newDiag(cur.getLocPtr(), cur.getLocLen(),

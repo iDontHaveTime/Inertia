@@ -16,6 +16,9 @@
 #include <inrcc/Options/LangOptions.h>
 #include <inrcc/Support/Arena.h>
 
+#include <cstdio>
+#include <cstdlib>
+
 namespace inrcc {
 
 #define langs(s) Language::Standard::s
@@ -66,11 +69,6 @@ int Driver::driverMain() {
 
     if(!args.has(Arg::Kind::Input)) {
         logerr("no input files");
-        return 1;
-    }
-
-    if(!args.has(Arg::Kind::Output)) {
-        logerr("no output specified");
         return 1;
     }
 
@@ -155,6 +153,7 @@ constexpr CexprStringMap<
 #undef INRCC_NEW_FILETYPE
 
 FileType Driver::getFileType(Arg* arg) {
+    if(ftoverride_ != FileType::Unknown) return ftoverride_;
     inr::sview ext = arg->getOriginal();
     ext = ext.slice(ext.findLast('.'), ext.size());
     if(ext[0] != '.') {
@@ -247,22 +246,70 @@ int Driver::sourceFileCompilation(ArgVec& args, Language lang) {
         fman.addLinuxLikeIncludePaths();
     }
 
-    auto sources = args.get(Arg::Kind::Input);
+    for(Arg& argRef : args.getAll()) {
+        if(argRef.getKind() != Arg::Kind::Input &&
+           argRef.getKind() != Arg::Kind::SetLanguage) {
+            continue;
+        }
 
-    for(Arg* arg : sources) {
+        if(argRef.getKind() == Arg::Kind::SetLanguage) {
+            const std::string& opt = argRef.getOptional();
+
+            if(opt == "c") {
+                ftoverride_ = FileType::C;
+            }
+            else if(opt == "none") {
+                ftoverride_ = FileType::Unknown;
+            }
+            else if(opt == "c++") {
+                ftoverride_ = FileType::CXX;
+            }
+            else {
+                logwarn("unknown language '", opt, "' defaulting to none");
+            }
+            continue;
+        }
+
+        Arg* arg = &argRef;
         FileType fileType = getFileType(arg);
         if(fileType == FileType::Unknown) {
             return 1;
         }
         if(!isSourceFileType(fileType)) continue;
 
-        DriverFMan::File file =
-            fman.openFileBufferNoInclude(arg->getOriginal());
-        if(!file.file) {
-            logerr("file '", arg->getOriginal(),
-                   "' doesn't exist or is a directory");
+        DriverFMan::File file;
 
-            return 1;
+        if(!arg->getOpt()) {
+            file = fman.openFileBufferNoInclude(arg->getOriginal());
+            if(!file.file) {
+                logerr("file '", arg->getOriginal(),
+                       "' doesn't exist or is a directory");
+
+                return 1;
+            }
+        }
+        else {
+            size_t size = 0x2000;
+            size_t bytesRead = 0;
+            char* buffer = (char*)std::malloc(size);
+
+            while(true) {
+                if(!buffer) {
+                    logerr("bad alloc for when reading stdin");
+                    return 1;
+                }
+
+                if(size_t read = std::fread(buffer + bytesRead, 1,
+                                            size - bytesRead, stdin)) {
+                    if((bytesRead += read) == size) {
+                        buffer = (char*)std::realloc(buffer, size <<= 1);
+                    }
+                }
+                else break;
+            }
+
+            buffer[bytesRead] = '\0';
+            file = fman.newCustomFile(buffer, buffer + bytesRead, "<stdin>");
         }
 
         if(compileSourceFile(args, file, lang, fman, diagnostics_, target_)) {

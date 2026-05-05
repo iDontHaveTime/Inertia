@@ -33,11 +33,12 @@ private:
     inr::sview original_;  ///< Original string of the arg.
     std::string optional_; ///< Processed string, optional.
 
-    Kind kind_; ///< Arg kind.
+    Kind kind_;    ///< Arg kind.
+    unsigned opt_; ///< Optional flags.
 
 public:
     Arg(inr::sview original, std::string optional, Kind kind) :
-        original_(original), optional_(optional), kind_(kind) {}
+        original_(original), optional_(optional), kind_(kind), opt_(0) {}
 
     /// @brief Returns the optional string, valid in some cases.
     const std::string& getOptional() const noexcept {
@@ -57,6 +58,14 @@ public:
     /// @brief Returns the arg's kind.
     Kind getKind() const noexcept {
         return kind_;
+    }
+
+    unsigned getOpt() const noexcept {
+        return opt_;
+    }
+
+    void setOpt(unsigned opt) noexcept {
+        opt_ = opt;
     }
 };
 
@@ -110,14 +119,17 @@ public:
         processArgs();
     }
 
+    /// @brief Returns how many occurrences of this arg.
     uint16_t howMany(Arg::Kind kind) const noexcept {
         return hasArg_[(unsigned)kind];
     }
 
+    /// @brief Returns whether or not this arg was present.
     bool has(Arg::Kind kind) const noexcept {
         return howMany(kind);
     }
 
+    /// @brief Returns the last occurrence of this arg.
     Arg* getLast(Arg::Kind kind) noexcept {
         inr_assert(kind != Arg::Kind::Tool,
                    "You cannot get the tool kind through getLast().");
@@ -125,6 +137,7 @@ public:
                                             : nullptr;
     }
 
+    /// @brief Returns all occurrences of this arg.
     inr::ivec<Arg*, 4> get(Arg::Kind kind) {
         if(howMany(kind) <= 1) {
             Arg* arg = getLast(kind);
@@ -138,6 +151,10 @@ public:
         }
 
         return argPtrs;
+    }
+
+    std::vector<Arg>& getAll() noexcept {
+        return args_;
     }
 };
 

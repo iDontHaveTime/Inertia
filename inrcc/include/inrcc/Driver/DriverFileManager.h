@@ -27,12 +27,16 @@ public:
     };
 
 private:
-    FileManager fman_;
-    std::string sysroot_;
-    inr::ivec<std::string, 8> includePaths_;
+    FileManager fman_;    ///< Base class for managing the files.
+    std::string sysroot_; ///< Sysroot path.
+    inr::ivec<std::string, 8> includePaths_; ///< Current stored include paths
 
 public:
     DriverFMan() noexcept = default;
+
+    File newCustomFile(char* start, char* end, inr::sview name) {
+        return {fman_.newCustomFile(start, end), name};
+    }
 
     const File wasOpenedBefore(inr::sview name) const noexcept {
         return {fman_.wasOpenedBefore(name), name, 0};
@@ -43,17 +47,34 @@ public:
         return {fman_.openFileBuffer(name), name, 0};
     }
 
+    /// @brief Returns whether or not this path is absolute.
     bool isAbsolute(inr::sview p) {
         return std::filesystem::path(p.str()).is_absolute();
     }
 
-    bool hasInclude(inr::sview name, size_t startAt = 0) {
+    /// @brief Returns whether or not this file exist, whilst searching include
+    /// paths.
+    bool hasIncludeNoLocal(inr::sview name, size_t startAt = 0) {
+        if(isAbsolute(name)) return fman_.exists(name);
         for(size_t i = startAt; i < includePaths_.size(); i++) {
             std::string tryFor = includePaths_[i];
             tryFor += name;
             if(fman_.exists(tryFor)) return true;
         }
         return false;
+    }
+
+    /// @brief Same as hasIncludeNoLocal but also searches this file's
+    /// directory.
+    bool hasIncludeYesLocal(File file, inr::sview name, size_t startAt = 0) {
+        if(isAbsolute(name)) return fman_.exists(name);
+        if(file.file && !startAt) {
+            std::filesystem::path searchP = file.file->path;
+            searchP.remove_filename();
+            searchP /= std::string_view(name);
+            if(fman_.exists(searchP.c_str())) return true;
+        }
+        return hasIncludeNoLocal(name, startAt);
     }
 
     /// @brief Specifically for <...> includes.
@@ -86,6 +107,8 @@ public:
         return openFileBufferNoLocalDir(name, startAt);
     }
 
+    /// @brief Sets the sysroot and returns true on whether or not it was
+    /// successful.
     bool setSysroot(std::string sysroot) noexcept {
         if(std::filesystem::is_directory(sysroot)) {
             sysroot_ = std::move(sysroot);
@@ -112,6 +135,7 @@ public:
         includePaths_.emplace_back(std::move(path));
     }
 
+    /// @brief Used for adding system includes.
     void addIncludePathRelativeToSysroot(std::string path) {
         std::string pathToAdd = sysroot_;
         char front = path.front();
@@ -127,6 +151,9 @@ public:
         includePaths_.emplace_back(std::move(pathToAdd));
     }
 
+    /// @brief Adds linux include paths.
+    ///
+    /// Adds the `/usr/local/include` and `/usr/include` paths.
     void addLinuxLikeIncludePaths() {
         addIncludePathRelativeToSysroot("/usr/local/include/");
         addIncludePathRelativeToSysroot("/usr/include/");

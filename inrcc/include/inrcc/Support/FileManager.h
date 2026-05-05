@@ -42,6 +42,10 @@ private:
     StringMap<size_t> cache_;
 
 public:
+    File* newCustomFile(char* start, char* end) {
+        return files_.emplace_back(new File({}, {start, end}, {}));
+    }
+
     bool exists(inr::sview fileName) {
         return std::filesystem::exists(fileName.strv());
     }

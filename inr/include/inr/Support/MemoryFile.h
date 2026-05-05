@@ -43,6 +43,11 @@ public:
     MemoryFile(FILE* f, long len, bool insertNL = false) :
         MemoryFile(f, len, insertNL, '\n') {}
 
+    /// @brief Acts as a unique_ptr in this case.
+    /// @param start Mutable start pointer.
+    /// @param end End pointer.
+    MemoryFile(char* start, char* end) noexcept : start_(start), end_(end) {}
+
     MemoryFile(const MemoryFile&) = delete;
     MemoryFile& operator=(const MemoryFile&) = delete;
 

@@ -165,11 +165,11 @@ void Diagnostics::printall(inr::raw_stream& os) {
 
     if(warnings || errors) {
         if(warnings) {
-            os << warnings << " warnings";
+            os << warnings << ((warnings > 1) ? " warnings" : " warning");
         }
         if(errors) {
             if(warnings) os << " and ";
-            os << errors << " errors";
+            os << errors << ((errors > 1) ? " errors" : " error");
         }
         os << " generated.\n";
     }
