@@ -194,7 +194,9 @@ void Lexer::handleCaseNum(Token& tok, const char*& ptr) {
         uint8_t kind = lookupTable.lookup(c);
 
         if(!(kind & (LAlpha | LNum))) {
-            break;
+            if(c != '.') {
+                break; // TODO: Handle floating point numbers
+            }
         }
 
         reusableSkip(ptr);
@@ -206,6 +208,7 @@ void Lexer::handleCaseNum(Token& tok, const char*& ptr) {
     inr::sview view = tok.getView();
 
     if(view.size() > 2 && view.front() == '0') {
+        // TODO: Handle prefixed numbers
     }
     else {
         const char* it = view.begin();
