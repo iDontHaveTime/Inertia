@@ -7,6 +7,8 @@
 
 /// @file ADT/CexprStringMap.h
 /// @brief Provides a constant expression hash map.
+///
+/// Avoid including this header when not needed and in non .cpp files.
 
 #include <inrcc/ADT/StringMap.h>
 

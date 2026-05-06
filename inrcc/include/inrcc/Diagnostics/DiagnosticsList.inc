@@ -81,6 +81,12 @@ NEW_DIAGNOSTIC(macro_expected_colon, NoStrID, DefFatal, "expected ':' for '?'")
 
 NEW_DIAGNOSTIC(macro_expected_lparen, NoStrID, DefFatal, "expected '(' for expression")
 
+#undef DefNothing
+#undef DefWarning
+#undef DefError
+#undef DefFatal
+#undef NoStrID
+
 #ifdef UNDEF_NEW_DIAGNOSTIC
 #undef UNDEF_NEW_DIAGNOSTIC
 #undef NEW_DIAGNOSTIC

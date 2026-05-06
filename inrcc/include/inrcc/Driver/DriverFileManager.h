@@ -38,6 +38,10 @@ public:
         return {fman_.newCustomFile(start, end), name};
     }
 
+    File newCustomFileWithCache(char* start, char* end, inr::sview name) {
+        return {fman_.newCustomFile(start, end, name), name};
+    }
+
     const File wasOpenedBefore(inr::sview name) const noexcept {
         return {fman_.wasOpenedBefore(name), name, 0};
     }

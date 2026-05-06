@@ -17,8 +17,9 @@ At this stage, Inertia is early in development, so the main ways to contribute a
 
 **Commit Message Style:**
 
-`[Commit type]: Title describing the commit.`
+`[Project][Commit type] Title describing the commit.`
  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, `revert`.
+ - Projects: `inr` (Inertia), `inrcc`.
  - Example from a previous commit: `[docs]: Improved docs on the lexer.`
 
 PRs may be returned if the commit messages do not follow this style.

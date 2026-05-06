@@ -16,13 +16,13 @@ namespace inrcc {
 
 class Language {
 public:
+    /// @brief This represents a language inrcc might or might not support.
     enum Standard : uint32_t {
-/// @brief This represents a language inrcc might or might not support.
-#define INRCC_LANG(IDENT, SUPPORTED, STR, VAL) IDENT = VAL,
-
+        Unknown,
+#define INRCC_LANG(IDENT, SUPPORTED, STR, ...) IDENT,
 #include <inrcc/Options/LangOptions.inc>
-
 #undef INRCC_LANG
+        STANDARD_END
     };
 
     static bool isLanguageSupported(Standard lang) noexcept;
@@ -30,7 +30,7 @@ public:
 
 private:
     /// @brief Standard of the language.
-    Standard standard_;
+    Standard standard_ = Unknown;
     /// @brief Features of the language.
     ///
     /// Bit 0 - Trigraphs:
@@ -44,10 +44,11 @@ private:
     /// - ??> }
     /// - ??- ~
     /// Bit 1 - Spaceship operator: <=>
+    /// Bit 2 - Extensions: gnu89, gnu99, etc..
     unsigned feats_ = 0;
 
 public:
-    constexpr Language() noexcept : standard_(Unknown) {}
+    constexpr Language() noexcept = default;
 
     constexpr Language(const Language&) noexcept = default;
     constexpr Language& operator=(const Language&) noexcept = default;
@@ -81,12 +82,20 @@ public:
         return feats_ & 0x2;
     }
 
+    constexpr bool getExtensions() const noexcept {
+        return feats_ & 0x4;
+    }
+
     constexpr void enableTrigraph() noexcept {
         feats_ |= 0x1;
     }
 
     constexpr void enableSpaceship() noexcept {
         feats_ |= 0x2;
+    }
+
+    constexpr void enableExtensions() noexcept {
+        feats_ |= 0x4;
     }
 
     static Language getFromString(inr::sview str) noexcept;

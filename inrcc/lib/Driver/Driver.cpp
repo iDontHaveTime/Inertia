@@ -21,17 +21,16 @@
 
 namespace inrcc {
 
-#define langs(s) Language::Standard::s
-constexpr static uint32_t CC_DM_STANDARDS =
-    langs(c89) | langs(c99) | langs(c11) | langs(c17) | langs(c23);
-#undef langs
-
 bool languageSupportedByDriverMode(DriverMode dm, Language lang) {
     switch(dm) {
         case DriverMode::Unknown:
             return false;
         case DriverMode::CC:
-            return CC_DM_STANDARDS & (uint32_t)lang.getStandard();
+            if(Language::Standard s = lang.getStandard();
+               s == Language::c89 || s == Language::c99 || s == Language::c11 ||
+               s == Language::c17 || s == Language::c23)
+                return true;
+            else return false;
     }
 }
 
@@ -210,9 +209,7 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
     Token tok;
     do {
         tok = lex.next();
-        inr::outs() << tok << ' ';
     } while(tok.getKind() != TokenKind::TOKEN_END);
-    inr::outs() << '\n';
 
     diagnostics.printall(inr::outs());
 

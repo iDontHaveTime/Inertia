@@ -3,31 +3,28 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
 // Inrcc's languages
-#ifdef INRCC_LANG
-
-#define INRCC_EXT 0x8000
+#ifndef INRCC_LANG
+#define INRCC_LANG(...)
+#define UNDEF_INRCC_LANG
+#endif
 
 // C89
-INRCC_LANG(c89, false, "c89", 0x1)
-// C89 w Extensions
-INRCC_LANG(gnu89, false, "gnu89", 0x1 | INRCC_EXT)
+INRCC_LANG(c89, false, "c89", "gnu89")
 
 // C99
-INRCC_LANG(c99, true, "c99", 0x2)
-// C99 w Extensions
-INRCC_LANG(gnu99, true, "gnu99", 0x2 | INRCC_EXT)
+INRCC_LANG(c99, true, "c99", "gnu99")
 
 // C11
-INRCC_LANG(c11, false, "c11", 0x4)
+INRCC_LANG(c11, false, "c11", "gnu11")
 
 // C17
-INRCC_LANG(c17, false, "c17", 0x8)
+INRCC_LANG(c17, false, "c17", "gnu17")
 
 // C23
-INRCC_LANG(c23, false, "c23", 0x10)
+INRCC_LANG(c23, false, "c23", "gnu23")
 
-INRCC_LANG(Unknown, false, "unknown", 0)
 
-#undef INRCC_EXT
-
+#ifdef UNDEF_INRCC_LANG
+#undef UNDEF_INRCC_LANG
+#undef INRCC_LANG
 #endif

@@ -13,6 +13,10 @@ bool Language::isLanguageSupported(Standard lang) noexcept {
         return SUPPORTED;
 #include <inrcc/Options/LangOptions.inc>
 #undef INRCC_LANG
+        case Unknown:
+            [[fallthrough]];
+        case STANDARD_END:
+            return false;
     }
 }
 
@@ -23,18 +27,28 @@ const char* Language::getAsString(Standard lang) noexcept {
         return STR;
 #include <inrcc/Options/LangOptions.inc>
 #undef INRCC_LANG
+        case Unknown:
+            [[fallthrough]];
+        case STANDARD_END:
+            return "unknown";
     }
 }
 
 Language Language::getFromString(inr::sview str) noexcept {
-#define INRCC_LANG(IDENT, SUPPORTED, STR, ...) \
-    if(str == STR) {                           \
-        return {IDENT};                        \
-    }                                          \
-    else
+    Language mightBe{};
+#define INRCC_LANG(IDENT, SUPPORTED, STR, EXTVER, ...) \
+    if(str == STR) {                                   \
+        mightBe.setStandard(IDENT);                    \
+        return mightBe;                                \
+    }                                                  \
+    else if(str == EXTVER) {                           \
+        mightBe.setStandard(IDENT);                    \
+        mightBe.enableExtensions();                    \
+        return mightBe;                                \
+    }
 #include <inrcc/Options/LangOptions.inc>
 #undef INRCC_LANG
-    return {};
+    return mightBe;
 }
 
 } // namespace inrcc

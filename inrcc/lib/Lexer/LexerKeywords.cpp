@@ -26,7 +26,6 @@ void Lexer::setKeywords() {
                       inrcc_keyword___VA_ARGS__.getLength(),
                       &inrcc_keyword___VA_ARGS__);
     switch(lang_.getStandard()) {
-        case Language::gnu89:
         case Language::c89:
 #define INRCC_KEYWORD_C89(ID, ...)                   \
     infoTable_.insert(inrcc_keyword_##ID.getStart(), \
@@ -34,8 +33,6 @@ void Lexer::setKeywords() {
 #include <inrcc/Lexer/TokenKind.inc>
 #undef INRCC_KEYWORD_C89
             break;
-        case Language::gnu99:
-            [[fallthrough]];
         case Language::c99:
 #define INRCC_KEYWORD_C99(ID, ...)                   \
     infoTable_.insert(inrcc_keyword_##ID.getStart(), \
@@ -47,7 +44,8 @@ void Lexer::setKeywords() {
         case Language::c17:
         case Language::c23:
         case Language::Unknown:
-            break;
+            [[fallthrough]];
+        case Language::STANDARD_END:
             break;
     }
 }

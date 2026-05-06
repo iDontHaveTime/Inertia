@@ -46,6 +46,11 @@ public:
         return files_.emplace_back(new File({}, {start, end}, {}));
     }
 
+    File* newCustomFile(char* start, char* end, inr::sview name) {
+        cache_.insert(name, files_.size());
+        return newCustomFile(start, end);
+    }
+
     bool exists(inr::sview fileName) {
         return std::filesystem::exists(fileName.strv());
     }
