@@ -13,7 +13,7 @@ option(BUILD_WARNINGS "Build with warning flags" YES)
 set(INRCC_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # This will hold all libraries created with add_inrcc_library
-inrcc_map_name_to_library(INRCC_LIBRARIES Options Lexer Driver Diag)
+inrcc_map_name_to_library(INRCC_LIBRARIES Options Lexer Driver Diag Parser Sema)
 
 # These are the Inertia libraries inrcc uses
 inr_map_name_to_library(INRCC_NEEDED_LIBRARIES Core IR Target Option TIR)

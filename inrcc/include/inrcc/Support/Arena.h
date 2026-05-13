@@ -55,16 +55,18 @@ public:
     }
 
     void* allocate(size_t size, size_t align) {
-        uintptr_t addr = (uintptr_t)cur_;
-        uintptr_t aligned = (addr + align - 1) & ~(align - 1);
+        while(true) {
+            uintptr_t addr = (uintptr_t)cur_;
+            uintptr_t aligned = (addr + align - 1) & ~(align - 1);
 
-        if(aligned + size <= (uintptr_t)end_) {
-            cur_ = (uint8_t*)(aligned + size);
-            return (void*)aligned;
+            if(aligned + size <= (uintptr_t)end_) {
+                cur_ = (uint8_t*)(aligned + size);
+                return (void*)aligned;
+            }
+
+            grow(size + align);
+            if(!cur_) return nullptr;
         }
-
-        grow(size + align);
-        return allocate(size, align);
     }
 
     template<typename T, typename... Args>

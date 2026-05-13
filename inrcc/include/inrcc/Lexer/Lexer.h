@@ -80,6 +80,15 @@ enum class TokenKind : unsigned {
     PREPROCESS_HASHHASH,
     LITERAL_INTEGER,
     LITERAL_STRING,
+    LITERAL_LSTRING,
+    LITERAL_USTRING,
+    LITERAL_uSTRING,
+    LITERAL_u8STRING,
+    LITERAL_CHAR,
+    LITERAL_LCHAR,
+    LITERAL_UCHAR,
+    LITERAL_uCHAR,
+    LITERAL_u8CHAR,
     INVALID_INTEGER,
 #define INRCC_KEYWORD(ID, ...) KEYWORD_##ID,
 #include <inrcc/Lexer/TokenKind.inc>
@@ -287,10 +296,30 @@ public:
     }
 
     friend inr::raw_stream& operator<<(inr::raw_stream& os, const Token& tok) {
-        if(tok.getKind() == TokenKind::LITERAL_STRING) {
-            return os << '"' << tok.getView() << '"';
+        switch(tok.getKind()) {
+            case TokenKind::LITERAL_STRING:
+                return os << '"' << tok.getView() << '"';
+            case TokenKind::LITERAL_LSTRING:
+                return os << "L\"" << tok.getView() << '"';
+            case TokenKind::LITERAL_USTRING:
+                return os << "U\"" << tok.getView() << '"';
+            case TokenKind::LITERAL_uSTRING:
+                return os << "u\"" << tok.getView() << '"';
+            case TokenKind::LITERAL_u8STRING:
+                return os << "u8\"" << tok.getView() << '"';
+            case TokenKind::LITERAL_CHAR:
+                return os << '\'' << tok.getView() << '\'';
+            case TokenKind::LITERAL_LCHAR:
+                return os << "L'" << tok.getView() << '\'';
+            case TokenKind::LITERAL_UCHAR:
+                return os << "U'" << tok.getView() << '\'';
+            case TokenKind::LITERAL_uCHAR:
+                return os << "u'" << tok.getView() << '\'';
+            case TokenKind::LITERAL_u8CHAR:
+                return os << "u8'" << tok.getView() << '\'';
+            default:
+                return os << tok.getView();
         }
-        return os << tok.getView();
     }
 };
 
@@ -411,6 +440,7 @@ private:
     Arena& arena_;
     IdentMap& infoTable_;
     Diagnostics& diagnostics_;
+    const CData& data_;
     MacroMap macros_;
     MacroInfo fileMacro_{
         {Token(TokenKind::LITERAL_STRING, 0, nullptr, nullptr)}, true};
@@ -431,6 +461,7 @@ private:
     void caseNum(Token& tok);
     bool caseSymbol(Token& tok, bool preprocess = true);
     void caseString(Token& tok, const char*& ptr);
+    void caseChar(Token& tok, const char*& ptr);
 
     void routeLexing(uint8_t);
 
@@ -483,18 +514,20 @@ private:
 public:
     Lexer(Language lang, DriverFMan::File file, DriverFMan& fman, Arena& arena,
           IdentMap& infoTable, Diagnostics& diagnostics,
-          MacroInfo* baseFileMacro) noexcept :
+          MacroInfo* baseFileMacro, const CData& data) noexcept :
         lang_(lang),
         original_(file),
         ptr_(file.file->memfile.data()),
         fman_(fman),
         arena_(arena),
         infoTable_(infoTable),
-        diagnostics_(diagnostics) {
+        diagnostics_(diagnostics),
+        data_(data) {
         setKeywords();
         setFileMacro(file);
         setBaseFileMacro(baseFileMacro);
         setMacros();
+        setTypeMacros();
     }
 
     void skipWhitespace();
@@ -565,7 +598,7 @@ public:
 
     void setMacrosBasedOnTriple(inr::Triple);
     void addMacroWithPredefOne(inr::sview);
-    void setTypeMacros(const CData&);
+    void setTypeMacros();
     Token glueToken(const Token& lhs, const Token& rhs, SourceLoc loc);
     void handleCaseAlpha(Token& tok, const char*& ptr);
     void handleCaseNum(Token& tok, const char*& ptr);

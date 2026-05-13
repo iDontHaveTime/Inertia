@@ -14,6 +14,8 @@
 #include <inrcc/Lexer/Lexer.h>
 #include <inrcc/Options/Data.h>
 #include <inrcc/Options/LangOptions.h>
+#include <inrcc/Parser/Parser.h>
+#include <inrcc/Sema/Sema.h>
 #include <inrcc/Support/Arena.h>
 
 #include <cstdio>
@@ -186,13 +188,14 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
                        inr::Triple target) {
     Arena arena;
     IdentMap infoTable;
-    MacroInfo baseFile({{TokenKind::LITERAL_STRING, 0, nullptr, nullptr}},
-                       true);
+    MacroInfo baseFile(
+        {Token(TokenKind::LITERAL_STRING, file.originalName.size(),
+               file.originalName.data(), nullptr)},
+        true);
     CData data(target);
 
-    Lexer lex(lang, file, fman, arena, infoTable, diagnostics, &baseFile);
+    Lexer lex(lang, file, fman, arena, infoTable, diagnostics, &baseFile, data);
     lex.setMacrosBasedOnTriple(target);
-    lex.setTypeMacros(data);
 
     auto predefines = args.get(Arg::Kind::Define);
 
@@ -206,10 +209,9 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
         lex.addMacroWithPredefOne(arg->getOptional());
     }
 
-    Token tok;
-    do {
-        tok = lex.next();
-    } while(tok.getKind() != TokenKind::TOKEN_END);
+    Sema sema;
+    Parser parser(lex, arena, sema, diagnostics);
+    auto decls = parser.parseAll();
 
     diagnostics.printall(inr::outs());
 

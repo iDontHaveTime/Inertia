@@ -64,13 +64,13 @@ public:
     /// addition, as size_ also uses uint32_t.
     StringMap(inr::Alignment initSize = 0x1000) :
         size_(initSize.getAlignment()), count_(0) {
-        entries_ = (Entry*)calloc(size_, sizeof(Entry));
+        entries_ = (Entry*)std::calloc(size_, sizeof(Entry));
     }
 
     /// @brief This function should not be used.
     /// @note It is used internally by CexprStringMap.
     StringMap(const void* entries, uint32_t capacity, uint32_t count) {
-        entries_ = malloc(capacity * sizeof(Entry));
+        entries_ = std::malloc(capacity * sizeof(Entry));
         size_ = capacity;
         count_ = count;
         std::memcpy(entries_, entries, capacity * sizeof(Entry));
@@ -101,7 +101,7 @@ public:
     /// @brief Move operator.
     StringMap& operator=(StringMap&& other) noexcept {
         if(this != &other) {
-            free(entries_);
+            std::free(entries_);
 
             entries_ = other.entries_;
             size_ = other.size_;
@@ -114,7 +114,7 @@ public:
     }
 
     ~StringMap() noexcept {
-        free(entries_);
+        std::free(entries_);
     }
 
 private:
@@ -176,8 +176,12 @@ private:
         Entry* end = entries_ + size_;
 
         while(entry + 1 < end && (entry + 1)->key_) {
-            *entry = *(entry + 1);
-            entry++;
+            Entry* candidate = (entry + 1);
+            if(candidate->key_ && entry->hash_ == candidate->hash_) {
+                *entry = *(entry + 1);
+                entry++;
+            }
+            else break;
         }
 
         entry->key_ = nullptr;
@@ -282,7 +286,10 @@ public:
 
             if(entry->hash_ == hash) {
                 if(entry->keyLen_ == keyLen) {
-                    if(inr::str::compare(entry->key_, key, keyLen) == 0) break;
+                    if(inr::str::compare(entry->key_, key, keyLen) == 0) {
+                        entry->value_ = val;
+                        return &entry->value_;
+                    }
                 }
                 else if constexpr(CmpFunc != nullptr &&
                                   FallBackToCmpFunc == true) {
@@ -326,7 +333,7 @@ private:
         Entry* oldEntries = entries_;
 
         size_ <<= 1;
-        entries_ = (Entry*)calloc(size_, sizeof(Entry));
+        entries_ = (Entry*)std::calloc(size_, sizeof(Entry));
 
         for(uint32_t i = 0; i < oldSize; i++) {
             if(Entry* entry = oldEntries + i; entry->key_) {
@@ -340,7 +347,7 @@ private:
             }
         }
 
-        free(oldEntries);
+        std::free(oldEntries);
     }
 };
 

@@ -24,3 +24,13 @@ add_inrcc_library(Driver ${DriverSources})
 file(GLOB DiagSources "Diagnostics/*.cpp")
 
 add_inrcc_library(Diag ${DiagSources})
+
+# Parser library
+file(GLOB ParserSources "Parser/*.cpp")
+
+add_inrcc_library(Parser ${ParserSources})
+
+# Sema library
+file(GLOB SemaSources "Sema/*.cpp")
+
+add_inrcc_library(Sema ${SemaSources})

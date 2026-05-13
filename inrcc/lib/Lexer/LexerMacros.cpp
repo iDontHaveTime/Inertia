@@ -185,9 +185,9 @@ static inline void setBasedOnClosestType(const IdentMapTypes& types,
     }
 }
 
-void Lexer::setTypeMacros(const CData& data) {
-    if(data.getIntWidth() == 32 && data.getPtrWidth() == 64 &&
-       data.getLongLongWidth() == 64 && data.getLongWidth() == 64) {
+void Lexer::setTypeMacros() {
+    if(data_.getIntWidth() == 32 && data_.getPtrWidth() == 64 &&
+       data_.getLongLongWidth() == 64 && data_.getLongWidth() == 64) {
         INSERT_MACRO("_LP64", MacroN1);
         INSERT_MACRO("__LP64__", MacroN1);
     }
@@ -198,11 +198,11 @@ void Lexer::setTypeMacros(const CData& data) {
     MacroInfo* ID = arena_.alloc<MacroInfo>();  \
     ID->enableBuiltin();                        \
     macros_.insert(STR, sizeof(STR) - 1, ID);   \
-    setBasedOnClosestType(types, ID->getReplacements(), data, COND, SIGN)
+    setBasedOnClosestType(types, ID->getReplacements(), data_, COND, SIGN)
 
 #define ALIAS_TYPE_MACRO(ID, STR) macros_.insert(STR, sizeof(STR) - 1, ID);
 
-    SET_TYPE_MACRO_NEW(sizetype, "__SIZE_TYPE__", data.getSizeWidth(), 1);
+    SET_TYPE_MACRO_NEW(sizetype, "__SIZE_TYPE__", data_.getSizeWidth(), 1);
 
     // wchar, wint, intmax, uintmax, sig_atomic, skip for now.
     SET_TYPE_MACRO_NEW(int8, "__INT8_TYPE__", 8, -1);
@@ -236,8 +236,8 @@ void Lexer::setTypeMacros(const CData& data) {
     ALIAS_TYPE_MACRO(uint32, "__UINT_FAST32_TYPE__");
     ALIAS_TYPE_MACRO(uint64, "__UINT_FAST64_TYPE__");
 
-    SET_TYPE_MACRO_NEW(intptr, "__INTPTR_TYPE__", data.getPtrWidth(), 0);
-    SET_TYPE_MACRO_NEW(uintptr, "__UINTPTR_TYPE__", data.getPtrWidth(), 1);
+    SET_TYPE_MACRO_NEW(intptr, "__INTPTR_TYPE__", data_.getPtrWidth(), 0);
+    SET_TYPE_MACRO_NEW(uintptr, "__UINTPTR_TYPE__", data_.getPtrWidth(), 1);
 
     // use pointer size at least for now
     ALIAS_TYPE_MACRO(intptr, "__PTRDIFF_TYPE__");
@@ -255,12 +255,12 @@ void Lexer::setTypeMacros(const CData& data) {
     ID->getReplacements().emplace_back(TokenKind::LITERAL_INTEGER, \
                                        cres.ptr - buffer, buffer, nullptr)
 
-    NUMERICAL_MACRO_NEW(shortw, "__SHRT_WIDTH__", data.getShortWidth());
-    NUMERICAL_MACRO_NEW(intw, "__INT_WIDTH__", data.getIntWidth());
-    NUMERICAL_MACRO_NEW(lw, "__LONG_WIDTH__", data.getLongWidth());
-    NUMERICAL_MACRO_NEW(llw, "__LONG_LONG_WIDTH__", data.getLongLongWidth());
+    NUMERICAL_MACRO_NEW(shortw, "__SHRT_WIDTH__", data_.getShortWidth());
+    NUMERICAL_MACRO_NEW(intw, "__INT_WIDTH__", data_.getIntWidth());
+    NUMERICAL_MACRO_NEW(lw, "__LONG_WIDTH__", data_.getLongWidth());
+    NUMERICAL_MACRO_NEW(llw, "__LONG_LONG_WIDTH__", data_.getLongLongWidth());
 
-    NUMERICAL_MACRO_NEW(sizew, "__SIZE_WIDTH__", data.getSizeWidth());
+    NUMERICAL_MACRO_NEW(sizew, "__SIZE_WIDTH__", data_.getSizeWidth());
 
     NUMERICAL_MACRO_NEW(intlw8, "__INT_LEAST8_WIDTH__", 8);
     NUMERICAL_MACRO_NEW(intlw16, "__INT_LEAST16_WIDTH__", 16);
@@ -272,17 +272,17 @@ void Lexer::setTypeMacros(const CData& data) {
     ALIAS_TYPE_MACRO(intlw32, "__INT_FAST32_WIDTH__");
     ALIAS_TYPE_MACRO(intlw64, "__INT_FAST64_WIDTH__");
 
-    NUMERICAL_MACRO_NEW(intptrw, "__INTPTR_WIDTH__", data.getPtrWidth());
+    NUMERICAL_MACRO_NEW(intptrw, "__INTPTR_WIDTH__", data_.getPtrWidth());
 
     // pointer size currently
     ALIAS_TYPE_MACRO(intptrw, "__PTRDIFF_WIDTH__");
 
-    NUMERICAL_MACRO_NEW(shortsz, "__SIZEOF_SHORT__", data.getShortSize());
-    NUMERICAL_MACRO_NEW(intsz, "__SIZEOF_INT__", data.getIntSize());
-    NUMERICAL_MACRO_NEW(longsz, "__SIZEOF_LONG__", data.getLongSize());
-    NUMERICAL_MACRO_NEW(llsz, "__SIZEOF_LONG_LONG__", data.getLongLongSize());
-    NUMERICAL_MACRO_NEW(ptrsz, "__SIZEOF_POINTER__", data.getPtrSize());
-    NUMERICAL_MACRO_NEW(sizesz, "__SIZEOF_SIZE_T__", data.getSizeSize());
+    NUMERICAL_MACRO_NEW(shortsz, "__SIZEOF_SHORT__", data_.getShortSize());
+    NUMERICAL_MACRO_NEW(intsz, "__SIZEOF_INT__", data_.getIntSize());
+    NUMERICAL_MACRO_NEW(longsz, "__SIZEOF_LONG__", data_.getLongSize());
+    NUMERICAL_MACRO_NEW(llsz, "__SIZEOF_LONG_LONG__", data_.getLongLongSize());
+    NUMERICAL_MACRO_NEW(ptrsz, "__SIZEOF_POINTER__", data_.getPtrSize());
+    NUMERICAL_MACRO_NEW(sizesz, "__SIZEOF_SIZE_T__", data_.getSizeSize());
 
     // same scenario here
     ALIAS_TYPE_MACRO(ptrsz, "__SIZEOF_PTRDIFF_T__");

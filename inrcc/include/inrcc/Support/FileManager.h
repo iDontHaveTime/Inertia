@@ -91,6 +91,12 @@ public:
         const size_t* ff = cache_.find(name);
         return ff ? files_[*ff] : nullptr;
     }
+
+    ~FileManager() noexcept {
+        for(auto it = files_.rbegin(); it != files_.rend(); ++it) {
+            delete *it;
+        }
+    }
 };
 
 } // namespace inrcc

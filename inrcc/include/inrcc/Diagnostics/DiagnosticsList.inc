@@ -29,7 +29,7 @@ NEW_DIAGNOSTIC(expected_filename, NoStrID, DefFatal, "expected \"FILE\" or <FILE
 /// When include doesn't find a file
 NEW_DIAGNOSTIC(file_not_found, NoStrID, DefFatal, "file not found")
 
-/// When there is no identifier after define
+/// When there is no identifier after a preprocessor directive that requires it
 NEW_DIAGNOSTIC(macro_expected_identifier, NoStrID, DefError, "expected an identifier")
 
 /// When there is a new line in a preprocessing directive
@@ -80,6 +80,14 @@ NEW_DIAGNOSTIC(invalid_suffix, NoStrID, DefError, "invalid suffix")
 NEW_DIAGNOSTIC(macro_expected_colon, NoStrID, DefFatal, "expected ':' for '?'")
 
 NEW_DIAGNOSTIC(macro_expected_lparen, NoStrID, DefFatal, "expected '(' for expression")
+
+/// Known prefixes: L, U, u, u8
+NEW_DIAGNOSTIC(unknown_string_prefix, NoStrID, DefFatal, "unknown string prefix")
+/// Same thing as above but for char literals
+NEW_DIAGNOSTIC(unknown_charl_prefix, NoStrID, DefFatal, "unknown char literal prefix")
+
+NEW_DIAGNOSTIC(string_not_closed, NoStrID, DefFatal, "string wasn't closed properly")
+NEW_DIAGNOSTIC(char_not_closed, NoStrID, DefFatal, "char literal wasn't closed properly")
 
 #undef DefNothing
 #undef DefWarning

@@ -169,6 +169,71 @@ inrcc_inline void Lexer::handleCaseAlpha(Token& tok, const char*& ptr) {
 
         reusableSkip(ptr);
     }
+    if(*ptr == '\"') {
+        inr::sview str_prefix(tok.getStart(), ptr - tok.getStart());
+        if(str_prefix.size() == 1) {
+            if(str_prefix == "L") {
+                reusableSkip(ptr);
+                caseString(tok, ptr);
+                tok.setKind(TokenKind::LITERAL_LSTRING);
+                return;
+            }
+            else if(str_prefix == "U") {
+                reusableSkip(ptr);
+                caseString(tok, ptr);
+                tok.setKind(TokenKind::LITERAL_USTRING);
+                return;
+            }
+            else if(str_prefix == "u") {
+                reusableSkip(ptr);
+                caseString(tok, ptr);
+                tok.setKind(TokenKind::LITERAL_uSTRING);
+                return;
+            }
+        }
+        else if(str_prefix == "u8") {
+            reusableSkip(ptr);
+            caseString(tok, ptr);
+            tok.setKind(TokenKind::LITERAL_u8STRING);
+            return;
+        }
+        diagnostics_.newDiag(getCurrentFile(), tok.getLocPtr(),
+                             str_prefix.size(),
+                             Diagnostics::Diag::unknown_string_prefix);
+    }
+    else if(*ptr == '\'') {
+        inr::sview char_prefix(tok.getStart(), ptr - tok.getStart());
+        if(char_prefix.size() == 1) {
+            if(char_prefix == "L") {
+                reusableSkip(ptr);
+                caseChar(tok, ptr);
+                tok.setKind(TokenKind::LITERAL_LCHAR);
+                return;
+            }
+            else if(char_prefix == "U") {
+                reusableSkip(ptr);
+                caseChar(tok, ptr);
+                tok.setKind(TokenKind::LITERAL_UCHAR);
+                return;
+            }
+            else if(char_prefix == "u") {
+                reusableSkip(ptr);
+                caseChar(tok, ptr);
+                tok.setKind(TokenKind::LITERAL_uCHAR);
+                return;
+            }
+        }
+        else if(char_prefix == "u8") {
+            reusableSkip(ptr);
+            caseChar(tok, ptr);
+            tok.setKind(TokenKind::LITERAL_u8CHAR);
+            return;
+        }
+        diagnostics_.newDiag(getCurrentFile(), tok.getLocPtr(),
+                             char_prefix.size(),
+                             Diagnostics::Diag::unknown_string_prefix);
+    }
+
     tok.setLength(ptr - tok.getStart());
     tok.setLocLen(tok.getLength());
     inr::sview view = tok.getView();
@@ -398,6 +463,7 @@ void Lexer::handleInclude() {
                                  Diagnostics::Diag::expected_right_arrow);
             return;
         }
+        inr::sview fname(start, ptr_);
         DriverFMan::File f =
             fman_.openFileBufferNoLocalDir(inr::sview(start, ptr_));
         skipLine();
@@ -407,8 +473,7 @@ void Lexer::handleInclude() {
         }
         else {
             // ERROR. file not found
-            diagnostics_.newDiag(getCurrentFile(), tok.getLocPtr(),
-                                 ptr_ - tok.getLocPtr(),
+            diagnostics_.newDiag(getCurrentFile(), fname.data(), fname.size(),
                                  Diagnostics::Diag::file_not_found);
         }
         return;
@@ -764,6 +829,55 @@ void Lexer::handlePreprocessing() {
     }
 }
 
+void Lexer::caseChar(Token& tok, const char*& ptr) {
+    tok.setKind(TokenKind::LITERAL_CHAR);
+    tok.setStart(ptr);
+    tok.setLocPtr(ptr);
+
+    while(true) {
+        uint8_t kind = lookupTable.lookup(*ptr);
+
+        if(kind & LSymbol) {
+            char c = *ptr;
+            if(c == '\\') {
+                if(reusableJump('"', ptr)) continue;
+                if(reusableJump('a', ptr)) continue;
+                if(reusableJump('b', ptr)) continue;
+                if(reusableJump('e', ptr)) continue;
+                if(reusableJump('f', ptr)) continue;
+                if(reusableJump('n', ptr)) continue;
+                if(reusableJump('r', ptr)) continue;
+                if(reusableJump('t', ptr)) continue;
+                if(reusableJump('v', ptr)) continue;
+                if(reusableJump('\\', ptr)) continue;
+                if(reusableJump('\'', ptr)) continue;
+                if(reusableJump('?', ptr)) continue;
+                // TODO: Implement \x, \u, \U for escapes.
+            }
+            else if(c == '\'') {
+                tok.setLength(ptr - tok.getStart());
+                tok.setLocLen(tok.getLength());
+                reusableSkip(ptr);
+                return;
+            }
+        }
+        else if(kind & LNL) {
+            tok.setLength(ptr - tok.getStart());
+            tok.setLocLen(tok.getLength());
+            diagnostics_.newDiag(getCurrentFile(), tok.getLocPtr(),
+                                 tok.getLocLen(),
+                                 Diagnostics::Diag::char_not_closed);
+            return;
+        }
+        else if(kind & (LErr | LTerm)) {
+            tok.setLength(ptr - tok.getStart());
+            tok.setLocLen(tok.getLength());
+            return;
+        }
+        reusableSkip(ptr);
+    }
+}
+
 void Lexer::caseString(Token& tok, const char*& ptr) {
     tok.setKind(TokenKind::LITERAL_STRING);
     tok.setStart(ptr);
@@ -799,7 +913,10 @@ void Lexer::caseString(Token& tok, const char*& ptr) {
         else if(kind & LNL) {
             tok.setLength(ptr - tok.getStart());
             tok.setLocLen(tok.getLength());
-            return; // ERROR. string not closed
+            diagnostics_.newDiag(getCurrentFile(), tok.getLocPtr(),
+                                 tok.getLocLen(),
+                                 Diagnostics::Diag::string_not_closed);
+            return;
         }
         else if(kind & (LErr | LTerm)) {
             tok.setLength(ptr - tok.getStart());
@@ -811,7 +928,7 @@ void Lexer::caseString(Token& tok, const char*& ptr) {
 }
 
 bool Lexer::handleCaseSymbol(Token& tok, bool preprocess, const char*& ptr) {
-    char c = *ptr_;
+    char c = *ptr;
     reusableSkip(ptr);
     tok.setKind((TokenKind)lookupTable.fastTokenKind(c));
 
@@ -867,7 +984,8 @@ bool Lexer::handleCaseSymbol(Token& tok, bool preprocess, const char*& ptr) {
             }
             break;
         case '\'':
-            break;
+            caseChar(tok, ptr);
+            return false;
         case '*':
             if(reusableForward('=', ptr)) {
                 tok.setKind(TokenKind::SYMBOL_STAREQUAL);
@@ -973,7 +1091,7 @@ bool Lexer::handleCaseSymbol(Token& tok, bool preprocess, const char*& ptr) {
             break;
     }
 
-    tok.setLength(ptr_ - tok.getStart());
+    tok.setLength(ptr - tok.getStart());
     tok.setLocLen(tok.getLength());
 
     return false;
@@ -1364,8 +1482,10 @@ bool Lexer::preprocess(const Token& tok, LexerTokenStack& to) {
         if(minfoEntry->isFunctionLike()) {
             if(minfoEntry->getArgs().size() || minfoEntry->isVararg())
                 args.emplace_back();
+            const char* recover = ptr_;
             Token tok = nextNoPreProcessing();
             if(tok.getKind() != TokenKind::SYMBOL_LPAREN) {
+                ptr_ = recover;
                 return false;
             }
 
@@ -2081,258 +2201,276 @@ int Lexer::parseIfExpr() {
 }
 
 bool Lexer::nextNoPreProcessing(Token& to) {
-    if(!tokenStack_.empty()) {
-        to = *tokenStack_.back();
-        tokenStack_.pop_back();
+    while(true) {
+        if(!tokenStack_.empty()) {
+            to = *tokenStack_.back();
+            tokenStack_.pop_back();
+            return false;
+        }
+        if(skipWhitespacePreProcess()) return true;
+
+        uint8_t c = lookupTable.lookup(*ptr_);
+
+        to.setStart(ptr_);
+        to.setLocPtr(ptr_);
+        to.setIdentInfo(nullptr);
+
+        if(c & LErr) {
+            to.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
+            do {
+                reusableSkip(ptr_);
+                c = lookupTable.lookup(*ptr_);
+            } while(c & LErr);
+            to.setLength(to.getStart() - ptr_);
+            // ERROR.
+            return true;
+        }
+
+        switch((LexerLookup)c) {
+            case LTerm:
+                if(caseNone(to)) continue;
+                break;
+            case LAlpha:
+                caseAlpha(to);
+                break;
+            case LNum:
+                caseNum(to);
+                break;
+            case LSymbol:
+                if(caseSymbol(to, false)) continue;
+                break;
+            case LWhitespace:
+            case LErr:
+            case LNL:
+                inr_notpossible("This is checked beforehand.");
+            case LNone:
+                inr_notpossible("None are LNone.");
+        }
+
+        if(!tokensAllowed() && to.getKind() != TokenKind::TOKEN_END) continue;
+
         return false;
     }
-    if(skipWhitespacePreProcess()) return true;
-
-    uint8_t c = lookupTable.lookup(*ptr_);
-
-    to.setStart(ptr_);
-    to.setLocPtr(ptr_);
-    to.setIdentInfo(nullptr);
-
-    if(c & LErr) {
-        to.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
-        do {
-            reusableSkip(ptr_);
-            c = lookupTable.lookup(*ptr_);
-        } while(c & LErr);
-        to.setLength(to.getStart() - ptr_);
-        // ERROR.
-        return true;
-    }
-
-    switch((LexerLookup)c) {
-        case LTerm:
-            if(caseNone(to)) return nextNoPreProcessing(to);
-            break;
-        case LAlpha:
-            caseAlpha(to);
-            break;
-        case LNum:
-            caseNum(to);
-            break;
-        case LSymbol:
-            if(caseSymbol(to, false)) return nextNoPreProcessing(to);
-            break;
-        case LWhitespace:
-        case LErr:
-        case LNL:
-            inr_notpossible("This is checked beforehand.");
-        case LNone:
-            inr_notpossible("None are LNone.");
-    }
-
-    if(!tokensAllowed() && to.getKind() != TokenKind::TOKEN_END)
-        return nextNoPreProcessing(to);
-
-    return false;
 }
 
 Token Lexer::nextNoPreProcessing() {
-    if(!tokenStack_.empty()) {
-        Token tok = *tokenStack_.back();
-        tokenStack_.pop_back();
+    while(true) {
+        if(!tokenStack_.empty()) {
+            Token tok = *tokenStack_.back();
+            tokenStack_.pop_back();
+            return tok;
+        }
+        skipWhitespace();
+
+        uint8_t c = lookupTable.lookup(*ptr_);
+
+        Token tok;
+        tok.setLocPtr(ptr_);
+        tok.setStart(ptr_);
+
+        if(c & LErr) {
+            tok.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
+            do {
+                reusableSkip(ptr_);
+                c = lookupTable.lookup(*ptr_);
+            } while(c & LErr);
+            tok.setLength(ptr_ - tok.getStart());
+            tok.setLocLen(tok.getLength());
+            // ERROR.
+            return tok;
+        }
+
+        switch((LexerLookup)c) {
+            case LTerm:
+                if(caseNone(tok)) continue;
+                break;
+            case LAlpha:
+                caseAlpha(tok);
+                break;
+            case LNum:
+                caseNum(tok);
+                break;
+            case LSymbol:
+                if(caseSymbol(tok, false)) continue;
+                break;
+            case LWhitespace:
+            case LErr:
+            case LNL:
+                inr_notpossible("This is checked beforehand.");
+            case LNone:
+                inr_notpossible("None are LNone.");
+        }
+
+        if(!tokensAllowed() && tok.getKind() != TokenKind::TOKEN_END) continue;
+
         return tok;
     }
-    skipWhitespace();
-
-    uint8_t c = lookupTable.lookup(*ptr_);
-
-    Token tok;
-    tok.setLocPtr(ptr_);
-    tok.setStart(ptr_);
-
-    if(c & LErr) {
-        tok.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
-        do {
-            reusableSkip(ptr_);
-            c = lookupTable.lookup(*ptr_);
-        } while(c & LErr);
-        tok.setLength(tok.getStart() - ptr_);
-        // ERROR.
-        return tok;
-    }
-
-    switch((LexerLookup)c) {
-        case LTerm:
-            if(caseNone(tok)) return next();
-            break;
-        case LAlpha:
-            caseAlpha(tok);
-            break;
-        case LNum:
-            caseNum(tok);
-            break;
-        case LSymbol:
-            if(caseSymbol(tok, false)) return next();
-            break;
-        case LWhitespace:
-        case LErr:
-        case LNL:
-            inr_notpossible("This is checked beforehand.");
-        case LNone:
-            inr_notpossible("None are LNone.");
-    }
-
-    if(!tokensAllowed() && tok.getKind() != TokenKind::TOKEN_END) return next();
-
-    return tok;
 }
 
 bool Lexer::nextNoPreProcessingForce(Token& to) {
-    if(!tokenStack_.empty()) {
-        to = *tokenStack_.back();
-        tokenStack_.pop_back();
+    while(true) {
+        if(!tokenStack_.empty()) {
+            to = *tokenStack_.back();
+            tokenStack_.pop_back();
+            return false;
+        }
+        if(skipWhitespacePreProcess()) return true;
+
+        uint8_t c = lookupTable.lookup(*ptr_);
+
+        to.setStart(ptr_);
+        to.setLocPtr(ptr_);
+        to.setIdentInfo(nullptr);
+
+        if(c & LErr) {
+            to.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
+            do {
+                reusableSkip(ptr_);
+                c = lookupTable.lookup(*ptr_);
+            } while(c & LErr);
+            to.setLength(ptr_ - to.getStart());
+            to.setLocLen(to.getLength());
+            // ERROR.
+            return true;
+        }
+
+        switch((LexerLookup)c) {
+            case LTerm:
+                if(caseNone(to)) continue;
+                break;
+            case LAlpha:
+                caseAlpha(to);
+                break;
+            case LNum:
+                caseNum(to);
+                break;
+            case LSymbol:
+                if(caseSymbol(to, false)) continue;
+                break;
+            case LWhitespace:
+            case LErr:
+            case LNL:
+                inr_notpossible("This is checked beforehand.");
+            case LNone:
+                inr_notpossible("None are LNone.");
+        }
+
         return false;
     }
-    if(skipWhitespacePreProcess()) return true;
-
-    uint8_t c = lookupTable.lookup(*ptr_);
-
-    to.setStart(ptr_);
-    to.setLocPtr(ptr_);
-    to.setIdentInfo(nullptr);
-
-    if(c & LErr) {
-        to.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
-        do {
-            reusableSkip(ptr_);
-            c = lookupTable.lookup(*ptr_);
-        } while(c & LErr);
-        to.setLength(to.getStart() - ptr_);
-        // ERROR.
-        return true;
-    }
-
-    switch((LexerLookup)c) {
-        case LTerm:
-            if(caseNone(to)) return nextNoPreProcessingForce(to);
-            break;
-        case LAlpha:
-            caseAlpha(to);
-            break;
-        case LNum:
-            caseNum(to);
-            break;
-        case LSymbol:
-            if(caseSymbol(to, false)) return nextNoPreProcessingForce(to);
-            break;
-        case LWhitespace:
-        case LErr:
-        case LNL:
-            inr_notpossible("This is checked beforehand.");
-        case LNone:
-            inr_notpossible("None are LNone.");
-    }
-
-    return false;
 }
 
 Token Lexer::next() {
-    if(!tokenStack_.empty()) {
-        Token tok = *tokenStack_.back();
-        tokenStack_.pop_back();
+    while(true) {
+        if(!tokenStack_.empty()) {
+            Token tok = *tokenStack_.back();
+            tokenStack_.pop_back();
+            return tok;
+        }
+
+        skipWhitespace();
+
+        uint8_t c = lookupTable.lookup(*ptr_);
+
+        Token tok;
+        tok.setStart(ptr_);
+        tok.setLocPtr(ptr_);
+
+        if(c & LErr) {
+            tok.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
+            do {
+                reusableSkip(ptr_);
+                c = lookupTable.lookup(*ptr_);
+            } while(c & LErr);
+            tok.setLength(ptr_ - tok.getStart());
+            tok.setLocLen(tok.getLength());
+            // ERROR.
+            return tok;
+        }
+
+        switch((LexerLookup)c) {
+            case LTerm:
+                if(caseNone(tok)) continue;
+                break;
+            case LAlpha:
+                caseAlpha(tok);
+                break;
+            case LNum:
+                caseNum(tok);
+                break;
+            case LSymbol:
+                if(caseSymbol(tok)) continue;
+                break;
+            case LWhitespace:
+            case LErr:
+            case LNL:
+                inr_notpossible("This is checked beforehand.");
+            case LNone:
+                inr_notpossible("None are LNone.");
+        }
+
+        if(!tokensAllowed() && tok.getKind() != TokenKind::TOKEN_END) continue;
+
+        if(preprocess(tok, tokenStack_)) continue;
+
         return tok;
     }
-    skipWhitespace();
-
-    uint8_t c = lookupTable.lookup(*ptr_);
-
-    Token tok;
-    tok.setStart(ptr_);
-    tok.setLocPtr(ptr_);
-
-    if(c & LErr) {
-        tok.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
-        do {
-            reusableSkip(ptr_);
-            c = lookupTable.lookup(*ptr_);
-        } while(c & LErr);
-        tok.setLength(tok.getStart() - ptr_);
-        // ERROR.
-        return tok;
-    }
-
-    switch((LexerLookup)c) {
-        case LTerm:
-            if(caseNone(tok)) return next();
-            break;
-        case LAlpha:
-            caseAlpha(tok);
-            break;
-        case LNum:
-            caseNum(tok);
-            break;
-        case LSymbol:
-            if(caseSymbol(tok)) return next();
-            break;
-        case LWhitespace:
-        case LErr:
-        case LNL:
-            inr_notpossible("This is checked beforehand.");
-        case LNone:
-            inr_notpossible("None are LNone.");
-    }
-
-    if(!tokensAllowed() && tok.getKind() != TokenKind::TOKEN_END) return next();
-
-    return preprocess(tok, tokenStack_) ? next() : tok;
 }
 
 Token Lexer::nextNoPreProcessingDirective() {
-    if(!tokenStack_.empty()) {
-        Token tok = *tokenStack_.back();
-        tokenStack_.pop_back();
+    while(true) {
+        if(!tokenStack_.empty()) {
+            Token tok = *tokenStack_.back();
+            tokenStack_.pop_back();
+            return tok;
+        }
+
+        skipWhitespace();
+
+        uint8_t c = lookupTable.lookup(*ptr_);
+
+        Token tok;
+        tok.setStart(ptr_);
+        tok.setLocPtr(ptr_);
+
+        if(c & LErr) {
+            tok.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
+            do {
+                reusableSkip(ptr_);
+                c = lookupTable.lookup(*ptr_);
+            } while(c & LErr);
+            tok.setLength(ptr_ - tok.getStart());
+            tok.setLocLen(tok.getLength());
+            // ERROR.
+            return tok;
+        }
+
+        switch((LexerLookup)c) {
+            case LTerm:
+                if(caseNone(tok)) continue;
+                break;
+            case LAlpha:
+                caseAlpha(tok);
+                break;
+            case LNum:
+                caseNum(tok);
+                break;
+            case LSymbol:
+                if(caseSymbol(tok, false)) continue;
+                break;
+            case LWhitespace:
+            case LErr:
+            case LNL:
+                inr_notpossible("This is checked beforehand.");
+            case LNone:
+                inr_notpossible("None are LNone.");
+        }
+
+        if(!tokensAllowed() && tok.getKind() != TokenKind::TOKEN_END) continue;
+
+        if(preprocess(tok, tokenStack_)) continue;
+
         return tok;
     }
-    skipWhitespace();
-
-    uint8_t c = lookupTable.lookup(*ptr_);
-
-    Token tok;
-    tok.setStart(ptr_);
-    tok.setLocPtr(ptr_);
-
-    if(c & LErr) {
-        tok.setKind(TokenKind::TOKEN_UNKNOWN_BYTES);
-        do {
-            reusableSkip(ptr_);
-            c = lookupTable.lookup(*ptr_);
-        } while(c & LErr);
-        tok.setLength(tok.getStart() - ptr_);
-        // ERROR.
-        return tok;
-    }
-
-    switch((LexerLookup)c) {
-        case LTerm:
-            if(caseNone(tok)) return nextNoPreProcessingDirective();
-            break;
-        case LAlpha:
-            caseAlpha(tok);
-            break;
-        case LNum:
-            caseNum(tok);
-            break;
-        case LSymbol:
-            if(caseSymbol(tok, false)) return nextNoPreProcessingDirective();
-            break;
-        case LWhitespace:
-        case LErr:
-        case LNL:
-            inr_notpossible("This is checked beforehand.");
-        case LNone:
-            inr_notpossible("None are LNone.");
-    }
-
-    if(!tokensAllowed() && tok.getKind() != TokenKind::TOKEN_END)
-        return nextNoPreProcessingDirective();
-
-    return preprocess(tok, tokenStack_) ? nextNoPreProcessingDirective() : tok;
 }
 
 } // namespace inrcc

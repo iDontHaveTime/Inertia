@@ -83,6 +83,7 @@ void Driver::printVersion() {
 
 DriverMode getModeFromArgv0(const char* arg) {
     inr::sview argS(arg);
+    if(argS.size() < 2) return DriverMode::Unknown;
 
     argS = argS.substr(argS.size() - 2, 2);
 
