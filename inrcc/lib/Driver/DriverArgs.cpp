@@ -15,7 +15,7 @@ namespace inrcc {
 Language Driver::getDefaultLanguage() {
     switch(mode_) {
         case DriverMode::CC:
-            return Language::c99; // As of now c99 is the default.
+            return Language::c99; // Currently c99 is the default.
         case DriverMode::Unknown:
             return Language::Unknown;
     }
@@ -45,6 +45,10 @@ bool Driver::verifyArgs(class ArgVec& args) {
 
     if(args.howMany(Arg::Kind::Nostdinc) > 1) {
         logwarn("redundant '-nostdinc'");
+    }
+
+    if(args.howMany(Arg::Kind::Freestanding) > 1) {
+        logwarn("redundant '-ffreestanding'");
     }
 
     if(args.howMany(Arg::Kind::Target) + args.howMany(Arg::Kind::Target_Alias) >

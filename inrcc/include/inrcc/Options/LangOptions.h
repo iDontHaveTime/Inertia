@@ -28,6 +28,19 @@ public:
     static bool isLanguageSupported(Standard lang) noexcept;
     static const char* getAsString(Standard lang) noexcept;
 
+    constexpr bool isC() const noexcept {
+        switch(standard_) {
+            case c89:
+            case c99:
+            case c11:
+            case c17:
+            case c23:
+                return true;
+            default:
+                return false;
+        }
+    }
+
 private:
     /// @brief Standard of the language.
     Standard standard_ = Unknown;
@@ -45,6 +58,7 @@ private:
     /// - ??- ~
     /// Bit 1 - Spaceship operator: <=>
     /// Bit 2 - Extensions: gnu89, gnu99, etc..
+    /// Bit 3 - Freestanding
     unsigned feats_ = 0;
 
 public:
@@ -86,6 +100,10 @@ public:
         return feats_ & 0x4;
     }
 
+    constexpr bool getFreestanding() const noexcept {
+        return feats_ & 0x8;
+    }
+
     constexpr void enableTrigraph() noexcept {
         feats_ |= 0x1;
     }
@@ -96,6 +114,10 @@ public:
 
     constexpr void enableExtensions() noexcept {
         feats_ |= 0x4;
+    }
+
+    constexpr void enableFreestanding() noexcept {
+        feats_ |= 0x8;
     }
 
     static Language getFromString(inr::sview str) noexcept;

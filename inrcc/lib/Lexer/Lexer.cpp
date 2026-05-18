@@ -317,7 +317,7 @@ void Lexer::handleCaseNum(Token& tok, const char*& ptr) {
                 else if(c == 'l' || c == 'L') {
                     if((it + 1) != end) {
                         char c1 = *(it + 1);
-                        if(c1 == 'l' || c1 == 'L') {
+                        if(c1 == c) {
                             if(suffixLL || suffixL) {
                                 diagnostics_.newDiag(
                                     getCurrentFile(), tok.getLocPtr(),
@@ -817,6 +817,13 @@ void Lexer::handlePreprocessing() {
             diagnostics_.newDiag(getCurrentFile(), tok.getLocPtr(),
                                  ptr_ - tok.getLocPtr(),
                                  Diagnostics::Diag::cpp_error);
+            break;
+        case TokenKind::KEYWORD_pragma:
+            if(!tokensAllowed()) {
+                skipLine();
+                return;
+            }
+            skipLine();
             break;
         default:
             if(tokensAllowed()) {
@@ -1373,7 +1380,7 @@ static inline void stringifyToken(StringifyInfo info, Arena& arena,
         ++tokIt;
     }
 
-    tok.setKind(TokenKind::LITERAL_STRING);
+    tok.setKind(TokenKind::LITERAL_RAWSTRING);
     tok.setLength(ptr - tok.getStart());
     tok.setLoc(loc);
     to.emplace_back(arena.alloc<Token>(tok));

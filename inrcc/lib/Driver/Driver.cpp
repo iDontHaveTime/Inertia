@@ -28,11 +28,8 @@ bool languageSupportedByDriverMode(DriverMode dm, Language lang) {
         case DriverMode::Unknown:
             return false;
         case DriverMode::CC:
-            if(Language::Standard s = lang.getStandard();
-               s == Language::c89 || s == Language::c99 || s == Language::c11 ||
-               s == Language::c17 || s == Language::c23)
-                return true;
-            else return false;
+            return lang.getStandard() == Language::c99;
+            // return lang.isC();
     }
 }
 
@@ -136,6 +133,10 @@ bool Driver::resolveLanguage(ArgVec& args, Language& lang) {
         return true;
     }
 
+    if(args.has(Arg::Kind::Freestanding)) {
+        lang.enableFreestanding();
+    }
+
     return false;
 }
 
@@ -144,7 +145,8 @@ bool Driver::resolveLanguage(ArgVec& args, Language& lang) {
 constexpr CexprStringMap<
     FileType, INRCC_NEW_FILETYPE(".c", C), INRCC_NEW_FILETYPE(".cc", CXX),
     INRCC_NEW_FILETYPE(".cpp", CXX), INRCC_NEW_FILETYPE(".cxx", CXX),
-    INRCC_NEW_FILETYPE(".C", CXX), INRCC_NEW_FILETYPE(".s", PassToAssembler),
+    INRCC_NEW_FILETYPE(".C", CXX), INRCC_NEW_FILETYPE(".CC", CXX),
+    INRCC_NEW_FILETYPE(".s", PassToAssembler), INRCC_NEW_FILETYPE(".CPP", CXX),
     INRCC_NEW_FILETYPE(".S", PassToAssembler),
     INRCC_NEW_FILETYPE(".asm", PassToAssembler),
     INRCC_NEW_FILETYPE(".o", PassToLinker),

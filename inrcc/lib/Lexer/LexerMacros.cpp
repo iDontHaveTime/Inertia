@@ -11,6 +11,7 @@
 namespace inrcc {
 
 MACRO_WITH_INTEGER_VALUE(MacroN1, 1);
+MACRO_WITH_INTEGER_VALUE(MacroN0, 0);
 MACRO_WITH_INTEGER_VALUE(C99N, 199901L);
 MACRO_WITH_INTEGER_VALUE(C11N, 201112L);
 MACRO_WITH_INTEGER_VALUE(C17N, 201710L);
@@ -58,6 +59,10 @@ void Lexer::setMacros() {
     // __STDC__
     INSERT_MACRO("__STDC__", MacroN1);
 
+    macros_.insert("__STDC_HOSTED__", sizeof("__STDC_HOSTED__") - 1,
+                   lang_.getFreestanding() ? &MacroN0 : &MacroN1);
+
+    STARTIF(lang_.isC())
     STARTIF(STANDARD(c99))
     NEW_STDC_VERSION(C99N);
     ELSEIF(STANDARD(c11))
@@ -67,6 +72,8 @@ void Lexer::setMacros() {
     ELSEIF(STANDARD(c23))
     NEW_STDC_VERSION(C23N);
     ENDIF()
+    ENDIF()
+
 #define STR_STR_LEN(str) str, (sizeof(str) - 1)
     auto entry = infoTable_.find(STR_STR_LEN("__has_include"));
     if(entry) {

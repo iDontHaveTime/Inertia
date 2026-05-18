@@ -19,5 +19,6 @@ INRCC_FLAG(Define, "-D", "Defines a macro for the preprocessor.", JoinedOrSepara
 INRCC_FLAG(Define_Alias, "--define-macro=", "An alias for '-D'.", Joined)
 INRCC_FLAG(Target, "--target=", "Sets the compilation target.", Joined)
 INRCC_FLAG(Target_Alias, "-target", "Alias for '--target='.", Separate)
+INRCC_FLAG(Freestanding, "-ffreestanding", "Assumes a not hosted environment.", Flag)
 
 #endif

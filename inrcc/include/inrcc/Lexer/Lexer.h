@@ -84,6 +84,7 @@ enum class TokenKind : unsigned {
     LITERAL_USTRING,
     LITERAL_uSTRING,
     LITERAL_u8STRING,
+    LITERAL_RAWSTRING,
     LITERAL_CHAR,
     LITERAL_LCHAR,
     LITERAL_UCHAR,
@@ -317,6 +318,8 @@ public:
                 return os << "u'" << tok.getView() << '\'';
             case TokenKind::LITERAL_u8CHAR:
                 return os << "u8'" << tok.getView() << '\'';
+            case inrcc::TokenKind::LITERAL_RAWSTRING:
+                return os << "R\"(" << tok.getView() << ")\"";
             default:
                 return os << tok.getView();
         }
