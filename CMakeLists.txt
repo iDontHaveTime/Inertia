@@ -12,7 +12,7 @@ include(${INERTIA_CMAKE_UTILS}/InertiaLibraries.cmake)
 # Set the project
 project(Inertia
     VERSION ${INERTIA_VERSION_MAJOR}.${INERTIA_VERSION_MINOR}.${INERTIA_VERSION_PATCH}
-    LANGUAGES C CXX ASM)
+    LANGUAGES C CXX)
 
 # Inertia
 add_subdirectory(inr)

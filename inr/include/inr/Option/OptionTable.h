@@ -15,7 +15,7 @@ namespace inr::opt {
 
 /// @brief Options table for parsing args.
 ///
-/// The table should ideally be Inertia gen generated, it shouldn't be manually
+/// The table should ideally be inr-gen generated, it shouldn't be manually
 /// made. This is because it can be optimized much better since there is control
 /// over how it outputs strings and whatnot.
 class OptionTable {

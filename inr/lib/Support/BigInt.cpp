@@ -115,14 +115,14 @@ void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
 #include <alloca.h>
 
 void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
-    uint32_t* chunks = nullptr;
+    uint32_t stackArray[512];
+    uint32_t* chunks = stackArray;
     size_t maxChunks = tmp.bits_ >> 3;
     size_t chunkCount = 0;
 
-    if(maxChunks <= 512) {
-        chunks = (uint32_t*)alloca(maxChunks * sizeof(uint32_t));
+    if(maxChunks > 512) {
+        chunks = new uint32_t[maxChunks];
     }
-    else chunks = new uint32_t[maxChunks];
 
     while(!tmp.isZero()) {
         uint64_t remainder = 0;
