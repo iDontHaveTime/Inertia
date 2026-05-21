@@ -139,7 +139,7 @@ bool Driver::resolveLanguage(ArgVec& args, Language& lang) {
     return false;
 }
 
-// GCC defines prefixes as follows:
+// GCC defines suffixes as follows:
 // .c - C source
 // .i - C source no PP
 // .ii - C++ source no PP
