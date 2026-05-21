@@ -2,87 +2,79 @@
 #ifdef x86_CALLING_CONV_HEADER
 #undef x86_CALLING_CONV_HEADER
 namespace inr::x86 {
-bool CCSysV(unsigned valN, const Type* type, CCStateGeneric& state){
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8))){
-Register reg = state.allocateReg({DIL, SIL, DL, CL, R8B, R9B});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
+bool CCSysV(unsigned valN, const Type* type, CCStateGeneric& state) {
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8))) {
+        Register reg = state.allocateReg({DIL, SIL, DL, CL, R8B, R9B});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16))) {
+        Register reg = state.allocateReg({DI, SI, DX, CX, R8W, R9W});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32))) {
+        Register reg = state.allocateReg({EDI, ESI, EDX, ECX, R8D, R9D});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) ||
+       (type->isPointer())) {
+        Register reg = state.allocateReg({RDI, RSI, RDX, RCX, R8, R9});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    return false;
 }
+bool CCRetSysV(unsigned valN, const Type* type, CCStateGeneric& state) {
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8))) {
+        Register reg = state.allocateReg({AL});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16))) {
+        Register reg = state.allocateReg({AX});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32))) {
+        Register reg = state.allocateReg({EAX});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) ||
+       (type->isPointer())) {
+        Register reg = state.allocateReg({RAX});
+        if(!reg.isNone()) {
+            state.addAssign(
+                CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
+            return true;
+        }
+    }
+    return false;
 }
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16))){
-Register reg = state.allocateReg({DI, SI, DX, CX, R8W, R9W});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32))){
-Register reg = state.allocateReg({EDI, ESI, EDX, ECX, R8D, R9D});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) || (type->isPointer())){
-Register reg = state.allocateReg({RDI, RSI, RDX, RCX, R8, R9});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-return false;
-}
-bool CCRetSysV(unsigned valN, const Type* type, CCStateGeneric& state){
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 8))){
-Register reg = state.allocateReg({AL});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 16))){
-Register reg = state.allocateReg({AX});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 32))){
-Register reg = state.allocateReg({EAX});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-if(((type->isInteger() && ((const IntegerType*)type)->getWidth() == 64)) || (type->isPointer())){
-Register reg = state.allocateReg({RAX});
-if(!reg.isNone()) {
-state.addAssign(CCAssign::getReg(valN, type, reg, type, CCAssign::Info::Full));
-return true;
-}
-}
-return false;
-}
-constexpr Register CCSysVCallee[] = {
-	RBX,
-	RSP,
-	RBP,
-	R12,
-	R13,
-	R14,
-	R15
-};
-constexpr Register CCSysVCaller[] = {
-	RAX,
-	RDI,
-	RSI,
-	RDX,
-	RCX,
-	R8,
-	R9,
-	R10,
-	R11
-};
-}
+constexpr Register CCSysVCallee[] = {RBX, RSP, RBP, R12, R13, R14, R15};
+constexpr Register CCSysVCaller[] = {RAX, RDI, RSI, RDX, RCX, R8, R9, R10, R11};
+} // namespace inr::x86
 #endif

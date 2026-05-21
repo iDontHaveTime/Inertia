@@ -10,9 +10,8 @@
 
 #include <inr/ADT/IList.h>
 #include <inr/ADT/IVector.h>
-#include <inr/IR/Value.h>
-
 #include <inr/IR/Type.h>
+#include <inr/IR/Value.h>
 #include <inr/Support/Align.h>
 
 namespace inr {

@@ -11,7 +11,9 @@ bool Language::isLanguageSupported(Standard lang) noexcept {
 #define INRCC_LANG(IDENT, SUPPORTED, ...) \
     case IDENT:                           \
         return SUPPORTED;
+#define INRCC_LANG_ALIAS(...)
 #include <inrcc/Options/LangOptions.inc>
+#undef INRCC_LANG_ALIAS
 #undef INRCC_LANG
         case Unknown:
             [[fallthrough]];
@@ -25,7 +27,9 @@ const char* Language::getAsString(Standard lang) noexcept {
 #define INRCC_LANG(IDENT, SUPPORTED, STR, ...) \
     case IDENT:                                \
         return STR;
+#define INRCC_LANG_ALIAS(...)
 #include <inrcc/Options/LangOptions.inc>
+#undef INRCC_LANG_ALIAS
 #undef INRCC_LANG
         case Unknown:
             [[fallthrough]];
@@ -41,12 +45,26 @@ Language Language::getFromString(inr::sview str) noexcept {
         mightBe.setStandard(IDENT);                    \
         return mightBe;                                \
     }                                                  \
-    else if(str == EXTVER) {                           \
-        mightBe.setStandard(IDENT);                    \
-        mightBe.enableExtensions();                    \
-        return mightBe;                                \
+    else if constexpr(sizeof(EXTVER) > 1) {            \
+        if(str == EXTVER) {                            \
+            mightBe.setStandard(IDENT);                \
+            mightBe.enableExtensions();                \
+            return mightBe;                            \
+        }                                              \
+    }
+#define INRCC_LANG_ALIAS(IDENT, STR, EXTVER, ...) \
+    if(str == STR) {                              \
+        mightBe.setStandard(IDENT);               \
+    }                                             \
+    else if constexpr(sizeof(EXTVER) > 1) {       \
+        if(str == EXTVER) {                       \
+            mightBe.setStandard(IDENT);           \
+            mightBe.enableExtensions();           \
+            return mightBe;                       \
+        }                                         \
     }
 #include <inrcc/Options/LangOptions.inc>
+#undef INRCC_LANG_ALIAS
 #undef INRCC_LANG
     return mightBe;
 }

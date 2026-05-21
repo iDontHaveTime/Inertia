@@ -74,9 +74,8 @@ int Driver::driverMain() {
 }
 
 bool Driver::resolveTarget(ArgVec& args) {
-    if(args.has(Arg::Kind::Target) || args.has(Arg::Kind::Target_Alias)) {
+    if(args.has(Arg::Kind::Target)) {
         Arg* target = args.getLast(Arg::Kind::Target);
-        if(!target) target = args.getLast(Arg::Kind::Target_Alias);
 
         inr::Triple gotTriple = inr::Triple::fromString(target->getOptional());
         if(!gotTriple.validTriple()) return true;
@@ -140,18 +139,35 @@ bool Driver::resolveLanguage(ArgVec& args, Language& lang) {
     return false;
 }
 
+// GCC defines prefixes as follows:
+// .c - C source
+// .i - C source no PP
+// .ii - C++ source no PP
+// .h - C header, shouldn't compile or link
+// C++ headers: .hh, .H, .hp, .hxx, .hpp, .HPP, .h++, .tcc
+// C++ sources:
+// .cc, .cp, .cxx, .cpp, .CPP, .c++, .C
+// Assembly sources:
+// .s
+// .S, .sx - must be preprocessed
+// Others should be passed to the linker
 #define INRCC_NEW_FILETYPE(str, type) \
     CexprStringKey<str, FileType, FileType::type> {}
 constexpr CexprStringMap<
-    FileType, INRCC_NEW_FILETYPE(".c", C), INRCC_NEW_FILETYPE(".cc", CXX),
-    INRCC_NEW_FILETYPE(".cpp", CXX), INRCC_NEW_FILETYPE(".cxx", CXX),
-    INRCC_NEW_FILETYPE(".C", CXX), INRCC_NEW_FILETYPE(".CC", CXX),
-    INRCC_NEW_FILETYPE(".s", PassToAssembler), INRCC_NEW_FILETYPE(".CPP", CXX),
-    INRCC_NEW_FILETYPE(".S", PassToAssembler),
-    INRCC_NEW_FILETYPE(".asm", PassToAssembler),
-    INRCC_NEW_FILETYPE(".o", PassToLinker),
-    INRCC_NEW_FILETYPE(".a", PassToLinker),
-    INRCC_NEW_FILETYPE(".so", PassToLinker)>
+    FileType, INRCC_NEW_FILETYPE(".c", C), INRCC_NEW_FILETYPE(".i", CNOPP),
+    INRCC_NEW_FILETYPE(".h", CHEADER), INRCC_NEW_FILETYPE(".cc", CXX),
+    INRCC_NEW_FILETYPE(".cp", CXX), INRCC_NEW_FILETYPE(".cxx", CXX),
+    INRCC_NEW_FILETYPE(".cpp", CXX), INRCC_NEW_FILETYPE(".CPP", CXX),
+    INRCC_NEW_FILETYPE(".c++", CXX), INRCC_NEW_FILETYPE(".hh", CXXHEADER),
+    INRCC_NEW_FILETYPE(".H", CXXHEADER), INRCC_NEW_FILETYPE(".hp", CXXHEADER),
+    INRCC_NEW_FILETYPE(".hxx", CXXHEADER),
+    INRCC_NEW_FILETYPE(".hpp", CXXHEADER),
+    INRCC_NEW_FILETYPE(".HPP", CXXHEADER),
+    INRCC_NEW_FILETYPE(".h++", CXXHEADER),
+    INRCC_NEW_FILETYPE(".tcc", CXXHEADER), INRCC_NEW_FILETYPE(".ii", CXXNOPP),
+    INRCC_NEW_FILETYPE(".C", CXX), INRCC_NEW_FILETYPE(".S", PassToAssembler),
+    INRCC_NEW_FILETYPE(".sx", PassToAssembler),
+    INRCC_NEW_FILETYPE(".s", PassToAssemblerNoPP)>
     fileTypeMap;
 #undef INRCC_NEW_FILETYPE
 
@@ -160,27 +176,23 @@ FileType Driver::getFileType(Arg* arg) {
     inr::sview ext = arg->getOriginal();
     ext = ext.slice(ext.findLast('.'), ext.size());
     if(ext[0] != '.') {
-        logerr("file '", ext, "' has no file extension");
-        return FileType::Unknown;
+        return FileType::PassToLinker;
     }
 
     const FileType* ft = fileTypeMap.find(ext);
 
     if(ft) return *ft;
-
-    logerr("unknown file extension '", ext, "' in file '", arg->getOriginal(),
-           '\'');
-    return FileType::Unknown;
+    return FileType::PassToLinker;
 }
 
 static inline bool isSourceFileType(FileType ft) {
     switch(ft) {
         case FileType::C:
         case FileType::CXX:
+        case FileType::CNOPP:
+        case FileType::CXXNOPP:
             return true;
-        case FileType::Unknown:
-        case FileType::PassToLinker:
-        case FileType::PassToAssembler:
+        default:
             return false;
     }
 }
@@ -200,12 +212,6 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
     lex.setMacrosBasedOnTriple(target);
 
     auto predefines = args.get(Arg::Kind::Define);
-
-    for(Arg* arg : predefines) {
-        lex.addMacroWithPredefOne(arg->getOptional());
-    }
-
-    predefines = args.get(Arg::Kind::Define_Alias);
 
     for(Arg* arg : predefines) {
         lex.addMacroWithPredefOne(arg->getOptional());
@@ -265,8 +271,23 @@ int Driver::sourceFileCompilation(ArgVec& args, Language lang) {
             else if(opt == "c++") {
                 ftoverride_ = FileType::CXX;
             }
+            else if(opt == "c-header") {
+                ftoverride_ = FileType::CHEADER;
+            }
+            else if(opt == "cpp-output") {
+                ftoverride_ = FileType::CNOPP;
+            }
+            else if(opt == "c++-cpp-output") {
+                ftoverride_ = FileType::CXXNOPP;
+            }
+            else if(opt == "assembler") {
+                ftoverride_ = FileType::PassToAssemblerNoPP;
+            }
+            else if(opt == "assembler-with-cpp") {
+                ftoverride_ = FileType::PassToAssembler;
+            }
             else {
-                logwarn("unknown language '", opt, "' defaulting to none");
+                logwarn("unknown language '", opt, "' defaulting to 'none'");
             }
             continue;
         }

@@ -23,7 +23,9 @@ public:
         Input = 0, ///< Input file.
         Tool,      ///< The name of this tool.
 #define INRCC_FLAG(IDENT, ...) IDENT,
+#define INRCC_FLAG_ALIAS(...)
 #include <inrcc/Driver/Flags.inc>
+#undef INRCC_FLAG_ALIAS
 #undef INRCC_FLAG
 
         ArgsEnd

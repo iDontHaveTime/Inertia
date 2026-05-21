@@ -20,7 +20,9 @@ public:
     enum Standard : uint32_t {
         Unknown,
 #define INRCC_LANG(IDENT, SUPPORTED, STR, ...) IDENT,
+#define INRCC_LANG_ALIAS(...)
 #include <inrcc/Options/LangOptions.inc>
+#undef INRCC_LANG_ALIAS
 #undef INRCC_LANG
         STANDARD_END
     };

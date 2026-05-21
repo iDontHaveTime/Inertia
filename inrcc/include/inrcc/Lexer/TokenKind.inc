@@ -4,7 +4,8 @@
 
 // C/C++ keywords
 // Assume that ident = how the token is written.
-// Just because a keyword is defined does not mean it is being or is implemented.
+// Just because a keyword is defined does not mean it is being or is
+// implemented.
 
 #ifndef INRCC_KEYWORD
 #define INRCC_KEYWORD(...)

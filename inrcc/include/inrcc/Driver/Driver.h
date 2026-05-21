@@ -26,11 +26,16 @@ enum class DriverMode {
 
 /// @brief Represents file types that the driver knows.
 enum class FileType {
-    Unknown,        ///< Unknown file type.
-    C,              ///< C files: .c
-    CXX,            ///< C++ files: .cpp, .cxx, .cc, .C
-    PassToLinker,   ///< Binary files: .o, .a, .so
-    PassToAssembler ///< Assembly files: .s, .S, .asm
+    Unknown,             ///< Unknown file type.
+    C,                   ///< C files.
+    CHEADER,             ///< C header file.
+    CNOPP,               ///< C source without PP.
+    CXX,                 ///< C++ files.
+    CXXHEADER,           ///< C++ header file.
+    CXXNOPP,             ///< C++ source without PP.
+    PassToAssembler,     ///< Assembly with preprocessing.
+    PassToAssemblerNoPP, ///< Assembly with no preprocessing.
+    PassToLinker         ///< Files passed to the linker.
 };
 
 /// @brief The main entry point handler for inrcc.

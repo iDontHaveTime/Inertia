@@ -23,6 +23,17 @@ Language Driver::getDefaultLanguage() {
 
 bool Driver::verifyArgs(class ArgVec& args) {
     bool err = false;
+
+#define INRCC_FLAG(IDENT, STR, HELP_TEXT, OPTKIND, ...)             \
+    if constexpr(ArgOpt::OptKind::OPTKIND == ArgOpt::OptKind::Flag) \
+        if(args.howMany(Arg::Kind::IDENT) > 1) {                    \
+            logwarn("redundant '" STR "' flag");                    \
+        }
+#define INRCC_FLAG_ALIAS(...)
+#include <inrcc/Driver/Flags.inc>
+#undef INRCC_FLAG_ALIAS
+#undef INRCC_FLAG
+
     if(args.howMany(Arg::Kind::Output) > 1) {
         logerr("more than one output specified");
         err = true;
@@ -43,16 +54,7 @@ bool Driver::verifyArgs(class ArgVec& args) {
         err = true;
     }
 
-    if(args.howMany(Arg::Kind::Nostdinc) > 1) {
-        logwarn("redundant '-nostdinc'");
-    }
-
-    if(args.howMany(Arg::Kind::Freestanding) > 1) {
-        logwarn("redundant '-ffreestanding'");
-    }
-
-    if(args.howMany(Arg::Kind::Target) + args.howMany(Arg::Kind::Target_Alias) >
-       1) {
+    if(args.howMany(Arg::Kind::Target) > 1) {
         logerr("more than one target triple specified");
         err = true;
     }
@@ -66,17 +68,50 @@ bool Driver::verifyArgs(class ArgVec& args) {
     return err;
 }
 
+#define INRCC_FLAG(IDENT, STR, ...) \
+    constexpr inr::sview INRCC_FLAG_##IDENT##_STR = STR;
+#define INRCC_FLAG_ALIAS(...)
+#include <inrcc/Driver/Flags.inc>
+#undef INRCC_FLAG_ALIAS
+#undef INRCC_FLAG
+
+static inline void printHelpHelper(inr::sview flag, inr::sview help_text,
+                                   ArgOpt::OptKind optkind, bool alias) {
+    constexpr static unsigned INDENTATION = 28;
+    constexpr inr::sview JOINED_SUFFIX = "<value>";
+    size_t totalSize = 2 + flag.size();
+
+    inr::outs().indent(2) << flag;
+    if(optkind == ArgOpt::OptKind::Joined) {
+        inr::outs() << JOINED_SUFFIX;
+        totalSize += JOINED_SUFFIX.size();
+    }
+
+    if(totalSize < INDENTATION) {
+        inr::outs().indent(INDENTATION - totalSize);
+    }
+    else {
+        (inr::outs() << '\n').indent(INDENTATION);
+    }
+
+    if(!alias) {
+        inr::outs() << help_text << '\n';
+    }
+    else {
+        inr::outs() << "Alias for '" << help_text << "'.\n";
+    }
+}
+
 void Driver::printHelp() {
     inr::outs() << "Usage: " << toolName_
                 << " [options] <file...> -o <file>\nOptions:\n";
-    constexpr static unsigned INDENTATION = 28;
-#define INRCC_FLAG(INDENT, STR, HELP_TEXT, ...)                \
-    if constexpr((sizeof(STR) - 1) + 2 < INDENTATION)          \
-        (inr::outs() << "  " STR)                              \
-                .indent(INDENTATION - (2 + (sizeof(STR) - 1))) \
-            << HELP_TEXT "\n";                                 \
-    else (inr::outs() << "  " STR "\n").indent(INDENTATION) << HELP_TEXT "\n";
+#define INRCC_FLAG(IDENT, STR, HELP_TEXT, OPTKIND, ...) \
+    printHelpHelper(STR, HELP_TEXT, ArgOpt::OptKind::OPTKIND, false);
+#define INRCC_FLAG_ALIAS(IDENT, STR, OPTKIND, ...)                           \
+    printHelpHelper(STR, INRCC_FLAG_##IDENT##_STR, ArgOpt::OptKind::OPTKIND, \
+                    true);
 #include <inrcc/Driver/Flags.inc>
+#undef INRCC_FLAG_ALIAS
 #undef INRCC_FLAG
 }
 
@@ -101,11 +136,17 @@ std::string getToolNameFromArgv0(const char* arg) {
 }
 
 constexpr CexprStringMap<ArgOpt
-#define INRCC_FLAG(IDENT, STR, HELP_TEXT, OPTKIND, ...) \
-    , CexprStringKey<STR, ArgOpt,                       \
+#define NEW_CEXPR_OPT(IDENT, STR, OPTKIND) \
+    , CexprStringKey<STR, ArgOpt,          \
                      ArgOpt{Arg::Kind::IDENT, ArgOpt::OptKind::OPTKIND}> {}
+#define INRCC_FLAG(IDENT, STR, HELP_TEXT, OPTKIND, ...) \
+    NEW_CEXPR_OPT(IDENT, STR, OPTKIND)
+#define INRCC_FLAG_ALIAS(IDENT, STR, OPTKIND, ...) \
+    NEW_CEXPR_OPT(IDENT, STR, OPTKIND)
 #include <inrcc/Driver/Flags.inc>
+#undef INRCC_FLAG_ALIAS
 #undef INRCC_FLAG
+#undef NEW_CEXPR_OPT
                          >
     inrccOpts;
 
@@ -113,7 +154,7 @@ bool Driver::matchJoined(int i, std::vector<Arg>& args) {
     const ArgOpt* opt = nullptr;
     size_t offset = 0;
     inr::sview arg = argv_[i];
-#define INRCC_FLAG(IDENT, STR, HELP_TEXT, OPTKIND, ...)                 \
+#define MATCH_JOINED(STR, OPTKIND)                                      \
     if constexpr(ArgOpt::OptKind::OPTKIND == ArgOpt::OptKind::Joined || \
                  ArgOpt::OptKind::OPTKIND ==                            \
                      ArgOpt::OptKind::JoinedOrSeparate) {               \
@@ -125,8 +166,13 @@ bool Driver::matchJoined(int i, std::vector<Arg>& args) {
             }                                                           \
         }                                                               \
     }
+#define INRCC_FLAG(IDENT, STR, HELP_TEXT, OPTKIND, ...) \
+    MATCH_JOINED(STR, OPTKIND)
+#define INRCC_FLAG_ALIAS(IDENT, STR, OPTKIND) MATCH_JOINED(STR, OPTKIND)
 #include <inrcc/Driver/Flags.inc>
+#undef INRCC_FLAG_ALIAS
 #undef INRCC_FLAG
+#undef MATCH_JOINED
 matching_done:
     if(opt) {
         switch(opt->getOptKind()) {
