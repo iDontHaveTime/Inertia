@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/Support/Switch.h>
 #include <inr/Support/Version.h>
 #include <inr/Target/Triple.h>
 #include <inrcc/ADT/CexprStringMap.h>
@@ -16,6 +17,7 @@ Language Driver::getDefaultLanguage() {
     switch(mode_) {
         case DriverMode::CC:
             return Language::c99; // Currently c99 is the default.
+        case DriverMode::CXX:
         case DriverMode::Unknown:
             return Language::Unknown;
     }
@@ -126,9 +128,12 @@ DriverMode getModeFromArgv0(const char* arg) {
 
     argS = argS.substr(argS.size() - 2, 2);
 
-    if(argS == "cc") return DriverMode::CC;
+    DriverMode dmode = inr::StrSwitch<DriverMode>(argS)
+                           .newCase("cc", DriverMode::CC)
+                           .newCase("++", DriverMode::CXX)
+                           .setDefault(DriverMode::Unknown);
 
-    return DriverMode::Unknown;
+    return dmode;
 }
 
 std::string getToolNameFromArgv0(const char* arg) {

@@ -368,8 +368,12 @@ void TIRLowering::lowerSSAInstruction(const Instruction* inst, TIRBlock* block,
         case Instruction::InstructionID::ALLOCA:
             lowerSSAAlloca((const AllocaInst*)inst, block);
             break;
-        case Instruction::InstructionID::LOAD:
-            break;
+        case Instruction::InstructionID::LOAD: {
+            const Type* t = inst->getType();
+            if(t->isPointer()) t = ptrAsInteger_;
+            emitStore(t, mapOperand(inst, newVreg(block)),
+                      operandMap_[inst->getOperand(0)], block);
+        } break;
         case Instruction::InstructionID::STORE: {
             const Type* t = inst->getOperand(1)->getType();
             if(t->isPointer()) t = ptrAsInteger_;

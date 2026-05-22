@@ -24,15 +24,20 @@ namespace inr {
 class sview {
 public:
     using value_type = char;
-    using iterator = const value_type*;
+    using pointer = const value_type*;
+    using const_pointer = pointer;
+    using reference = const char&;
+    using const_reference = reference;
+    using iterator = const_pointer;
     using const_iterator = iterator;
-    using size_type = size_t;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
+    using size_type = size_t;
+    using difference_type = ptrdiff_t;
 
 private:
-    const char* str_ = nullptr;
-    size_t len_ = 0;
+    const_pointer str_ = nullptr;
+    size_type len_ = 0;
 
 public:
     /// @brief Constructs an empty string reference.
@@ -43,18 +48,20 @@ public:
 
     /// @brief Creates a reference to the string provided.
     /// @param str C string.
-    constexpr sview(const char* str) noexcept :
+    constexpr sview(const_pointer str) noexcept :
         str_(str), len_(inr::str::length(str)) {}
 
     /// @brief Creates a new string reference from start and end pointers.
-    constexpr sview(const char* ptr1, const char* ptr2) noexcept :
-        str_(ptr1), len_(ptr2 > ptr1 ? ptr2 - ptr1 : 0) {}
+    constexpr sview(const_pointer ptr1, const_pointer ptr2) noexcept :
+        str_(ptr1), len_(ptr2 - ptr1) {
+        inr_assert(ptr2 >= ptr1, "The end pointer is less than the start");
+    }
 
     /// @brief Creates a new string reference from the pointer and size
     /// provided.
     /// @param data Start of the string.
     /// @param length Length of the string.
-    constexpr sview(const char* data, size_t length) noexcept :
+    constexpr sview(const_pointer data, size_type length) noexcept :
         str_(data), len_(length) {}
 
     /// @brief Constructs a new string reference from an std::string.
@@ -73,11 +80,11 @@ public:
     constexpr sview(sview&&) noexcept = default;
     constexpr sview& operator=(sview&&) noexcept = default;
 
-    constexpr iterator begin() const noexcept {
+    constexpr const_iterator begin() const noexcept {
         return str_;
     }
 
-    constexpr iterator end() const noexcept {
+    constexpr const_iterator end() const noexcept {
         return str_ + len_;
     }
 
@@ -91,7 +98,7 @@ public:
 
     /// @brief Gets the string's pointer.
     /// @return Const pointer to the string.
-    constexpr const char* data() const noexcept {
+    constexpr const_pointer data() const noexcept {
         return str_;
     }
 
@@ -102,19 +109,19 @@ public:
     }
 
     /// @brief Gets the length of the string.
-    constexpr size_t size() const noexcept {
+    constexpr size_type size() const noexcept {
         return len_;
     }
 
     /// @brief Gets the first character of the string.
     /// @return First character of the string.
-    constexpr char front() const noexcept {
+    constexpr value_type front() const noexcept {
         return str_[0];
     }
 
     /// @brief Gets the last character of the string.
     /// @return Last character of the string.
-    constexpr char back() const noexcept {
+    constexpr value_type back() const noexcept {
         return str_[len_ - 1];
     }
 
@@ -131,7 +138,7 @@ public:
     /// @brief Access a certain character in the string.
     /// @param index Index of the character.
     /// @return Character in that index.
-    constexpr char operator[](size_t index) const noexcept {
+    constexpr value_type operator[](size_type index) const noexcept {
         return str_[index];
     }
 
@@ -161,38 +168,43 @@ public:
     /// @param c The character to find.
     /// @param from From what index to start.
     /// @return Index of the character found.
-    constexpr size_t find(char c, size_t from = 0) const noexcept {
+    constexpr size_type find(value_type c, size_type from = 0) const noexcept {
         if(from >= len_) return len_;
 
-        const char* ptr =
-            (const char*)inr::str::findc(str_, (unsigned char)c, len_ - from);
+        const_pointer ptr =
+            (const_pointer)inr::str::findc(str_, (unsigned char)c, len_ - from);
 
         return ptr ? ptr - str_ : 0;
     }
 
-    constexpr size_t findLast(char c, size_t from = 0) const noexcept {
+    /// @brief Finds the last character that is 'c'.
+    /// @param c Character to find.
+    /// @param from Index to start from.
+    /// @return Index of the character found.
+    constexpr size_type findLast(value_type c,
+                                 size_type from = 0) const noexcept {
         if(from >= len_) return len_;
 
-        size_t foundAt = 0;
-        while(from < len_) {
-            if(str_[from] == c) foundAt = from;
-            from++;
-        }
+        const_pointer ptr = (const_pointer)inr::str::findrc(
+            str_ + len_, (unsigned char)c, len_ - from);
 
-        return foundAt;
+        return ptr ? ptr - str_ : 0;
     }
 
     /// @brief Same as find(char, size_t) but case insensitive.
     /// @param c Character to find.
     /// @param from From what index to start.
     /// @return Index of the character.
-    constexpr size_t find_insensitive(char c, size_t from = 0) const noexcept {
+    constexpr size_type find_insensitive(value_type c,
+                                         size_type from = 0) const noexcept {
         if(from >= len_) return len_;
 
         if(std::isalpha(c)) {
-            char c1 = isupper(c) ? tolower(c) : toupper(c);
+            value_type c1 = isupper((unsigned char)c)
+                                ? tolower((unsigned char)c)
+                                : toupper((unsigned char)c);
             while(from < len_) {
-                char cmp = str_[from];
+                value_type cmp = str_[from];
                 if(cmp == c || cmp == c1) return from;
                 from++;
             }
@@ -207,16 +219,16 @@ public:
     /// @param start From what character to start.
     /// @param n How many characters.
     /// @return A new string view.
-    constexpr sview substr(size_t start, size_t n) const noexcept {
+    constexpr sview substr(size_type start, size_type n) const noexcept {
         return sview(str_ + start, n);
     }
 
     /// @brief Returns the amount of times a character appears.
     /// @param c The character to look for.
     /// @return How many characters were found.
-    constexpr size_t count(char c) const noexcept {
-        size_t n = 0;
-        for(size_t i = 0; i < len_; i++) {
+    constexpr size_type count(value_type c) const noexcept {
+        size_type n = 0;
+        for(size_type i = 0; i < len_; i++) {
             if(str_[i] == c) n++;
         }
         return n;
@@ -226,7 +238,7 @@ public:
     /// @param from From what index to start.
     /// @param to What index to end at.
     /// @return A new string view.
-    constexpr sview slice(size_t from, size_t to) const noexcept {
+    constexpr sview slice(size_type from, size_type to) const noexcept {
         if(from >= to) return sview();
         return sview(str_ + from, str_ + to);
     }

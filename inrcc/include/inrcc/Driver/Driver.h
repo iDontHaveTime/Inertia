@@ -21,7 +21,8 @@ namespace inrcc {
 /// @brief Possible modes the driver can be in.
 enum class DriverMode {
     Unknown, ///< Unknown mode.
-    CC       ///< C compiler.
+    CC,      ///< C compiler.
+    CXX      ///< C++ compiler.
 };
 
 /// @brief Represents file types that the driver knows.

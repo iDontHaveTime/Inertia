@@ -4,6 +4,7 @@
 
 #include <inr/ADT/StrView.h>
 #include <inr/Support/Compiler.h>
+#include <inr/Support/Switch.h>
 #include <inr/Target/Triple.h>
 #include <inrcc/ADT/CexprStringMap.h>
 #include <inrcc/ADT/StringMap.h>
@@ -30,6 +31,8 @@ bool languageSupportedByDriverMode(DriverMode dm, Language lang) {
         case DriverMode::CC:
             return lang.getStandard() == Language::c99;
             // return lang.isC();
+        case DriverMode::CXX:
+            return false;
     }
 }
 
@@ -91,14 +94,17 @@ bool Driver::resolveMode(ArgVec& args) {
         Arg* arg = args.getLast(Arg::Kind::ModeSet);
         inr::sview modeStr = arg->getOptional();
 
-        if(modeStr == "gcc") {
-            mode_ = DriverMode::CC;
-        }
-        else {
+        DriverMode dmode = inr::StrSwitch<DriverMode>(modeStr)
+                               .newCase("gcc", DriverMode::CC)
+                               .newCase("g++", DriverMode::CXX)
+                               .setDefault(DriverMode::Unknown);
+
+        if(dmode == DriverMode::Unknown) {
             logerr("unknown value '", modeStr, "' in '", arg->getOriginal(),
                    '\'');
             return true;
         }
+        mode_ = dmode;
     }
 
     if(mode_ == DriverMode::Unknown) {

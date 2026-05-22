@@ -161,7 +161,8 @@ public:
         ///
         /// For example: %x = add void 1, 2; You cannot add void.
         TypeNotAllowed,
-        DestinationIsNotPointer ///< Destination is not a pointer.
+        DestinationIsNotPointer, ///< Destination is not a pointer.
+        SourceIsNotPointer       ///< The source is not a pointer.
     };
 
 private:

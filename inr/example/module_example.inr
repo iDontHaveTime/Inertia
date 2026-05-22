@@ -4,5 +4,6 @@ entry:
 	%slot = alloca i32
 	%sum = add i32 %argc, 20
 	store ptr %slot, i32 %sum
-	ret i32 %sum
+	%res = load i32, ptr slot
+	ret i32 %res
 }

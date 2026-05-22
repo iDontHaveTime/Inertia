@@ -12,9 +12,10 @@
 
 #include <cstddef>
 #include <cstring>
-
-#if !__has_builtin(strlen) || !__has_builtin(memcmp) || !__has_builtin(memchr)
 #include <type_traits>
+
+#if defined(__GLIBC__)
+#define USE_MEMRCHR
 #endif
 
 namespace inr::str {
@@ -78,6 +79,25 @@ constexpr const void* findc(const void* s, int c, size_t n) noexcept {
     }
 #endif
 }
+
+constexpr const void* findrc(const void* s, int c, size_t n) noexcept {
+#ifdef USE_MEMRCHR
+    if(std::is_constant_evaluated()) {
+#endif
+        const unsigned char* p = (const unsigned char*)s;
+        for(size_t i = n; i > 0; i--) {
+            if(p[i - 1] == (unsigned char)c) return (const void*)(p + i - 1);
+        }
+        return nullptr;
+#ifdef USE_MEMRCHR
+    }
+    else return memrchr(s, c, n);
+#endif
+}
+
+#ifdef USE_MEMRCHR
+#undef USE_MEMRCHR
+#endif
 
 } // namespace inr::str
 

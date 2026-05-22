@@ -3,6 +3,7 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
 #include <inr/ADT/BigInt.h>
+#include <inr/Support/Compiler.h>
 
 #include <algorithm>
 #include <cstddef>
@@ -214,7 +215,7 @@ void bigint::print(raw_stream& os, unsigned radix, bool isSigned,
                 os << "0x";
                 break;
             default:
-                __builtin_unreachable();
+                inr_notpossible("This is checked beforehand.");
         }
     }
 

@@ -13,7 +13,11 @@ entry:
 	add i32 %4, %5
 	%6 = mem (reg rsp)
 	store i32 %6, %4
-	%7 = imm 4
-	add i64 %0, %7
+	%7 = reg esi
+	store i32 %7, %6
+	%8 = reg eax
+	store i32 %8, %7
+	%9 = imm 4
+	add i64 %0, %9
 	ret
 }

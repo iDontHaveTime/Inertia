@@ -7,5 +7,7 @@ main:
 	movl %edi, %eax
 	addl $20, %eax
 	movl %eax, (%rsp)
+	movl (%rsp), %esi
+	movl %esi, %eax
 	addq $4, %rsp
 	ret 

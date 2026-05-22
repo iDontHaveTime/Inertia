@@ -63,8 +63,11 @@ raw_stream& operator<<(raw_stream& os, const Instruction& ins) {
                       << *ins.getOperand(0) << ", "
                       << *ins.getOperand(1)->getType() << ' '
                       << *ins.getOperand(1);
-        default:
-            return os;
+        case Instruction::InstructionID::LOAD:
+            return os << '%' << ins.getName() << " = "
+                      << Instruction::getInstructionIDStr(ins.getID()) << ' '
+                      << *ins.getType() << ", " << *ins.getOperand(0)->getType()
+                      << ' ' << ins.getOperand(0)->getName();
     }
 }
 

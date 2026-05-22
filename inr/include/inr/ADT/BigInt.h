@@ -188,12 +188,12 @@ public:
     /// @brief Move operator.
     bigint& operator=(bigint&& other) noexcept {
         if(this != &other) {
-            if(onHeap()) delete[] heap_;
             bits_ = other.bits_;
             if(onStack()) {
                 stack_ = other.stack_;
             }
             else {
+                delete[] heap_;
                 heap_ = other.heap_;
                 other.heap_ = nullptr;
             }
@@ -374,13 +374,11 @@ public:
 
     template<typename T>
     T getAs() const noexcept {
-        if(onStack()) return (T)stack_;
-        return (T)*heap_;
+        return onStack() ? (T)stack_ : (T)*heap_;
     }
 
     Limb getAs() const noexcept {
-        if(onStack()) return stack_;
-        return *heap_;
+        return getAs<Limb>();
     }
 };
 

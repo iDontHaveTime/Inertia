@@ -201,6 +201,15 @@ static inline InstructionError* storeInstVerify(const StoreInst& inst) {
     return nullptr;
 }
 
+static inline InstructionError* loadInstVerify(const LoadInst& inst) {
+    if(!inst.getOperand(0)->getType()->isPointer()) {
+        return new InstructionError(
+            &inst, InstructionError::SubKind::SourceIsNotPointer);
+    }
+
+    return nullptr;
+}
+
 void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
                                        const Instruction& inst) {
     InstructionError* err = nullptr;
@@ -220,6 +229,8 @@ void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
             err = allocaInstVerify((const AllocaInst&)inst);
             break;
         case Instruction::InstructionID::LOAD:
+            err = loadInstVerify((const LoadInst&)inst);
+            break;
         case Instruction::InstructionID::STORE:
             err = storeInstVerify((const StoreInst&)inst);
             break;
@@ -301,6 +312,9 @@ void InstructionError::strerr(raw_stream& os) const {
             break;
         case SubKind::DestinationIsNotPointer:
             vError(os, instName, "'s destination is not a pointer type");
+            break;
+        case SubKind::SourceIsNotPointer:
+            vError(os, instName, "'s source is not a pointer type");
             break;
     }
 }

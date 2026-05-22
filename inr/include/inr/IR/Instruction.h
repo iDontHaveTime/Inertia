@@ -198,6 +198,17 @@ public:
     }
 };
 
+class LoadInst : public Instruction {
+    LoadInst(const Type* type, Value* from, sview name, Block* parent) :
+        Instruction(InstructionID::LOAD, type, parent, {from}, name) {}
+
+public:
+    static LoadInst* createLoad(const Type* type, Value* from, sview name,
+                                Block* parent) {
+        return new LoadInst(type, from, name, parent);
+    }
+};
+
 class StoreInst : public Instruction {
     StoreInst(Value* dest, Value* src, Block* parent) :
         Instruction(InstructionID::STORE, dest->getType(), parent,

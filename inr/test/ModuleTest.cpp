@@ -54,8 +54,9 @@ int main(int argc, char** argv) {
         func->getArg(0), ctx.getIntConstant(ctx.getI32(), 20), "sum", entry);
 
     inr::StoreInst::createStore(alloc, add, entry);
+    auto load = inr::LoadInst::createLoad(ctx.getI32(), alloc, "res", entry);
 
-    inr::ReturnInst::create(add, entry);
+    inr::ReturnInst::create(load, entry);
 
     inr::ModuleErrors errs = inr::verifyModule(mod);
     if(errs.hasErrors()) {
