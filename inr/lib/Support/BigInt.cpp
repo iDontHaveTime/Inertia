@@ -9,46 +9,10 @@
 #include <cstddef>
 #include <cstdint>
 
-#ifdef __x86_64__
-#define USE_X86LIBS 1
-#endif
-
-#if USE_X86LIBS
-#define DO_NOT_USE_BUILTIN
-#endif
-
-#if defined(USE_X86LIBS) || defined(__aarch64__)
+#ifdef __SIZEOF_INT128__
 #define USE_SECOND_BASE10IMPL
 #endif
 
-#ifdef USE_X86LIBS
-#include <immintrin.h>
-
-namespace inr {
-bool bigint::bigintAdd(Limb* dest, const Limb* src, bool c,
-                       size_t limbs) noexcept {
-    unsigned char carry = c;
-
-    for(size_t i = 0; i < limbs; i++) {
-        carry = _addcarry_u64(carry, dest[i], src[i], &dest[i]);
-    }
-
-    return carry;
-}
-
-bool bigint::bigintAddLimb(Limb* dest, Limb src, size_t limbs) noexcept {
-    unsigned char carry = _addcarry_u64(0, dest[0], src, &dest[0]);
-    size_t i = 1;
-    while(carry && i < limbs) {
-        carry = _addcarry_u64(carry, dest[i], 0, &dest[i]);
-        i++;
-    }
-    return carry;
-}
-} // namespace inr
-#endif
-
-#ifndef DO_NOT_USE_BUILTIN
 namespace inr {
 bool bigint::bigintAdd(Limb* dest, const Limb* src, bool c,
                        size_t limbs) noexcept {
@@ -72,13 +36,11 @@ bool bigint::bigintAddLimb(Limb* dest, Limb src, size_t limbs) noexcept {
 
     return carry;
 }
-} // namespace inr
-#endif
 
-namespace inr {
 #ifndef USE_SECOND_BASE10IMPL
 void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
     std::string str;
+    str.reserve(0x80);
     str.push_back(0);
     const Limb* limbs = tmp.heap_;
 
@@ -113,7 +75,6 @@ void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
     }
 }
 #else
-#include <alloca.h>
 
 void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
     uint32_t stackArray[512];
@@ -157,9 +118,6 @@ void bigint::base10Impl(bigint& tmp, raw_stream& os) noexcept {
     }
 }
 #endif
-} // namespace inr
-
-namespace inr {
 
 void bigint::bigintShiftRight(Limb* dest, size_t limbs,
                               unsigned shiftN) noexcept {
@@ -248,6 +206,7 @@ void bigint::print(raw_stream& os, unsigned radix, bool isSigned,
 
     if(radix != 10) {
         std::string str;
+        str.reserve(0x80);
         unsigned shiftN = (radix == 16 ? 4 : (radix == 8 ? 3 : 1));
         unsigned maskN = radix - 1;
 

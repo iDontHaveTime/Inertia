@@ -20,7 +20,7 @@ At this stage, Inertia is early in development, so the main ways to contribute a
 `[Project][Commit type] Title describing the commit.`
  - Types: `feat`, `fix`, `docs`, `style`, `refactor`, `perf`, `test`, `chore`, `build`, `ci`, `revert`.
  - Projects: `inr` (Inertia), `inrcc`.
- - Example from a previous commit: `[docs]: Improved docs on the lexer.`
+ - Example from a previous commit: `[inrcc][feat] Added arg aliases, and made it more gcc-like.`
 
 PRs may be returned if the commit messages do not follow this style.
 
