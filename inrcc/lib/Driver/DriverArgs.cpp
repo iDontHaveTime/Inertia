@@ -250,7 +250,7 @@ std::vector<Arg> Driver::parseArgs(bool& err) {
             }
             else {
                 if(!matchJoined(i, args)) {
-                    logerr("unknown flag'", arg, '\'');
+                    logerr("unknown flag '", arg, '\'');
                     err = true;
                 }
             }
