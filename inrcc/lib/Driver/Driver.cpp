@@ -227,7 +227,7 @@ bool compileSourceFile(ArgVec& args, DriverFMan::File file, Language lang,
     Parser parser(lex, arena, sema, diagnostics);
     auto decls = parser.parseAll();
 
-    diagnostics.printall(inr::outs());
+    diagnostics.printall(inr::logs());
 
     if(diagnostics.hadFatalErrors()) {
         return true;

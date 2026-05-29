@@ -341,6 +341,10 @@ extern raw_stream& errs();
 /// @brief Accesses the stream that is linked to stdout.
 /// @return Stdout's stream.
 extern raw_stream& outs();
+/// @brief Accesses the stream that is linked to stderr.
+/// @return Stderr's stream.
+/// @note The main difference of this and errs() is that this is buffered.
+extern raw_stream& logs();
 
 /// @brief A stream class into an stdio FILE stream.
 class standard_file_stream : public raw_stream {

@@ -89,13 +89,13 @@ public:
 
     template<typename... Args>
     void logerr(Args&&... args) const {
-        inr::log::sendargs(inr::outs(), inr::log::Level::ERROR, toolName_,
+        inr::log::sendargs(inr::logs(), inr::log::Level::ERROR, toolName_,
                            std::forward<Args>(args)...);
     }
 
     template<typename... Args>
     void logwarn(Args&&... args) const {
-        inr::log::sendargs(inr::outs(), inr::log::Level::WARN, toolName_,
+        inr::log::sendargs(inr::logs(), inr::log::Level::WARN, toolName_,
                            std::forward<Args>(args)...);
     }
 };

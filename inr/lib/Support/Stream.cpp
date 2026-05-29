@@ -156,6 +156,12 @@ raw_stream& errs() {
     return stderr_stream;
 }
 
+raw_stream& logs() {
+    /// Lazy init buffered stderr.
+    static stream stderr_buffered_stream(2, false);
+    return stderr_buffered_stream;
+}
+
 void standard_file_stream::writeImpl(const char* ptr, size_t size) {
     if(file_) fwrite(ptr, 1, size, file_);
 }
