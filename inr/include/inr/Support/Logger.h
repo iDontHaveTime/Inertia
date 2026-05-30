@@ -21,7 +21,7 @@ enum class Level : uint8_t {
     ERROR ///< Appends 'ERROR_MSG' and a colon with a space after.
 };
 
-constexpr Colors WARN_COLOR = col::YELLOW;
+constexpr Colors WARN_COLOR = col::MAGENTA;
 constexpr Colors ERROR_COLOR = col::RED;
 
 constexpr const char* ERROR_MSG = "error";

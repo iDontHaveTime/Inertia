@@ -48,17 +48,31 @@ void raw_stream::setUnbuffered() {
 
 /// @brief How many spaces does the space buffer hold.
 /// Basically how many spaces at once can indentation write.
-constexpr unsigned SPACE_BUFFER_SIZE = 16;
+constexpr unsigned SPACE_BUFFER_SIZE = 64;
 
 raw_stream& raw_stream::indent(unsigned space) {
-    /// Allocate a static buffer, no need to readjust stack every time.
-    static const char space_buffer[SPACE_BUFFER_SIZE] = {
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ',
-        ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
+    /// Space buffer for writing multiple spaces at once.
+    class SpaceBuffer {
+        char spaces_[SPACE_BUFFER_SIZE];
+
+    public:
+        constexpr SpaceBuffer() noexcept : spaces_() {
+            for(unsigned i = 0; i < SPACE_BUFFER_SIZE; i++) {
+                spaces_[i] = ' ';
+            }
+        }
+        constexpr ~SpaceBuffer() noexcept = default;
+
+        constexpr const char* getSpaces() const noexcept {
+            return spaces_;
+        }
+    };
+    constexpr static SpaceBuffer space_buffer{};
+
     while(space) {
         /// Write the number of spaces left.
         unsigned to_write = std::min(space, SPACE_BUFFER_SIZE);
-        write(space_buffer, to_write);
+        write(space_buffer.getSpaces(), to_write);
 
         space -= to_write;
     }
@@ -89,7 +103,7 @@ raw_stream& raw_stream::write(const char* ptr, size_t size) {
 
             size_t toCopy = std::min(bytesLeft, spaceLeft);
 
-            memcpy(buffCur, ptr, toCopy);
+            std::memcpy(buffCur, ptr, toCopy);
 
             buffCur += toCopy;
             ptr += toCopy;
@@ -103,13 +117,13 @@ struct CheckTerminalColors {
     bool color;
 
     CheckTerminalColors() {
-        const char* term = getenv("TERM");
-        if(getenv("NO_COLOR")) {
+        const char* term = std::getenv("TERM");
+        if(std::getenv("NO_COLOR")) {
             color = false;
             return;
         }
 
-        if(!term || strcmp(term, "dumb") == 0) {
+        if(!term || std::strcmp(term, "dumb") == 0) {
             color = false;
             return;
         }
@@ -134,9 +148,8 @@ stream::stream(int fd, bool shouldClose, size_t bufferSize) :
 }
 
 stream::~stream() noexcept {
-    /// Remove the buffer and close the fd if prompted.
     setUnbuffered();
-    if(close_) close(fd_);
+    if(close_) ::close(fd_);
 }
 
 void stream::writeImpl(const char* ptr, size_t size) {
@@ -144,6 +157,7 @@ void stream::writeImpl(const char* ptr, size_t size) {
     ::write(fd_, ptr, size);
 }
 
+#ifdef __unix__
 raw_stream& outs() {
     /// Lazy init stdout.
     static stream stdout_stream(1, false);
@@ -161,14 +175,24 @@ raw_stream& logs() {
     static stream stderr_buffered_stream(2, false);
     return stderr_buffered_stream;
 }
-
-void standard_file_stream::writeImpl(const char* ptr, size_t size) {
-    if(file_) fwrite(ptr, 1, size, file_);
+#else
+raw_stream& outs() {
+    /// Lazy init stdout.
+    static standard_file_stream stdout_stream(stdout, false);
+    return stdout_stream;
 }
 
-standard_file_stream::~standard_file_stream() noexcept {
-    setUnbuffered();
-    if(file_ && close_) fclose(file_);
+raw_stream& errs() {
+    /// Lazy init stderr.
+    static standard_file_stream stderr_stream(stderr, false, 0);
+    return stderr_stream;
 }
+
+raw_stream& logs() {
+    /// Lazy init buffered stderr.
+    static standard_file_stream stderr_buffered_stream(stderr, false);
+    return stderr_buffered_stream;
+}
+#endif
 
 } // namespace inr

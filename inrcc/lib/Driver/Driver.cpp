@@ -180,9 +180,13 @@ constexpr CexprStringMap<
 FileType Driver::getFileType(Arg* arg) {
     if(ftoverride_ != FileType::Unknown) return ftoverride_;
     inr::sview ext = arg->getOriginal();
-    ext = ext.slice(ext.findLast('.'), ext.size());
-    if(ext[0] != '.') {
+
+    auto pos = ext.findLast('.');
+    if(pos == inr::sview::npos) {
         return FileType::PassToLinker;
+    }
+    else {
+        ext = ext.substr(pos, inr::sview::npos);
     }
 
     const FileType* ft = fileTypeMap.find(ext);
@@ -303,7 +307,9 @@ int Driver::sourceFileCompilation(ArgVec& args, Language lang) {
         if(fileType == FileType::Unknown) {
             return 1;
         }
-        if(!isSourceFileType(fileType)) continue;
+        if(!isSourceFileType(fileType)) {
+            continue;
+        }
 
         DriverFMan::File file;
 

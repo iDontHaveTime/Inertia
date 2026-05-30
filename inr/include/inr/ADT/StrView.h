@@ -35,6 +35,8 @@ public:
     using size_type = size_t;
     using difference_type = ptrdiff_t;
 
+    constexpr static size_type npos = size_type(-1);
+
 private:
     const_pointer str_ = nullptr;
     size_type len_ = 0;
@@ -169,12 +171,12 @@ public:
     /// @param from From what index to start.
     /// @return Index of the character found.
     constexpr size_type find(value_type c, size_type from = 0) const noexcept {
-        if(from >= len_) return len_;
+        if(from >= len_) return npos;
 
-        const_pointer ptr =
-            (const_pointer)inr::str::findc(str_, (unsigned char)c, len_ - from);
+        const_pointer ptr = (const_pointer)inr::str::findc(
+            str_ + from, (unsigned char)c, len_ - from);
 
-        return ptr ? ptr - str_ : 0;
+        return ptr ? ptr - str_ : npos;
     }
 
     /// @brief Finds the last character that is 'c'.
@@ -183,12 +185,12 @@ public:
     /// @return Index of the character found.
     constexpr size_type findLast(value_type c,
                                  size_type from = 0) const noexcept {
-        if(from >= len_) return len_;
+        if(from >= len_) return npos;
 
         const_pointer ptr = (const_pointer)inr::str::findrc(
-            str_ + len_, (unsigned char)c, len_ - from);
+            str_ + from, (unsigned char)c, len_ - from);
 
-        return ptr ? ptr - str_ : 0;
+        return ptr ? ptr - str_ : npos;
     }
 
     /// @brief Same as find(char, size_t) but case insensitive.
@@ -197,7 +199,7 @@ public:
     /// @return Index of the character.
     constexpr size_type find_insensitive(value_type c,
                                          size_type from = 0) const noexcept {
-        if(from >= len_) return len_;
+        if(from >= len_) return npos;
 
         if(std::isalpha(c)) {
             value_type c1 = isupper((unsigned char)c)
@@ -208,7 +210,7 @@ public:
                 if(cmp == c || cmp == c1) return from;
                 from++;
             }
-            return from;
+            return npos;
         }
         else {
             return find(c, from);
@@ -220,6 +222,11 @@ public:
     /// @param n How many characters.
     /// @return A new string view.
     constexpr sview substr(size_type start, size_type n) const noexcept {
+        if(start >= len_) return sview();
+
+        size_type rlen = len_ - start;
+
+        if(n > rlen) n = rlen;
         return sview(str_ + start, n);
     }
 

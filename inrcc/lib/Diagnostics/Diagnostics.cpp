@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
+#include <inr/Support/Logger.h>
 #include <inrcc/Diagnostics/Diagnostics.h>
 
 namespace inrcc {
@@ -89,13 +90,15 @@ void Diagnostics::printall(inr::raw_stream& os) {
         switch(sev) {
             case Severeness::Warning:
                 warnings++;
-                os.changeColor(inr::col::YELLOW) << " warning: ";
+                os.changeColor(inr::log::WARN_COLOR)
+                    << ' ' << inr::log::WARN_MSG << ": ";
                 break;
             case Severeness::Error:
                 [[fallthrough]];
             case Severeness::Fatal:
                 errors++;
-                os.changeColor(inr::col::RED) << " error: ";
+                os.changeColor(inr::log::ERROR_COLOR)
+                    << ' ' << inr::log::ERROR_MSG << ": ";
                 break;
             case Severeness::Nothing:
                 inr_notpossible("This is checked beforehand");

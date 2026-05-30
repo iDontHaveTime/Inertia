@@ -13,6 +13,7 @@
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
 #include <limits>
 #include <string>
@@ -133,7 +134,7 @@ public:
     /// @param c Character.
     /// @return *this
     raw_stream& operator<<(char c) {
-        return write(&c, sizeof(c));
+        return write(&c, 1);
     }
 
     /// @brief Writes an unsigned character to the stream.
@@ -214,9 +215,7 @@ public:
     }
 
     /// @brief Default destructor.
-    virtual ~raw_stream() noexcept {
-        setUnbuffered();
-    }
+    virtual ~raw_stream() noexcept = default;
 
     /// @brief Resets the colors to the terminal's default.
     /// @return *this
@@ -353,10 +352,12 @@ class standard_file_stream : public raw_stream {
     /// @brief Should the stream call fclose().
     bool close_;
     /// @brief Overriden write implementation to write to the FILE.
-    void writeImpl(const char* ptr, size_t size) override;
+    void writeImpl(const char* ptr, size_t size) override {
+        if(file_) std::fwrite(ptr, 1, size, file_);
+    }
 
     void flushImpl() override {
-        if(file_) fflush(file_);
+        if(file_) std::fflush(file_);
     }
 
 public:
@@ -370,7 +371,10 @@ public:
                          size_t bufferSize = DEFAULT_BUFFER_SIZE) noexcept :
         raw_stream(bufferSize), file_(f), close_(shouldClose) {}
 
-    ~standard_file_stream() noexcept override;
+    ~standard_file_stream() noexcept override {
+        setUnbuffered();
+        if(close_ && file_) std::fclose(file_);
+    }
 };
 
 /// @brief Provides a raw_stream interface for std::string.
@@ -392,6 +396,10 @@ public:
     /// @brief Returns the string and empties the one in the class.
     std::string str() const noexcept {
         return std::move(str_);
+    }
+
+    ~string_stream() noexcept override {
+        setUnbuffered();
     }
 };
 
