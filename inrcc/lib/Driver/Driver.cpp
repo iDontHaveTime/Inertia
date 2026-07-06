@@ -304,6 +304,7 @@ int Driver::sourceFileCompilation(ArgVec& args, Language lang) {
 
         Arg* arg = &argRef;
         FileType fileType = getFileType(arg);
+
         if(fileType == FileType::Unknown) {
             return 1;
         }
