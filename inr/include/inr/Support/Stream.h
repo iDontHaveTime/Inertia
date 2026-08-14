@@ -139,9 +139,7 @@ public:
     /// @brief Writes the specified amount of spaces.
     /// @param space How many spaces should be written.
     ///
-    /// Internally uses a decently sized space buffer so that each write is many
-    /// spaces at once instead of one, so prefer this over writing spaces one by
-    /// one.
+    /// Uses a buffer with spaces so that it writes multiple spaces at once.
     stream& indent(unsigned space);
 
     /// @brief Writes "null" to the stream.
