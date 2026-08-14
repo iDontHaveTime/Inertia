@@ -1,37 +1,61 @@
-# Set the C++ standard to C++20
-set(CMAKE_CXX_STANDARD 20)
-set(CMAKE_CXX_STANDARD_REQUIRED YES)
-set(CMAKE_CXX_EXTENSIONS NO)
+# The root cmake for the Inertia backend.
+cmake_minimum_required(VERSION 3.20.0)
 
-# Default to shared libraries
-option(BUILD_SHARED_LIBS "Build as shared libraries" YES)
+# == Utils ==
 
-# Compile with warning flags
-option(BUILD_WARNINGS "Build with warning flags" YES)
+# inr/cmake/*
+set(INERTIA_CMAKE_UTILS "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-# ./inr/include
-set(INERTIA_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include)
+# Include the version.
+include("${INERTIA_CMAKE_UTILS}/inrVersion.cmake")
+# Include the build mode.
+include("${INERTIA_CMAKE_UTILS}/inrBuild.cmake")
+# Include target entries.
+include("${INERTIA_CMAKE_UTILS}/inrTarget.cmake")
 
-# This will hold all libraries created with add_inertia_library
-inr_map_name_to_library(INERTIA_LIBRARIES Core IR Target Option Gen TIR)
+# Set the variables so that its easier to check the build mode.
+if(INERTIA_BUILD STREQUAL "Shared")
+    set(INERTIA_SHARED TRUE)
+    set(INERTIA_MONOLITHIC TRUE)
+elseif(INERTIA_BUILD STREQUAL "Static")
+    set(INERTIA_MONOLITHIC TRUE)
+elseif(INERTIA_BUILD STREQUAL "MultiShared")
+    set(INERTIA_SHARED TRUE)
+endif()
 
-# add_inertia_library(NAME files...)
-function(add_inertia_library lib_name)
-    if(NOT ARGN)
-        set(lib_srcs "")
+# Uses monolithic library name if Inertia was built that way.
+macro(inr_map_library VARIABLE_TO_SET)
+    if(INERTIA_MONOLITHIC)
+        set(${VARIABLE_TO_SET} Inr)
     else()
-        set(lib_srcs ${ARGN})
+        set(${VARIABLE_TO_SET} "${ARGN}")
     endif()
+endmacro()
 
-    add_library("Inr${lib_name}" ${lib_srcs})
+# == Libraries ==
 
-    target_include_directories("Inr${lib_name}" PUBLIC ${INERTIA_INCLUDE_DIRS})
+# inr/include
+set(INERTIA_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-    if(BUILD_WARNINGS)
-        target_compile_options("Inr${lib_name}" PRIVATE -Wall -Wextra -Wpedantic)
-    endif()
-endfunction()
+project(Inertia
+    VERSION ${INERTIA_VERSION_MAJOR}.${INERTIA_VERSION_MINOR}.${INERTIA_VERSION_PATCH}
+    LANGUAGES CXX)
 
+option(INERTIA_ENABLE_TESTING "Should testing be enabled?" ON)
+
+# Source of the libraries
 add_subdirectory(lib)
-add_subdirectory(test)
+
+# == Testing ==
+
+if(INERTIA_ENABLE_TESTING)
+    enable_testing()
+    # Test executables
+    add_subdirectory(tests)
+endif()
+
+# == Tooling ==
+
+include("${INERTIA_CMAKE_UTILS}/inrTools.cmake")
+
 add_subdirectory(tools)

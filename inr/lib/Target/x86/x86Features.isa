@@ -1,0 +1,21 @@
+// Copyright (c) 2026 Inertia Project
+// Distributed under the Boost Software License, Version 1.0.
+// See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
+
+(namespace inr
+    (namespace x86
+        (feature long_mode false)
+
+        (feature x87_fpu true)
+
+        (feature sse false)
+        (feature sse2 false)
+        (feature sse3 false)
+        (feature ssse3 false)
+        (feature sse4_1 false)
+        (feature sse4_2 false)
+
+        (feature avx false)
+        (feature avx2 false)
+    )
+)

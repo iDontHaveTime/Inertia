@@ -6,22 +6,25 @@
 #define INERTIA_ADT_IVECTOR_H
 
 /// @file ADT/IVector.h
-/// @brief Provides the inline vector class.
+/// @brief Provides a vector class that can store some elements on stack.
 
-#include <inr/Support/Compiler.h>
+#include <inr/Support/Assert.h>
 
+#include <algorithm>
+#include <bit>
 #include <cstddef>
-#include <cstdint>
 #include <cstring>
 #include <initializer_list>
 #include <iterator>
-#include <utility>
+#include <type_traits>
 #include <vector>
 
 namespace inr {
 
-/// @brief Inline vector class stores on stack until N was reached.
-template<typename T, size_t N>
+/// @brief A vector class that can hold N elements on the stack before
+/// allocating heap memory.
+/// @note Not exception safe.
+template<typename T, std::size_t N>
 class ivec {
 public:
     using value_type = T;
@@ -33,41 +36,38 @@ public:
     using const_iterator = const_pointer;
     using reverse_iterator = std::reverse_iterator<iterator>;
     using const_reverse_iterator = std::reverse_iterator<const_iterator>;
-    using size_type = size_t;
-    using difference_type = ptrdiff_t;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
 
 private:
-    alignas(value_type) uint8_t
-        inlineStorage_[N * sizeof(value_type)]; ///< Stores N objects on stack.
+    alignas(value_type) std::byte inlineStorage_[N * sizeof(value_type)];
     size_type size_ = 0;
-    size_type capacity_ = N; ///< How much can this vector currently hold.
-    pointer data_ = (pointer)inlineStorage_; ///< Points to the data, could be
-                                             ///< the stack array or heap.
+    size_type capacity_ = N;
+    pointer data_ = (pointer)inlineStorage_;
 
-    bool isHeap() const noexcept {
+    bool isOnHeap() const {
         return data_ != (const_pointer)inlineStorage_;
     }
 
-    /// @brief Frees the memory and goes back to inline storage.
-    void freeMemory() noexcept {
+    void freeMemory() {
         clear();
-        if(isHeap()) {
-            operator delete[](data_);
+        if(isOnHeap()) {
+            ::operator delete[](data_, std::align_val_t(alignof(value_type)));
             data_ = (pointer)inlineStorage_;
             capacity_ = N;
         }
     }
 
-    /// @brief Grows memory, moves to heap if needed.
-    /// @param minCapacity Minimum capacity needed.
-    /// @note May allocate more than minCapacity.
-    void growMemory(size_type minCapacity) noexcept {
+    constexpr static size_type DEFAULT_GROW_MINIMUM = 0x10;
+
+    void growMemory(size_type minCapacity) {
         if(minCapacity <= capacity_) return;
 
-        size_type newCapacity =
-            std::bit_ceil(std::max<size_type>(minCapacity, 16));
+        size_type newCapacity = std::bit_ceil(
+            std::max<size_type>(minCapacity, DEFAULT_GROW_MINIMUM));
         pointer newData =
-            (pointer) operator new[](newCapacity * sizeof(value_type));
+            (pointer)::operator new[](newCapacity * sizeof(value_type),
+                                      std::align_val_t(alignof(value_type)));
 
         if constexpr(std::is_trivially_copyable_v<value_type>) {
             std::memcpy(newData, data_, size_ * sizeof(value_type));
@@ -79,8 +79,8 @@ private:
             }
         }
 
-        if(isHeap()) {
-            operator delete[](data_);
+        if(isOnHeap()) {
+            ::operator delete[](data_, std::align_val_t(alignof(value_type)));
         }
 
         data_ = newData;
@@ -88,19 +88,17 @@ private:
     }
 
 public:
-    /// @brief Default constructor, does nothing.
-    ivec() noexcept = default;
+    /// @brief Creates an empty vector.
+    /// @note Does not initialize elements on stack.
+    ivec() = default;
 
-    /// @brief Copy constructor.
-    ivec(const ivec& other) noexcept {
+    ivec(const ivec& other) {
         insert(begin(), other.begin(), other.end());
     }
 
-    /// @brief Copy operator.
-    ivec& operator=(const ivec& other) noexcept {
+    ivec& operator=(const ivec& other) {
         if(this != &other) {
-            freeMemory();
-            insert(begin(), other.begin(), other.end());
+            freeMemory(), insert(begin(), other.begin(), other.end());
         }
         return *this;
     }
@@ -110,11 +108,8 @@ public:
         size_ = other.size_;
         capacity_ = other.capacity_;
 
-        if(other.isHeap()) {
+        if(other.isOnHeap()) {
             data_ = other.data_;
-            other.data_ = (pointer)other.inlineStorage_;
-            other.size_ = 0;
-            other.capacity_ = N;
         }
         else {
             data_ = (pointer)inlineStorage_;
@@ -122,12 +117,15 @@ public:
                 std::memcpy(data_, other.data_, size_ * sizeof(value_type));
             }
             else {
-                for(size_type i = 0; i < size_; ++i) {
+                for(size_type i = 0; i < size_; i++) {
                     new(data_ + i) value_type(std::move(other.data_[i]));
+                    other.data_[i].~value_type();
                 }
             }
-            other.clear();
         }
+        other.data_ = (pointer)other.inlineStorage_;
+        other.size_ = 0;
+        other.capacity_ = N;
     }
 
     /// @brief Move operator.
@@ -139,11 +137,8 @@ public:
         size_ = other.size_;
         capacity_ = other.capacity_;
 
-        if(other.isHeap()) {
+        if(other.isOnHeap()) {
             data_ = other.data_;
-            other.data_ = (pointer)other.inlineStorage_;
-            other.size_ = 0;
-            other.capacity_ = N;
         }
         else {
             data_ = (pointer)inlineStorage_;
@@ -151,81 +146,94 @@ public:
                 std::memcpy(data_, other.data_, size_ * sizeof(value_type));
             }
             else {
-                for(size_type i = 0; i < size_; ++i) {
+                for(size_type i = 0; i < size_; i++) {
                     new(data_ + i) value_type(std::move(other.data_[i]));
+                    other.data_[i].~value_type();
                 }
             }
-            other.clear();
         }
+
+        other.data_ = (pointer)other.inlineStorage_;
+        other.size_ = 0;
+        other.capacity_ = N;
 
         return *this;
     }
 
-    /// @brief Initializer list constructor.
-    ivec(std::initializer_list<value_type> init) noexcept {
-        growMemory(init.size());
+    ~ivec() {
+        freeMemory();
+    }
+
+    ivec(std::initializer_list<value_type> init) {
         insert(begin(), init.begin(), init.end());
     }
 
-    /// @brief Initializer list operator.
-    ivec& operator=(std::initializer_list<value_type> init) noexcept {
+    ivec& operator=(std::initializer_list<value_type> init) {
         freeMemory();
-        growMemory(init.size());
         insert(begin(), init.begin(), init.end());
         return *this;
     }
 
-    /// @brief Destructor.
-    ~ivec() noexcept {
-        freeMemory();
-    }
-
-    /// @brief Destructs object and sets the size to 0.
-    /// @note Does not free memory, nor go back to stack.
-    void clear() noexcept {
-        while(size_) {
-            data_[--size_].~value_type();
+    /// @brief Destructs and sets the size back to 0.
+    /// @note Does not free memory nor goes back to stack.
+    void clear() {
+        if constexpr(!std::is_trivially_destructible_v<value_type>) {
+            while(size_) {
+                data_[--size_].~value_type();
+            }
+        }
+        else {
+            size_ = 0;
         }
     }
 
-    /// @brief Returns the pointer to data.
-    /// @return Pointer to the first element.
-    pointer data() noexcept {
+    /// @brief Returns a pointer to the data.
+    pointer data() {
         return data_;
     }
 
-    /// @brief Returns a const pointer to data.
-    /// @return Const pointer to the first element.
-    const_pointer data() const noexcept {
+    /// @brief Returns a const pointer to the data.
+    const_pointer data() const {
         return data_;
     }
 
-    /// @brief Safely accesses an element at an index.
-    /// @param n Index to access it at.
-    reference at(size_type n) noexcept {
-        inr_assert(n < size_, "ivec's at() is out of range.");
+    /// @brief Accesses an element.
+    reference operator[](size_type n) {
+        inr_assert(n < size_, "ivec operator[]: out of bounds");
         return data_[n];
     }
 
-    /// @brief Same as `at(size_type)` but const.
-    const_reference at(size_type n) const noexcept {
-        inr_assert(n < size_, "ivec's at() is out of range.");
+    /// @brief Accesses an element.
+    const_reference operator[](size_type n) const {
+        inr_assert(n < size_, "ivec operator[] (const): out of bounds");
         return data_[n];
     }
 
-    /// @brief Construct emplaces an object into the pos provided.
-    /// @param pos Position to construct it at.
-    /// @param args Args to pass in to the constructor.
-    /// @return Slot it was placed in.
+    /// @brief Alias for operator[].
+    /// @note Does not throw exceptions like STL's at().
+    reference at(size_type n) {
+        inr_assert(n < size_, "ivec at(): out of bounds");
+        return data_[n];
+    }
+
+    /// @brief Alias for const operator[].
+    /// @note Does not throw exceptions like STL's at();
+    const_reference at(size_type n) const {
+        inr_assert(n < size_, "ivec at() (const): out of bounds");
+        return data_[n];
+    }
+
+    /// @brief Constructs another element at the specified position.
+    /// @return Iterator to the slot it was placed in.
     template<typename... Args>
-    iterator emplace(iterator pos, Args&&... args) noexcept {
+    iterator emplace(iterator pos, Args&&... args) {
         size_type index = pos - data_;
-        inr_assert(index <= size_, "ivec's emplace position is out of range.");
+        inr_assert(index <= size_, "ivec emplace(): position is out of range");
 
         growMemory(size_ + 1);
 
         for(size_type i = size_; i > index; i--) {
-            new(data_ + i) value_type(std::move_if_noexcept(data_[i - 1]));
+            new(data_ + i) value_type(std::move(data_[i - 1]));
             data_[i - 1].~value_type();
         }
 
@@ -234,54 +242,32 @@ public:
         return data_ + index;
     }
 
-    /// @brief Constructs an object at the back of the vector.
-    /// @param args Args to pass to the constructor.
-    /// @return Reference to the new object.
     template<typename... Args>
-    reference emplace_back(Args&&... args) noexcept {
+    reference emplace_back(Args&&... args) {
         return *emplace(end(), std::forward<Args>(args)...);
     }
 
-    /// @brief Copies the object to the back of the vector.
-    /// @param v Object to copy.
-    /// @return Reference to the new object.
-    reference push_back(const_reference v) noexcept {
+    reference push_back(const_reference v) {
         return emplace_back(v);
     }
 
-    /// @brief Moves the object to the back of the vector.
-    /// @param v Object to move.
-    /// @return Reference to the new object.
-    reference push_back(value_type&& v) noexcept {
+    reference push_back(value_type&& v) {
         return emplace_back(std::move(v));
     }
 
-    /// @brief Copy inserts the object into the pos provided.
-    /// @param pos The position to copy it to.
-    /// @param v Object to copy.
-    /// @return The slot it was placed.
-    iterator insert(iterator pos, const_reference v) noexcept {
+    iterator insert(iterator pos, const_reference v) {
         return emplace(pos, v);
     }
 
-    /// @brief Move inserts the object into the pos provided.
-    /// @param pos The position to move it to.
-    /// @param v Object to move.
-    /// @return The slot it was placed.
-    iterator insert(iterator pos, value_type&& v) noexcept {
+    iterator insert(iterator pos, value_type&& v) {
         return emplace(pos, std::move(v));
     }
 
-    /// @brief Range insert into the vector.
-    /// @param pos Where to start from.
-    /// @param first Pointer to the start.
-    /// @param last Pointer to the end.
-    /// @return Slot the first object was placed.
     template<typename InputIt>
-    iterator insert(iterator pos, InputIt first, InputIt last) noexcept {
+    iterator insert(iterator pos, InputIt first, InputIt last) {
         size_type index = pos - data_;
         size_type count = std::distance(first, last);
-        if(count == 0) return pos;
+        if(!count) return pos;
 
         growMemory(size_ + count);
 
@@ -305,116 +291,148 @@ public:
         return data_ + index;
     }
 
+    void erase(iterator pos) {
+        inr_assert(pos < end(), "ivec erase(): iterator out of range");
+
+        if constexpr(!std::is_trivially_destructible_v<value_type>)
+            pos->~value_type();
+
+        if constexpr(std::is_trivially_copyable_v<value_type>) {
+            if(pos + 1 != end()) {
+                std::memmove(pos, pos + 1, (end() - pos) * sizeof(value_type));
+            }
+        }
+        else {
+            for(pos++; pos < end(); pos++) {
+                new(pos - 1) value_type(std::move(*pos));
+                pos->~value_type();
+            }
+        }
+        size_--;
+    }
+
+    bool erase_if(iterator pos, bool cond) {
+        if(cond) {
+            erase(pos);
+            return true;
+        }
+        return false;
+    }
+
+    bool erase_if_found(const_reference v) {
+        auto it = find(v);
+        return erase_if(it, it != end());
+    }
+
     /// @brief Returns the amount of elements in the vector.
-    size_type size() const noexcept {
+    size_type size() const {
         return size_;
     }
 
     /// @brief Returns the max capacity of the vector at the moment.
-    size_type capacity() const noexcept {
+    size_type capacity() const {
         return capacity_;
     }
 
     /// @brief Returns whether the vector is empty or not.
-    bool empty() const noexcept {
+    bool empty() const {
         return size_ == 0;
     }
 
-    /// @brief Returns a reference to an object at index n.
-    /// @param n Object index.
-    reference operator[](size_type n) noexcept {
-        return data_[n];
-    }
-
-    /// @brief Returns a const reference to an object at index n.
-    /// @param n Object index.
-    const_reference operator[](size_type n) const noexcept {
-        return data_[n];
-    }
-
-    iterator begin() noexcept {
+    iterator begin() {
         return data_;
     }
-    iterator end() noexcept {
+
+    iterator end() {
         return data_ + size_;
     }
-    const_iterator begin() const noexcept {
+
+    const_iterator begin() const {
         return data_;
     }
-    const_iterator end() const noexcept {
+
+    const_iterator end() const {
         return data_ + size_;
     }
-    reverse_iterator rbegin() noexcept {
+
+    const_iterator cbegin() const {
+        return begin();
+    }
+
+    const_iterator cend() const {
+        return end();
+    }
+
+    reverse_iterator rbegin() {
         return reverse_iterator(end());
     }
-    reverse_iterator rend() noexcept {
+
+    reverse_iterator rend() {
         return reverse_iterator(begin());
     }
-    const_reverse_iterator rbegin() const noexcept {
+
+    const_reverse_iterator rbegin() const {
         return const_reverse_iterator(end());
     }
-    const_reverse_iterator rend() const noexcept {
+
+    const_reverse_iterator rend() const {
         return const_reverse_iterator(begin());
     }
 
+    const_reverse_iterator crbegin() const {
+        return rbegin();
+    }
+    const_reverse_iterator crend() const {
+        return rend();
+    }
+
     /// @brief Returns this as an STL vector.
-    std::vector<value_type> vec() noexcept {
+    std::vector<value_type> vec() {
         return std::vector<value_type>(begin(), end());
     }
 
     /// @brief Compares elements of the two vectors.
-    bool operator==(const ivec& other) const noexcept {
+    bool operator==(const ivec& other) const {
         return std::equal(begin(), end(), other.begin(), other.end());
     }
 
     /// @brief Returns the first element.
-    reference front() noexcept {
+    reference front() {
+        inr_assert(size_ != 0, "ivec front(): size was zero");
         return data_[0];
     }
 
     /// @brief Returns the last element.
-    reference back() noexcept {
+    reference back() {
+        inr_assert(size_ != 0, "ivec back(): size was zero");
         return data_[size_ - 1];
     }
 
     /// @brief Returns the first element, const.
-    const_reference front() const noexcept {
+    const_reference front() const {
+        inr_assert(size_ != 0, "ivec front() (const): size was zero");
         return data_[0];
     }
 
     /// @brief Returns the last element, const.
-    const_reference back() const noexcept {
+    const_reference back() const {
+        inr_assert(size_ != 0, "ivec back() (const): size was zero");
         return data_[size_ - 1];
     }
 
-    void pop_back() noexcept {
-        inr_assert(size_ > 0, "Size must not be 0.");
+    void pop_back() {
+        inr_assert(size_ != 0, "ivec pop_back(): size was zero");
         if constexpr(!std::is_trivially_destructible_v<value_type>)
             data_[size_ - 1].~value_type();
         size_--;
     }
 
-    const_iterator find(const_reference val) const noexcept {
-        const_iterator it = begin();
-        for(; it != end(); ++it) {
-            if(*it == val) return it;
-        }
-        return it;
+    const_iterator find(const_reference val) const {
+        return std::find(begin(), end(), val);
     }
 
-    iterator find(const_reference val) noexcept {
-        iterator it = begin();
-        for(; it != end(); ++it) {
-            if(*it == val) return it;
-        }
-        return it;
-    }
-
-    bool bfind(const T& val) const noexcept {
-        for(const_pointer i = data_; i != data_ + size_; ++i) {
-            if(*i == val) return true;
-        }
-        return false;
+    iterator find(const_reference val) {
+        return std::find(begin(), end(), val);
     }
 };
 

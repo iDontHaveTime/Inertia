@@ -1,76 +1,94 @@
 // Copyright (c) 2026 Inertia Project
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
-
 #include <inr/Support/Stream.h>
-#include <unistd.h>
+#include <inr/Support/Version.h>
 
-#include <algorithm>
-#include <cstdlib>
-#include <cstring>
+#ifndef __unix__
+#define INR_USE_STANDARD_STREAM
+#endif
+
+#ifdef INR_USE_STANDARD_STREAM
+#include <inr/Support/CStream.h>
+#endif
 
 namespace inr {
 
+/// @brief By default should be auto.
 ColorOverride global_color_override = ColorOverride::AUTO;
 
-raw_stream::raw_stream(size_t bufferSize) {
-    /// The stream should start unbuffered.
-    buffStart = buffCur = buffEnd = nullptr;
-    buffStatus = BufferedStatus::UNBUFFERED;
+stream::stream(size_type bufferSize) :
+    start_(nullptr), cur_(nullptr), end_(nullptr), reversedColor_(false) {
+    setBufferSize(bufferSize);
+}
 
-    /// If buffer allocation is needed.
-    if(bufferSize != 0) {
-        setBufferSize(bufferSize);
+stream& stream::write(cbuff_t data, size_type size) {
+    if(!start_) writeImpl(data, size);
+    else {
+        size_type bufsiz = getBufferSize();
+
+        while(size) {
+            size_type spaceLeft = getCharsInBuffer();
+
+            if(spaceLeft >= bufsiz) {
+                flush();
+                writeImpl(data, size);
+                break;
+            }
+
+            if(!spaceLeft) {
+                flush();
+                spaceLeft = bufsiz;
+            }
+
+            size_type toCopy = std::min(size, spaceLeft);
+
+            std::memcpy(cur_, data, toCopy);
+
+            cur_ += toCopy;
+            data += toCopy;
+            size -= toCopy;
+        }
+    }
+    return *this;
+}
+
+void stream::setBufferSize(size_type size) {
+    flush();
+    if(!size) {
+        delete[] start_;
+        start_ = cur_ = end_ = nullptr;
+        return;
+    }
+
+    if(size != getBufferSize()) {
+        delete[] start_;
+        start_ = cur_ = new buffchar_t[size];
+        end_ = start_ + size;
     }
 }
 
-void raw_stream::setBufferSize(size_t size) {
-    /// Free the buffer if needed.
-    setUnbuffered();
-    /// If the size is zero return since we already freed the buffer.
-    if(size == 0) return;
-    /// Allocate a new buffer.
-    buffStart = buffCur = new char[size];
-    buffEnd = buffStart + size;
-    buffStatus = BufferedStatus::INTERNAL;
-}
-
-void raw_stream::setUnbuffered() {
-    /// If a buffer already exists, free it.
-    if(buffStatus == BufferedStatus::INTERNAL && buffStart) {
-        flush();
-        delete[] buffStart;
-    }
-    /// Set the status to unbuffered and reset pointers.
-    buffStatus = BufferedStatus::UNBUFFERED;
-    buffStart = buffCur = buffEnd = nullptr;
-}
-
-/// @brief How many spaces does the space buffer hold.
-/// Basically how many spaces at once can indentation write.
 constexpr unsigned SPACE_BUFFER_SIZE = 64;
 
-raw_stream& raw_stream::indent(unsigned space) {
-    /// Space buffer for writing multiple spaces at once.
+stream& stream::indent(unsigned space) {
     class SpaceBuffer {
         char spaces_[SPACE_BUFFER_SIZE];
 
     public:
-        constexpr SpaceBuffer() noexcept : spaces_() {
+        constexpr SpaceBuffer() : spaces_() {
             for(unsigned i = 0; i < SPACE_BUFFER_SIZE; i++) {
                 spaces_[i] = ' ';
             }
         }
-        constexpr ~SpaceBuffer() noexcept = default;
+        constexpr ~SpaceBuffer() = default;
 
-        constexpr const char* getSpaces() const noexcept {
+        constexpr const char* getSpaces() const {
             return spaces_;
         }
     };
     constexpr static SpaceBuffer space_buffer{};
 
     while(space) {
-        /// Write the number of spaces left.
         unsigned to_write = std::min(space, SPACE_BUFFER_SIZE);
         write(space_buffer.getSpaces(), to_write);
 
@@ -79,120 +97,26 @@ raw_stream& raw_stream::indent(unsigned space) {
     return *this;
 }
 
-raw_stream& raw_stream::write(const char* ptr, size_t size) {
-    /// If unbuffered simply just write to the stream.
-    if(buffStatus == BufferedStatus::UNBUFFERED) writeImpl(ptr, size);
-    else {
-        /// If buffered we loop until no more bytes left to write.
-        size_t bytesLeft = size;
-
-        while(bytesLeft) {
-            size_t spaceLeft = buffEnd - buffCur;
-
-            /// If the write is more than the buffer just write all at once.
-            if(bytesLeft >= getBufferSize()) {
-                flush();
-                writeImpl(ptr, bytesLeft);
-                break;
-            }
-
-            if(!spaceLeft) {
-                flush();
-                spaceLeft = getBufferSize();
-            }
-
-            size_t toCopy = std::min(bytesLeft, spaceLeft);
-
-            std::memcpy(buffCur, ptr, toCopy);
-
-            buffCur += toCopy;
-            ptr += toCopy;
-            bytesLeft -= toCopy;
-        }
-    }
-    return *this;
+#ifdef INR_USE_STANDARD_STREAM
+stream& out() {
+    static cstream stdout_s(stdout, false);
+    return stdout_s;
 }
 
-struct CheckTerminalColors {
-    bool color;
-
-    CheckTerminalColors() {
-        const char* term = std::getenv("TERM");
-        if(std::getenv("NO_COLOR")) {
-            color = false;
-            return;
-        }
-
-        if(!term || std::strcmp(term, "dumb") == 0) {
-            color = false;
-            return;
-        }
-
-        color = true;
-    }
-};
-
-stream::stream(int fd, bool shouldClose, size_t bufferSize) :
-    raw_stream(bufferSize), fd_(fd), close_(shouldClose) {
-    if(fd == 1 || fd == 2) {
-        if(bool(isatty(fd))) {
-            displayed_ = true;
-            static CheckTerminalColors colorsPresent;
-            colors_ = colorsPresent.color;
-        }
-    }
-    else {
-        displayed_ = false;
-        colors_ = false;
-    }
+stream& err() {
+    static cstream stderr_s(stderr, false);
+    return stderr_s;
 }
 
-stream::~stream() noexcept {
-    setUnbuffered();
-    if(close_) ::close(fd_);
-}
-
-void stream::writeImpl(const char* ptr, size_t size) {
-    /// @todo Error handling.
-    ::write(fd_, ptr, size);
-}
-
-#ifdef __unix__
-raw_stream& outs() {
-    /// Lazy init stdout.
-    static stream stdout_stream(1, false);
-    return stdout_stream;
-}
-
-raw_stream& errs() {
-    /// Lazy init stderr.
-    static stream stderr_stream(2, false, 0);
-    return stderr_stream;
-}
-
-raw_stream& logs() {
-    /// Lazy init buffered stderr.
-    static stream stderr_buffered_stream(2, false);
-    return stderr_buffered_stream;
-}
-#else
-raw_stream& outs() {
-    /// Lazy init stdout.
-    static standard_file_stream stdout_stream(stdout, false);
-    return stdout_stream;
-}
-
-raw_stream& errs() {
-    /// Lazy init stderr.
-    static standard_file_stream stderr_stream(stderr, false, 0);
-    return stderr_stream;
-}
-
-raw_stream& logs() {
-    /// Lazy init buffered stderr.
-    static standard_file_stream stderr_buffered_stream(stderr, false);
-    return stderr_buffered_stream;
+stream& log() {
+    static cstream log_s(stderr, false, stream::DEFAULT_BUFFER_SIZE);
+    return log_s;
 }
 #endif
+
+stream& operator<<(stream& os, Version ver) {
+    return os << ver.getMajor() << '.' << ver.getMinor() << '.'
+              << ver.getPatch();
+}
 
 } // namespace inr

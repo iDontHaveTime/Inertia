@@ -73,4 +73,7 @@ IndentWidth: 4
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 
-EnumTrailingComma: Remove
+EnumTrailingComma: Insert
+
+InsertNewlineAtEOF: true
+LineEnding: LF

@@ -6,24 +6,27 @@
 #define INERTIA_SUPPORT_STREAM_H
 
 /// @file Support/Stream.h
-/// @brief Contains classes relating to streams.
-///
-/// Only contains output streams, no input streams.
+/// @brief Provides a stream class as a replacement for STL's streams.
 
 #include <charconv>
 #include <cstddef>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <limits>
 #include <string>
 
 namespace inr {
 
-enum class ColorOverride : uint8_t { AUTO, ALWAYS, NEVER };
+enum class ColorOverride : uint8_t {
+    AUTO,
+    ALWAYS,
+    NEVER,
+};
+/// @brief Overrides whether or not colors are available or not.
 extern ColorOverride global_color_override;
 
-enum class Colors {
+/// @brief Terminal colors.
+enum class col {
     BLACK = 30,
     RED,
     GREEN,
@@ -39,136 +42,154 @@ enum class Colors {
     BRIGHT_BLUE,
     BRIGHT_MAGENTA,
     BRIGHT_CYAN,
-    BRIGHT_WHITE
+    BRIGHT_WHITE,
 };
 
-using col = Colors;
-
-class raw_stream;
-
-using stream_manipulator = raw_stream& (*)(raw_stream&);
-
-/// @brief An abstract output stream class.
-class raw_stream {
+/// @brief Base class for all output streams.
+///
+/// Somewhat follows STL stream semantics with the operator<<.
+class stream {
 protected:
-    /// @brief Describes the status of the stream's buffer.
-    enum class BufferedStatus : uint8_t { UNBUFFERED, INTERNAL };
-    /// @brief Pointer to the data type of the buffer.
-    char *buffStart, *buffCur, *buffEnd;
-    /// @brief Status of the stream's buffering.
-    BufferedStatus buffStatus;
-    bool reversedColor = false;
+    /// @brief One buffer character.
+    /// @note Should always be char.
+    using buffchar_t = char;
+    /// @brief Pointer to the buffer character.
+    using buff_t = buffchar_t*;
+    /// @brief Pointer to a constant buffer character.
+    using cbuff_t = const buffchar_t*;
+    /// @brief Alias for std::size_t.
+    using size_type = std::size_t;
 
-    /// @brief Implementation of the write, class-dependent.
+private:
+    buff_t start_, cur_, end_;
+    bool reversedColor_;
+
+protected:
+    /// @brief Implementation for the write method for the derived stream.
     /// @param ptr Pointer to the data.
     /// @param size Size of the data.
-    virtual void writeImpl(const char* ptr, size_t size) = 0;
-
-    /// @brief If the flush has extra steps.
-    virtual void flushImpl() {}
-
-    /// @brief The buffer size constructors default to.
-    constexpr static size_t DEFAULT_BUFFER_SIZE = 0x2000;
+    virtual void writeImpl(cbuff_t ptr, size_type size) = 0;
+    /// @brief A hook for when flushing the buffer.
+    ///
+    /// This is usually empty, although for example when using stdio's FILE
+    /// handle you should call fflush.
+    virtual void flushImpl() {};
 
 public:
-    /// @brief Constructs a stream with the selected buffer size.
-    /// @param bufferSize Size for the buffer, 0 for unbuffered.
-    raw_stream(size_t bufferSize = DEFAULT_BUFFER_SIZE);
+    /// @brief What is the default buffer size if it wasn't specified.
+    constexpr static size_type DEFAULT_BUFFER_SIZE = 0x2000;
 
-    raw_stream(const raw_stream&) = delete;
-    raw_stream& operator=(const raw_stream&) = delete;
+    /// @brief Creates a new stream with the specified buffer size.
+    /// @param bufferSize Size of the buffer to create, 0 for none.
+    stream(size_type bufferSize = DEFAULT_BUFFER_SIZE);
 
-    /// @brief Returns the buffer size of the stream.
-    /// @return Buffer size.
-    size_t getBufferSize() const noexcept {
-        return buffEnd - buffStart;
+    /// @brief Streams shouldn't be copyable.
+    stream(const stream&) = delete;
+    stream& operator=(const stream&) = delete;
+
+    /// @brief Why would you ever construct a stream from moving.
+    stream(stream&&) = delete;
+    /// @brief Why would you ever move a stream.
+    stream& operator=(stream&&) = delete;
+
+    /// @brief Returns the size of the buffer.
+    size_type getBufferSize() const {
+        return end_ - start_;
     }
 
-    /// @brief Writes data to the stream.
-    /// @param ptr Pointer to the data.
+    /// @brief Writes to the stream.
+    /// @param data The data to write.
     /// @param size Size of the data.
-    /// @return *this
-    raw_stream& write(const char* ptr, size_t size);
+    /// @return *this.
+    stream& write(cbuff_t data, size_type size);
 
-    /// @brief Allocates a new buffer for the stream.
-    /// @param size The size for the new buffer.
-    void setBufferSize(size_t size = DEFAULT_BUFFER_SIZE);
-    /// @brief Sets the stream to be unbuffered.
-    void setUnbuffered();
-    /// @brief Flushes the buffer.
+    /// @brief May change the stream's buffer.
+    /// @param size Size for the new buffer.
+    void setBufferSize(size_type size);
+
+    /// @brief Removes this stream's buffer.
+    void setUnbuffered() {
+        setBufferSize(0);
+    }
+
+    /// @brief Returns how many chars are currently in the buffer.
+    size_type getCharsInBuffer() const {
+        return end_ - cur_;
+    }
+
+    /// @brief Flushes the stream.
     void flush() {
-        // nullptr if unbuffered so no need to check.
-        if(buffCur != buffStart) {
-            writeImpl(buffStart, buffCur - buffStart);
-            buffCur = buffStart;
+        if(cur_ != start_) {
+            writeImpl(start_, getCharsInBuffer());
+            cur_ = start_;
         }
         flushImpl();
     }
 
-    /// @brief Is the stream displayed on a tty or console window.
-    /// @return True if displayed, false if not.
+    /// @brief Returns whether or not the stream is on a terminal.
     virtual bool isDisplayed() const {
         return false;
     }
 
-    /// @brief Whether the stream supports colors or not.
-    /// @return True if supports, false if not.
+    /// @brief Returns whether or not the stream supports colors.
     virtual bool hasColors() const {
-        return isDisplayed();
+        return global_color_override == ColorOverride::ALWAYS;
     }
 
-    /// @brief Writes N amount of spaces to the stream.
-    /// @param space Amount of spaces to write.
-    /// @return *this
+    /// @brief Writes the specified amount of spaces.
+    /// @param space How many spaces should be written.
     ///
-    /// Uses a temporary space buffer, can write up to 16 spaces per iteration.
-    raw_stream& indent(unsigned space);
+    /// Internally uses a decently sized space buffer so that each write is many
+    /// spaces at once instead of one, so prefer this over writing spaces one by
+    /// one.
+    stream& indent(unsigned space);
 
-    /// @brief Writes 'null' to the stream.
-    /// @return *this
-    raw_stream& operator<<(std::nullptr_t) {
+    /// @brief Writes "null" to the stream.
+    stream& operator<<(std::nullptr_t) {
         return write("null", 4);
     }
 
     /// @brief Writes a character to the stream.
-    /// @param c Character.
-    /// @return *this
-    raw_stream& operator<<(char c) {
+    stream& operator<<(char c) {
         return write(&c, 1);
     }
 
-    /// @brief Writes an unsigned character to the stream.
-    /// @param c Character.
-    /// @return *this
-    raw_stream& operator<<(unsigned char c) {
-        return *this << char(c);
+    /// @brief Writes a signed character to the stream.
+    stream& operator<<(signed char c) {
+        return write((cbuff_t)&c, 1);
     }
 
-    /// @brief Writes a signed character to the stream.
-    /// @param c Character.
-    /// @return *this
-    raw_stream& operator<<(signed char c) {
-        return *this << char(c);
+    /// @brief Writes an unsigned character to the stream.
+    stream& operator<<(unsigned char c) {
+        return write((cbuff_t)&c, 1);
     }
 
     /// @brief Writes a boolean to the stream.
-    /// @param c Boolean value.
-    /// @return *this
-    raw_stream& operator<<(bool b) {
-        return write(b ? "true" : "false", b ? 4 : 5);
+    stream& operator<<(bool b) {
+        return write((b ? "true" : "false"), (b ? 4 : 5));
+    }
+
+    stream& operator<<(const void* ptr) {
+        uintptr_t ptrVal = uintptr_t(ptr);
+        buffchar_t buff[(sizeof(void*) * 2) + 6] = {'0', 'x'};
+        auto result = std::to_chars(buff + 2, buff + sizeof(buff), ptrVal, 16);
+
+        if(result.ec == std::errc()) {
+            write(buff, result.ptr - buff);
+        }
+
+        return *this;
     }
 
     /// @brief Writes either an integral or a floating point value to the
     /// stream.
-    /// @param n The value to write.
-    /// @return *this
     template<typename T>
     requires std::integral<T> || std::floating_point<T>
-    raw_stream& operator<<(T n) {
-        char buff[(std::is_floating_point_v<T>
-                       ? std::numeric_limits<T>::max_digits10
-                       : std::numeric_limits<T>::digits10) +
-                  0x20];
+    stream& operator<<(T n) {
+        buffchar_t buff[(std::is_floating_point_v<T>
+                             ? std::numeric_limits<T>::max_digits10
+                             : std::numeric_limits<T>::digits10) +
+                        0x20];
 
         auto result = std::to_chars(buff, buff + sizeof(buff), n);
         if(result.ec == std::errc()) {
@@ -178,230 +199,99 @@ public:
         return *this;
     }
 
-    /// @brief Writes a pointer's address to the stream.
-    /// @param ptr Address to write.
-    /// @return *this
-    raw_stream& operator<<(const void* ptr) {
-        char buff[(sizeof(void*) * 2) + 8];
-
-        auto result =
-            std::to_chars(buff, buff + sizeof(buff), (uintptr_t)ptr, 16);
-        if(result.ec == std::errc()) {
-            write(buff, result.ptr - buff);
-        }
-
-        return *this;
+    /// @brief Writes a null terminated string to the stream.
+    stream& operator<<(const char* cstr) {
+        return write(cstr, std::strlen(cstr));
     }
 
-    /// @brief Writes a C-string to the stream.
-    /// @param cstr String.
-    /// @return *this
-    raw_stream& operator<<(const char* cstr) {
-        return write(cstr, strlen(cstr));
-    }
-
-    /// @brief Writes an std::string to the stream.
-    /// @param str String.
-    /// @return *this
-    raw_stream& operator<<(const std::string& str) {
+    /// @brief Writes a string to the stream.
+    stream& operator<<(const std::string& str) {
         return write(str.data(), str.size());
     }
 
-    /// @brief Writes an std::string_view to the stream.
-    /// @param str String.
-    /// @return *this
-    raw_stream& operator<<(std::string_view str) {
-        return write(str.data(), str.size());
+    /// @brief Writes a string view to the stream.
+    stream& operator<<(std::string_view sv) {
+        return write(sv.data(), sv.size());
     }
 
-    /// @brief Default destructor.
-    virtual ~raw_stream() noexcept = default;
+    /// @brief Does not flush or free the buffer because it may cause a pure
+    /// virtual call.
+    virtual ~stream() = default;
 
-    /// @brief Resets the colors to the terminal's default.
-    /// @return *this
-    raw_stream& resetColor() {
+    /// @brief Resets colors to the default ones.
+    stream& resetColor() {
         if(hasColors()) {
             write("\033[0m", 4);
-            reversedColor = false;
+            reversedColor_ = false;
         }
         return *this;
     }
 
-    /// @brief Reverses the colors of the FG and BG.
-    /// @return *this
-    raw_stream& reverseColor() {
+    /// @brief Reverses the colors of the background and foreground.
+    stream& reverseColor() {
         if(hasColors()) {
-            if(reversedColor) {
-                *this << "\033[27m";
+            if(reversedColor_) {
+                write("\033[27m", 5);
             }
-            else *this << "\033[7m";
-            reversedColor = !reversedColor;
+            else write("\033[7m", 4);
+            reversedColor_ = !reversedColor_;
         }
         return *this;
     }
 
-    /// @brief Change the stream's colors.
-    /// @param color Color to change to.
-    /// @param bold Should the text be bold.
-    /// @param bg Set the background, if false sets the text (foreground).
-    /// @return *this
-    raw_stream& changeColor(Colors color, bool bold = false, bool bg = false) {
+    /// @brief Changes color (maybe boldness too) of the stream.
+    stream& changeColor(col color, bool bold = false, bool bg = false) {
         if(hasColors()) {
             int code = int(color);
-            if(bg) {
-                code += 10;
+            if(bg) code += 10;
+
+            write("\033[", 2);
+            if(bold) {
+                write("1;", 2);
             }
 
-            *this << "\033[";
-
-            if(bold) *this << "1;";
-
-            *this << code << "m";
+            *this << code << 'm';
         }
         return *this;
     }
 
-    /// @brief Resets or sets boldness.
-    /// @param b True to enable, false to disable.
-    /// @return *this
-    raw_stream& setBold(bool b = true) {
+    /// @brief Sets the boldness of the stream.
+    stream& setBold(bool bold = true) {
         if(hasColors()) {
-            *this << (b ? "\033[1m" : "\033[22m");
+            if(bold) {
+                write("\033[1m", 4);
+            }
+            else {
+                write("\033[22m", 5);
+            }
         }
         return *this;
     }
 
     /// @brief Resets foreground color.
-    raw_stream& removeFColor() {
-        if(hasColors()) {
-            *this << "\033[39m";
-        }
+    stream& removeFColor() {
+        if(hasColors()) write("\033[39m", 5);
         return *this;
     }
 
     /// @brief Resets background color.
-    raw_stream& removeBColor() {
-        if(hasColors()) {
-            *this << "\033[49m";
-        }
+    stream& removeBColor() {
+        if(hasColors()) write("\033[49m", 5);
         return *this;
     }
 
-    /// @brief Call stream manipulator on this stream.
-    /// @param sm Stream manipulator.
-    /// @return *this
-    raw_stream& operator<<(stream_manipulator sm) {
-        return sm(*this);
+    /// @brief Operator overload for `changeColor(...)`.
+    stream& operator<<(col color) {
+        return changeColor(color);
     }
 };
 
-/// @brief Output stream to a file.
-class stream : public raw_stream {
-protected:
-    /// @brief Stream's file descriptor.
-    int fd_;
-    /// @brief Should the stream close the file descriptor.
-    bool close_;
-    /// @brief Is the stream displayed on a console or a tty window.
-    bool displayed_;
-    /// @brief Does the stream support colors.
-    bool colors_;
-    /// @brief Overriden write implementation to write to the fd.
-    void writeImpl(const char* ptr, size_t size) override;
-
-public:
-    /// @brief Default stream constructor.
-    /// @param fd File descriptor to use.
-    /// @param shouldClose Should the stream close the file descriptor.
-    /// @param bufferSize Size of the buffer the stream will use.
-    stream(int fd, bool shouldClose,
-           size_t bufferSize = raw_stream::DEFAULT_BUFFER_SIZE);
-
-    bool isDisplayed() const override {
-        return displayed_;
-    }
-
-    bool hasColors() const override {
-        if(global_color_override == ColorOverride::NEVER) return false;
-        else if(global_color_override == ColorOverride::ALWAYS) return true;
-        return colors_;
-    }
-
-    auto getHandle() const noexcept {
-        return fd_;
-    }
-
-    ~stream() noexcept override;
-};
-
-/// @brief Accesses the stream that is linked to stderr.
-/// @return Stderr's stream.
-extern raw_stream& errs();
-/// @brief Accesses the stream that is linked to stdout.
-/// @return Stdout's stream.
-extern raw_stream& outs();
-/// @brief Accesses the stream that is linked to stderr.
-/// @return Stderr's stream.
-/// @note The main difference of this and errs() is that this is buffered.
-extern raw_stream& logs();
-
-/// @brief A stream class into an stdio FILE stream.
-class standard_file_stream : public raw_stream {
-    /// @brief Stream's file handle.
-    FILE* file_;
-    /// @brief Should the stream call fclose().
-    bool close_;
-    /// @brief Overriden write implementation to write to the FILE.
-    void writeImpl(const char* ptr, size_t size) override {
-        if(file_) std::fwrite(ptr, 1, size, file_);
-    }
-
-    void flushImpl() override {
-        if(file_) std::fflush(file_);
-    }
-
-public:
-    /// @brief The basic constructor for this stream class.
-    /// @param f Stdio file stream.
-    /// @param shouldClose Should this stream take ownership of the file.
-    /// @param bufferSize Size of the buffer, 0 to disable.
-    ///
-    /// Putting the buffer size to 0 does not disable the FILE's buffer.
-    standard_file_stream(FILE* f, bool shouldClose,
-                         size_t bufferSize = DEFAULT_BUFFER_SIZE) noexcept :
-        raw_stream(bufferSize), file_(f), close_(shouldClose) {}
-
-    ~standard_file_stream() noexcept override {
-        setUnbuffered();
-        if(close_ && file_) std::fclose(file_);
-    }
-};
-
-/// @brief Provides a raw_stream interface for std::string.
-class string_stream : public raw_stream {
-    std::string str_;
-
-    void writeImpl(const char* ptr, size_t size) override {
-        str_ += std::string_view(ptr, size);
-    }
-
-public:
-    /// @brief Default constructor.
-    string_stream() noexcept : raw_stream(0) {}
-
-    /// @brief Uses the provided string.
-    /// @param str String to use.
-    string_stream(std::string str) noexcept : str_(std::move(str)) {}
-
-    /// @brief Returns the string and empties the one in the class.
-    std::string str() const noexcept {
-        return std::move(str_);
-    }
-
-    ~string_stream() noexcept override {
-        setUnbuffered();
-    }
-};
+/// @brief Buffered stdout stream.
+extern stream& out();
+/// @brief Unbuffered stderr stream.
+extern stream& err();
+/// @brief Buffered stderr stream.
+extern stream& log();
 
 } // namespace inr
 

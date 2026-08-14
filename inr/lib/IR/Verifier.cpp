@@ -1,322 +1,387 @@
 // Copyright (c) 2026 Inertia Project
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
-
-#include <inr/IR/Argument.h>
-#include <inr/IR/Block.h>
-#include <inr/IR/Function.h>
-#include <inr/IR/Instruction.h>
-#include <inr/IR/Module.h>
+#include <inr/IR/ArgDef.h>
+#include <inr/IR/BlockDef.h>
+#include <inr/IR/FuncDef.h>
+#include <inr/IR/InstDef.h>
 #include <inr/IR/Type.h>
 #include <inr/IR/Verifier.h>
-#include <inr/Support/Logger.h>
-
-#include <unordered_set>
+#include <inr/Support/Stream.h>
 
 namespace inr {
 
-class ModuleVerifier {
-    static void moduleVerify(ModuleErrors& errs, const Module* module);
-    static void functionVerify(ModuleErrors& errs, const Function& func,
-                               std::unordered_set<sview>& seen);
-    static void blockVerify(ModuleErrors& errs, const Function& func,
-                            const Block& block,
-                            std::unordered_set<sview>& seen);
-    static void instructionVerify(ModuleErrors& errs, const Function& func,
-                                  const Instruction& inst);
-
-public:
-    static ModuleErrors verify(const Module* module);
-};
-
-ModuleErrors verifyModule(const Module* module) {
-    return ModuleVerifier::verify(module);
-}
-
-ModuleErrors ModuleVerifier::verify(const Module* module) {
-    ModuleErrors errs;
-
-    moduleVerify(errs, module);
-
-    return errs;
-}
-
-void ModuleVerifier::moduleVerify(ModuleErrors& errs, const Module* module) {
-    std::unordered_set<sview> seen;
-
-    for(const Function& func : module->getFunctions()) {
-        functionVerify(errs, func, seen);
+template<typename... Args>
+static inline void printError(inr::stream* os, Args&&... args) {
+    if(os) {
+        (((*os) << "verifier: ").changeColor(col::RED, true) << "error: ")
+            .resetColor();
+        (((*os) << args), ...);
+        (*os) << '\n';
     }
 }
 
-void ModuleVerifier::functionVerify(ModuleErrors& errs, const Function& func,
-                                    std::unordered_set<sview>& seen) {
-    if(seen.contains(func.getName()))
-        errs.addError(
-            new FunctionError(&func, FunctionError::SubKind::Redefinition));
-    else seen.emplace(func.getName());
+static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
+                                     inr::stream* os) {
+    bool err = false;
 
-    // Return type always matches.
-    const FunctionType* signature = func.getType();
-
-    if(signature->getArgs().size() != func.getArgs().size()) {
-        errs.addError(new FunctionError(
-            &func, FunctionError::SubKind::MismatchedSignature));
-    }
-    else {
-        for(size_t i = 0; i < func.getArgs().size(); i++) {
-            if(signature->getArgs()[i] != func.getArgs()[i].getType()) {
-                errs.addError(new FunctionError(
-                    &func, FunctionError::SubKind::MismatchedSignature));
-                break;
+    switch(inst.getInstType()) {
+        case InstDef::Ret: {
+            const RetInst& ret = (const RetInst&)inst;
+            if(fn.getType()->isFunction() &&
+               ((const FuncType*)fn.getType())->getReturn() != ret.getType()) {
+                printError(os, "return type mismatch");
+                err = true;
             }
-        }
-    }
-
-    if(func.getBlocks().front() == nullptr) {
-        errs.addError(
-            new FunctionError(&func, FunctionError::SubKind::NoEntryBlock));
-    }
-
-    std::unordered_set<sview> seenBlock;
-    for(const Block& block : func.getBlocks()) {
-        blockVerify(errs, func, block, seenBlock);
-    }
-}
-
-void ModuleVerifier::blockVerify(ModuleErrors& errs, const Function& func,
-                                 const Block& block,
-                                 std::unordered_set<sview>& seen) {
-    if(seen.contains(block.getName()))
-        errs.addError(
-            new BlockError(&block, BlockError::SubKind::Redefinition));
-    else seen.emplace(block.getName());
-
-    const Instruction* termInst = nullptr;
-    bool errMultiTermSent = false;
-    bool errNotLastSent = false;
-
-    for(const Instruction& inst : block.getInstructions()) {
-        if(termInst && !errNotLastSent) {
-            errs.addError(new BlockError(
-                &block, BlockError::SubKind::TerminatorIsntLast));
-            errNotLastSent = true;
-        }
-        if(inst.isTerminator()) {
-            if(!termInst) {
-                termInst = &inst;
+            if(!ret.isRetVoid()) {
+                if(ret.getUses().empty()) {
+                    printError(os, "return returns a value but has no value");
+                    err = true;
+                }
+                else {
+                    if(ret.getRetVal()->getType() != ret.getType()) {
+                        printError(os,
+                                   "return value and return instruction have "
+                                   "different types");
+                        err = true;
+                    }
+                }
+            }
+            switch(ret.getType()->getID()) {
+                case Type::Integer:
+                case Type::Pointer:
+                case Type::Void:
+                case Type::Float:
+                    break;
+                case Type::Function:
+                case Type::Block:
+                    printError(os,
+                               "return tries to return a non returnable type");
+                    err = true;
+                    break;
+            }
+        } break;
+        case InstDef::Jmp: {
+            const JmpInst& jinst = (const JmpInst&)inst;
+            if(jinst.getUses().size() == 1) {
+                if(!jinst.getNonCondBlock()->getType()->isBlock()) {
+                    printError(os,
+                               "jmp (non conditional) must jump to a block");
+                    err = true;
+                }
+            }
+            else if(jinst.getUses().size() == 3) {
+                if(!jinst.getCondition()->getType()->isInteger()) {
+                    printError(
+                        os,
+                        "jmp (conditional) condition must be an integer (i1)");
+                    err = true;
+                }
+                else {
+                    if(((const IntType*)jinst.getCondition()->getType())
+                           ->getWidth() != 1) {
+                        printError(os,
+                                   "jmp (conditional) condition must be i1");
+                        err = true;
+                    }
+                }
+                if(!jinst.getIfTrue()->getType()->isBlock()) {
+                    printError(
+                        os, "jmp (conditional) iftrue operand must be a block");
+                    err = true;
+                }
+                if(!jinst.getIfFalse()->getType()->isBlock()) {
+                    printError(
+                        os,
+                        "jmp (conditional) iffalse operand must be a block");
+                    err = true;
+                }
             }
             else {
-                if(!errMultiTermSent) {
-                    errs.addError(new BlockError(
-                        &block, BlockError::SubKind::MultipleTerminators));
-                    errMultiTermSent = true;
+                printError(os, "jmp can only have 1 or 3 operands");
+                err = true;
+            }
+        } break;
+        case InstDef::Unreachable:
+            break;
+        case InstDef::Phi: {
+            const PhiInst& phi = (const PhiInst&)inst;
+            if(phi.getBlocks().size() != phi.getUses().size()) {
+                printError(
+                    os, "phi operands (values) and blocks must match in count");
+                err = true;
+            }
+            else {
+                for(unsigned i = 0; i < phi.getIncomingCount(); i++) {
+                    auto inc = phi.getIncoming(i);
+                    switch(inc.first->getType()->getID()) {
+                        case Type::Integer:
+                        case Type::Pointer:
+                        case Type::Float:
+                            break;
+                        case Type::Void:
+                        case Type::Block:
+                        case Type::Function:
+                            printError(os, "phi can only accept value types");
+                            err = true;
+                            break;
+                    }
+                    if(!inc.second->getType()->isBlock()) {
+                        printError(os,
+                                   "phi incoming block is not a block type");
+                        err = true;
+                    }
+                }
+            }
+        } break;
+        case InstDef::Cmp:
+        case InstDef::Add:
+        case InstDef::Sub:
+        case InstDef::Mul:
+        case InstDef::UDiv:
+        case InstDef::SDiv:
+        case InstDef::URem:
+        case InstDef::SRem:
+        case InstDef::Shl:
+        case InstDef::LShr:
+        case InstDef::AShr:
+        case InstDef::And:
+        case InstDef::Or:
+        case InstDef::Xor: {
+            const BinaryInst& binst = (const BinaryInst&)inst;
+            if(binst.getUses().size() != 2) {
+                printError(os, "binary instruction doesn't have 2 operands");
+                err = true;
+            }
+            else {
+                if(binst.getLhs()->getType() != binst.getRhs()->getType()) {
+                    printError(
+                        os, "binary instruction lhs type does not match rhs");
+                    err = true;
+                }
+                else if(binst.getInstType() != InstDef::Cmp &&
+                        binst.getType() != binst.getLhs()->getType()) {
+                    printError(
+                        os,
+                        "binary instruction type does not match operand type");
+                    err = true;
+                }
+            }
+            switch(binst.getType()->getID()) {
+                case Type::Integer:
+                    if(binst.getInstType() == InstDef::Cmp &&
+                       ((const IntType*)binst.getType())->getWidth() != 1) {
+                        printError(os,
+                                   "comparison instruction's width is not i1");
+                        err = true;
+                    }
+                    break;
+                case Type::Pointer:
+                case Type::Void:
+                case Type::Float:
+                case Type::Function:
+                case Type::Block:
+                    printError(os, "binary instruction has an invalid type");
+                    err = true;
+                    break;
+            }
+        } break;
+        case InstDef::Load: {
+            const LoadInst& linst = (const LoadInst&)inst;
+            if(linst.getUses().size() != 1) {
+                printError(os, "load instruction should only have 1 operand");
+                err = true;
+            }
+            else {
+                if(!linst.getFrom()->getType()->isPointer()) {
+                    printError(os,
+                               "load instruction should load from a pointer");
+                    err = true;
+                }
+            }
+            switch(linst.getType()->getID()) {
+                case Type::Integer:
+                case Type::Pointer:
+                case Type::Float:
+                    break;
+                case Type::Void:
+                case Type::Block:
+                case Type::Function:
+                    printError(os, "load instruction can only load values");
+                    err = true;
+                    break;
+            }
+        } break;
+        case InstDef::Store: {
+            const StoreInst& sinst = (const StoreInst&)inst;
+            if(sinst.getUses().size() != 2) {
+                printError(os, "store should have 2 operands");
+                err = true;
+            }
+            else {
+                if(!sinst.getTo()->getType()->isPointer()) {
+                    printError(os, "store's destination should be a pointer");
+                    err = true;
+                }
+                switch(sinst.getFrom()->getType()->getID()) {
+                    case Type::Integer:
+                    case Type::Pointer:
+                    case Type::Float:
+                        break;
+                    case Type::Void:
+                    case Type::Block:
+                    case Type::Function:
+                        printError(os, "store can only store values");
+                        err = true;
+                        break;
+                }
+            }
+        } break;
+        case InstDef::Alloca: {
+            const AllocaInst& ainst = (const AllocaInst&)inst;
+            if(ainst.getUses().size() != 1) {
+                printError(os, "alloca should only have 1 operand");
+                err = true;
+            }
+            else {
+                if(!ainst.getCount()->getType()->isInteger()) {
+                    printError(os,
+                               "alloca's count operand should be an integer");
+                    err = true;
+                }
+                switch(ainst.getAllocaType()->getID()) {
+                    case Type::Integer:
+                    case Type::Pointer:
+                    case Type::Float:
+                        break;
+                    case Type::Void:
+                    case Type::Block:
+                    case Type::Function:
+                        printError(os, "alloca can only allocate values");
+                        err = true;
+                        break;
+                }
+            }
+        } break;
+    }
+
+    return !err;
+}
+
+static inline bool verifyBlock(const FuncDef& fn, const BlockDef& blk,
+                               inr::stream* os) {
+    bool err = false;
+
+    if(!blk.getType()->isBlock()) {
+        printError(os, "block does not have a block type");
+        err = true;
+    }
+
+    bool terminated = false;
+
+    for(const InstDef& inst : blk.getInstructions()) {
+        if(!verifyInstruction(fn, inst, os)) err = true;
+        if(inst.isTerminator()) {
+            terminated = true;
+            if(&inst != blk.getInstructions().listTail()) {
+                printError(os, "block terminator is not the last instruction");
+                err = true;
+            }
+        }
+    }
+
+    if(!terminated) {
+        printError(os, "block is not terminated");
+        err = true;
+    }
+
+    return !err;
+}
+
+static inline bool verifyFunction(const FuncDef& fn, inr::stream* os) {
+    bool err = false;
+    std::string_view fName = fn.getName();
+
+    if(fName.empty()) {
+        printError(os, "function name is empty");
+        err = true;
+        fName = "unnamed";
+    }
+
+    const Type* t = fn.getType();
+    if(!t->isFunction()) {
+        printError(os, "function ", fName, "'s type is not a function type");
+        err = true;
+    }
+    else {
+        const FuncType* ft = (const FuncType*)t;
+        switch(ft->getReturn()->getID()) {
+            case Type::Integer:
+            case Type::Pointer:
+            case Type::Void:
+            case Type::Float:
+                break;
+            case Type::Function:
+                printError(os, "function ", fName,
+                           "'s return type is a function type");
+                err = true;
+                break;
+            case Type::Block:
+                printError(os, "function ", fName,
+                           "'s return type is a block type");
+                err = true;
+                break;
+        }
+        if(ft->getNumArgs() != fn.getNumArgs()) {
+            printError(os, "function ", fName,
+                       "'s type arg count doesn't match function arg count");
+            err = true;
+        }
+        else {
+            for(unsigned i = 0; i < ft->getNumArgs(); i++) {
+                const ArgDef* ad = fn.getArg(i);
+                const Type* at = ft->getArg(i);
+                switch(at->getID()) {
+                    case Type::Integer:
+                    case Type::Pointer:
+                    case Type::Void:
+                    case Type::Float:
+                        break;
+                    case Type::Function:
+                        printError(os, "function ", fName, "'s arg ", i,
+                                   " is a function type");
+                        err = true;
+                        break;
+                    case Type::Block:
+                        printError(os, "function ", fName, "'s arg ", i,
+                                   " is a block type");
+                        err = true;
+                        break;
+                }
+                if(ad->getType() != at) {
+                    printError(os, "function ", fName, "'s arg ", i,
+                               " type does not match the type arg");
+                    err = true;
                 }
             }
         }
-        instructionVerify(errs, func, inst);
     }
 
-    if(!termInst) {
-        errs.addError(
-            new BlockError(&block, BlockError::SubKind::NoTerminator));
+    for(const BlockDef& blk : fn.getBlocks()) {
+        if(!verifyBlock(fn, blk, os)) err = true;
     }
+
+    return !err;
 }
 
-static inline InstructionError* checkOperands(const Instruction& inst,
-                                              const Type* expect) {
-    for(const Value* val : inst.getOperands()) {
-        if(val->getType() != expect)
-            return new InstructionError(
-                &inst, InstructionError::SubKind::OperandTypeMismatch);
-    }
-    return nullptr;
-}
+bool Verifier::verify(const TUnit& unit, inr::stream* os) {
+    bool err = false;
 
-static inline InstructionError* returnVerify(const Function& func,
-                                             const ReturnInst& ret) {
-    const Type* type = ret.getType();
-
-    if(func.getType()->getReturn() != type) {
-        return new InstructionError(
-            &ret, InstructionError::SubKind::ReturnTypeMismatch);
+    for(const FuncDef& fn : unit.getFuncs()) {
+        if(!verifyFunction(fn, os)) err = true;
     }
 
-    if(type->isVoid()) {
-        if(ret.getNumOperands())
-            return new InstructionError(
-                &ret, InstructionError::SubKind::TooManyOperands);
-    }
-    else {
-        unsigned numOp = ret.getNumOperands();
-        if(numOp > 1) {
-            return new InstructionError(
-                &ret, InstructionError::SubKind::TooManyOperands);
-        }
-        else if(numOp == 0) {
-            return new InstructionError(
-                &ret, InstructionError::SubKind::ReturnNoOperand);
-        }
-    }
-
-    return checkOperands(ret, type);
-}
-
-static inline InstructionError* binaryInstVerify(const BinaryInst& inst) {
-    if(inst.getNumOperands() > 2) {
-        return new InstructionError(&inst,
-                                    InstructionError::SubKind::TooManyOperands);
-    }
-    else if(inst.getNumOperands() < 2) {
-        return new InstructionError(
-            &inst, InstructionError::SubKind::TooLittleOperands);
-    }
-
-    const Type* type = inst.getType();
-
-    return checkOperands(inst, type);
-}
-
-static inline InstructionError* allocaInstVerify(const AllocaInst& inst) {
-    switch(inst.getTypeToAllocate()->getTypeID()) {
-        case Type::TypeID::Integer:
-        case Type::TypeID::Pointer:
-            break;
-        case Type::TypeID::Void:
-        case Type::TypeID::Function:
-        case Type::TypeID::Block:
-            return new InstructionError(
-                &inst, InstructionError::SubKind::TypeNotAllowed);
-    }
-
-    return nullptr;
-}
-
-static inline InstructionError* storeInstVerify(const StoreInst& inst) {
-    if(!inst.getOperand(0)->getType()->isPointer()) {
-        return new InstructionError(
-            &inst, InstructionError::SubKind::DestinationIsNotPointer);
-    }
-
-    return nullptr;
-}
-
-static inline InstructionError* loadInstVerify(const LoadInst& inst) {
-    if(!inst.getOperand(0)->getType()->isPointer()) {
-        return new InstructionError(
-            &inst, InstructionError::SubKind::SourceIsNotPointer);
-    }
-
-    return nullptr;
-}
-
-void ModuleVerifier::instructionVerify(ModuleErrors& errs, const Function& func,
-                                       const Instruction& inst) {
-    InstructionError* err = nullptr;
-    switch(inst.getID()) {
-        case Instruction::InstructionID::RETURN:
-            err = returnVerify(func, (const ReturnInst&)inst);
-            break;
-        case Instruction::InstructionID::ADD:
-            if(!inst.getType()->isInteger()) {
-                new InstructionError(&inst,
-                                     InstructionError::SubKind::TypeNotAllowed);
-                return;
-            }
-            err = binaryInstVerify((const BinaryInst&)inst);
-            break;
-        case Instruction::InstructionID::ALLOCA:
-            err = allocaInstVerify((const AllocaInst&)inst);
-            break;
-        case Instruction::InstructionID::LOAD:
-            err = loadInstVerify((const LoadInst&)inst);
-            break;
-        case Instruction::InstructionID::STORE:
-            err = storeInstVerify((const StoreInst&)inst);
-            break;
-    }
-    if(err) errs.addError(err);
-}
-
-/// @brief A helper function for errors.
-template<typename... Args>
-static inline void vError(raw_stream& os, Args&&... args) {
-    log::sendargs(os, log::Level::ERROR, "inr-module-verifier",
-                  std::forward<Args>(args)...);
-}
-
-void FunctionError::strerr(raw_stream& os) const {
-    sview funcName = getFunction()->getName();
-    switch(getSubKind()) {
-        case SubKind::Redefinition:
-            vError(os, "function ", funcName, " is already defined elsewhere");
-            break;
-        case SubKind::MismatchedSignature:
-            vError(os, "function ", funcName, " has a mismatched signature");
-            break;
-        case SubKind::NoEntryBlock:
-            vError(os, "function ", funcName, " has no blocks");
-            break;
-    }
-}
-
-void BlockError::strerr(raw_stream& os) const {
-    sview blockName = getBlock()->getName();
-    switch(getSubKind()) {
-        case SubKind::Redefinition:
-            vError(os, "block ", blockName, " is already defined elsewhere");
-            break;
-        case SubKind::NoTerminator:
-            vError(os, "block ", blockName, " has no terminator");
-            break;
-        case SubKind::TerminatorIsntLast:
-            vError(os, "block ", blockName,
-                   " has its terminator as not the last instruction");
-            break;
-        case SubKind::MultipleTerminators:
-            vError(os, "block ", blockName, " has more than one terminator");
-            break;
-    }
-}
-
-void InstructionError::strerr(raw_stream& os) const {
-    sview instName =
-        Instruction::getInstructionIDStr(getInstruction()->getID());
-    switch(getSubKind()) {
-        case SubKind::ReturnTypeMismatch:
-            vError(os, instName, " has type '", *getInstruction()->getType(),
-                   "' but the expected type was '",
-                   *getInstruction()
-                        ->getParent()
-                        ->getParent()
-                        ->getType()
-                        ->getReturn(),
-                   '\'');
-            break;
-        case SubKind::ReturnNoOperand:
-            vError(os, instName, " has type '", *getInstruction()->getType(),
-                   "' but has no return value");
-            break;
-        case SubKind::OperandTypeMismatch:
-            vError(os, instName, " has operands with different types");
-            break;
-        case SubKind::TooManyOperands:
-            vError(os, instName, " has too many operands");
-            break;
-        case SubKind::TooLittleOperands:
-            vError(os, instName, " has too little operands");
-            break;
-        case SubKind::TypeNotAllowed:
-            vError(os, instName,
-                   " contains a disallowed type for that instruction");
-            break;
-        case SubKind::DestinationIsNotPointer:
-            vError(os, instName, "'s destination is not a pointer type");
-            break;
-        case SubKind::SourceIsNotPointer:
-            vError(os, instName, "'s source is not a pointer type");
-            break;
-    }
+    return !err;
 }
 
 } // namespace inr

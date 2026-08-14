@@ -1,45 +1,54 @@
+# This CMakeLists.txt file is responsible for building the Inertia libraries.
 
-# Core library
-file(GLOB SupportSources "Support/*.cpp")
+# C++20 without GNU extensions.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_inertia_library(Core ${SupportSources})
+if(INERTIA_MONOLITHIC)
+    if(INERTIA_SHARED)
+        add_library(Inr SHARED)
+    else()
+        add_library(Inr)
+    endif()
 
-target_compile_definitions(InrCore PRIVATE
-    INERTIA_VERSION_MAJOR=${INERTIA_VERSION_MAJOR}
-    INERTIA_VERSION_MINOR=${INERTIA_VERSION_MINOR}
-    INERTIA_VERSION_PATCH=${INERTIA_VERSION_PATCH}
-)
+    target_include_directories(Inr PUBLIC ${INERTIA_INCLUDE_DIRS})
 
-# IR Library
-file(GLOB IRSources "IR/*.cpp")
+    if(MSVC)
+        target_compile_options(Inr PRIVATE /W4)
+    else()
+        target_compile_options(Inr PRIVATE -Wall -Wextra)
+    endif()
 
-add_inertia_library(IR ${IRSources})
+    macro(inr_add_library TARGET_NAME)
+        target_sources(Inr PRIVATE "${ARGN}")
+    endmacro()
+else()
+    # A function that creates a new libraries and includes directories, 
+    # sets the standard, and also handles shared vs static libs.
+    function(inr_add_library TARGET_NAME)
 
-# Should x86 be included in the build
-option(BUILD_X86 "Should it include x86" YES)
+        if(INERTIA_SHARED)
+            add_library(${TARGET_NAME} SHARED ${ARGN})
+        else()
+            add_library(${TARGET_NAME} ${ARGN})
+        endif()
 
-# Target Library
-file(GLOB_RECURSE TargetSources "Target/*.cpp")
+        target_include_directories(${TARGET_NAME} PUBLIC ${INERTIA_INCLUDE_DIRS})
 
-add_inertia_library(Target ${TargetSources})
+        if(MSVC)
+            target_compile_options(${TARGET_NAME} PRIVATE /W4)
+        else()
+            target_compile_options(${TARGET_NAME} PRIVATE -Wall -Wextra)
+        endif()
 
-if(BUILD_X86)
-    target_compile_definitions(InrTarget PRIVATE
-        INERTIA_INCLUDE_X86
-    )
+    endfunction()
 endif()
 
-# Option Library
-file(GLOB OptionSources "Option/*.cpp")
+set(INERTIA_LIB_FILES ${CMAKE_CURRENT_SOURCE_DIR})
 
-add_inertia_library(Option ${OptionSources})
-
-# Gen Library
-file(GLOB GenSources "Gen/*.cpp")
-
-add_inertia_library(Gen ${GenSources})
-
-# TIR Library
-file(GLOB TIRSources "TIR/*.cpp")
-
-add_inertia_library(TIR ${TIRSources})
+add_subdirectory(Support)
+add_subdirectory(CLI)
+add_subdirectory(IR)
+add_subdirectory(Target)
+add_subdirectory(TIR)

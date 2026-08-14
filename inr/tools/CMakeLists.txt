@@ -1,12 +1,29 @@
+# Main CMakeLists.txt file for Inertia tools directory.
 
-function(add_inertia_cli_tool TOOL_NAME)
-    get_filename_component(FILE_NO_EXT ${TOOL_NAME} NAME_WE)
+# Tools should match Inertia's required C++ standard.
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-    add_executable(${FILE_NO_EXT} ${TOOL_NAME})
+function(inr_add_tool TOOL_NAME)
+    add_executable(${TOOL_NAME} ${ARGN})
 
-    target_include_directories(${FILE_NO_EXT} PRIVATE ${INERTIA_INCLUDE_DIRS})
+    target_include_directories(${TOOL_NAME} PUBLIC ${INERTIA_INCLUDE_DIRS})
 
-    target_link_libraries(${FILE_NO_EXT} PRIVATE ${INERTIA_LIBRARIES})
+    if(MSVC)
+        target_compile_options(${TOOL_NAME} PRIVATE /W4)
+    else()
+        target_compile_options(${TOOL_NAME} PRIVATE -Wall -Wextra)
+    endif()
+
 endfunction()
 
-add_inertia_cli_tool(inr-gen.cpp)
+# Random IR generation tool.
+if(INERTIA_TOOL_RANDIR)
+    add_subdirectory(inr-randir)
+endif()
+
+# ISA lang.
+if(INERTIA_TOOL_ISA)
+    add_subdirectory(inr-isa)
+endif()

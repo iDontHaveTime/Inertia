@@ -2,18 +2,40 @@
 
 ## What is Inertia?
 
-The Inertia Project is a compiler-related project that as of now contains two subprojects:
- - `Inertia`
- - `inrcc`
+In this section you'll read about Inertia and what it is.
 
-`Inertia` is the "main" purpose of this project, thus the name. It's a collection of libraries that form a backend compiler, as of now `Inertia` supports AOT compilation.
+### Compiler or Compiler backend?
+Inertia can refer to two things, one being the infrastructure/backend which is in the `inr` folder.
+The other one can refer to this project as a whole.
 
-`inrcc` on the other hand is a C frontend targeting `Inertia`.
+As for the question itself, depends, like `inrcc` is a full compiler from source to machine.
+But Inertia as in the infrastructure, is a collection of libraries which in fact do lower IR to machine code but it also contains libraries independent of lowering, so Inertia can be used outside of compiler context.
 
-## Contributing
+### inr
+As mentioned above this is the infrastructure/backend, the reason for the slash is that it is both.
+So whether you want to use this as a backend for your compiler or just a general support library, feel free to do it.
 
-Since Inertia is open source, contributions are welcome. For guidelines and details, check out the [CONTRIBUTING](CONTRIBUTING.md) file.
+### inrcc
+Now this is a full compiler, this is meant to be a C/C++ compiler that uses Inertia as its backend.
+It is completely optional, Inertia has zero dependency on `inrcc`.
 
-## License
+---
 
-This project is licensed under the [**Boost Software License (BSL-1.0)**](LICENSE).
+## Working with Inertia
+
+### Using Inertia
+Feel at home using Inertia whether it's `inr` or `inrcc` or anything else, you can use it in your projects, experiments, or anything else you want.
+
+All Inertia components are modular and are made with libraries, so you can fork Inertia and modify it however you want.
+
+### Contributing
+If you are willing to spend your time helping Inertia to go forward, you can read this [CONTRIBUTING](CONTRIBUTING.md) file.
+
+---
+
+## Extra
+
+Some extra info for you to know.
+
+### License
+Inertia uses the Boost Software License 1.0.

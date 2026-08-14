@@ -6,165 +6,170 @@
 #define INERTIA_IR_TYPE_H
 
 /// @file IR/Type.h
-/// @brief Contains the type class.
+/// @brief Represents a Def type.
 
-#include <inr/Support/Align.h>
-#include <inr/Target/Triple.h>
+#include <inr/ADT/ArrView.h>
+#include <inr/Math/FPFormat.h>
 
-#include <cstdint>
-#include <initializer_list>
-#include <string>
 #include <vector>
 
 namespace inr {
 
-/// @brief The base class for all types.
+/// @brief Base class for all IR types.
 class Type {
 public:
-    enum class TypeID : uint8_t { Void, Integer, Pointer, Function, Block };
+    enum TypeID : unsigned {
+        Integer, // Integer MUST be first.
+        Pointer,
+        Void,
+        Block,
+        Float,
+        Function, // Make sure function is last.
+    };
+
+private:
+    TypeID id_;
 
 protected:
-    TypeID typeID_;
-
-    Type(TypeID id) noexcept : typeID_(id) {}
+    constexpr Type(TypeID id) : id_(id) {}
 
 public:
-    Type(const Type&) = delete;
-    Type& operator=(const Type&) = delete;
+    friend class TypeMapInternal;
+
+    Type(const Type&) = default;
+    Type& operator=(const Type&) = default;
 
     Type(Type&&) noexcept = default;
     Type& operator=(Type&&) noexcept = default;
 
-    TypeID getTypeID() const noexcept {
-        return typeID_;
+    /// @brief Returns the type of the type.
+    TypeID getID() const {
+        return id_;
     }
 
-    bool isVoid() const noexcept {
-        return typeID_ == TypeID::Void;
+    /// @brief Returns true if this type is a pointer.
+    bool isPointer() const {
+        return id_ == Pointer;
     }
 
-    bool isInteger() const noexcept {
-        return typeID_ == TypeID::Integer;
+    /// @brief Returns true if this type is an integer.
+    bool isInteger() const {
+        return id_ == Integer;
     }
 
-    bool isPointer() const noexcept {
-        return typeID_ == TypeID::Pointer;
+    /// @brief Returns true if this type is void.
+    bool isVoid() const {
+        return id_ == Void;
     }
 
-    bool isFunction() const noexcept {
-        return typeID_ == TypeID::Function;
+    bool isFloat() const {
+        return id_ == Float;
     }
 
-    bool isBlock() const noexcept {
-        return typeID_ == TypeID::Block;
+    bool isFunction() const {
+        return id_ == Function;
     }
 
-    virtual ~Type() noexcept = default;
+    bool isBlock() const {
+        return id_ == Block;
+    }
 };
 
-class VoidType : public Type {
+/// @brief Represents the `void` type.
+class VoidType final : public Type {
+    constexpr VoidType() : Type(Void) {}
+
 public:
-    VoidType() noexcept : Type(TypeID::Void) {}
+    friend class TypeMapInternal;
 };
 
-class BlockType : public Type {
+/// @brief Represents the `ptr` type.
+class PtrType final : public Type {
+    constexpr PtrType() : Type(Pointer) {}
+
 public:
-    BlockType() noexcept : Type(TypeID::Block) {}
+    friend class TypeMapInternal;
 };
 
-class IntegerType : public Type {
-    /// @brief Width of the integer in bits.
+/// @brief Represents the `iX` type.
+class IntType final : public Type {
     unsigned width_;
 
-public:
-    IntegerType(unsigned width) noexcept :
-        Type(TypeID::Integer), width_(width) {}
+    constexpr IntType(unsigned width) : Type(Integer), width_(width) {}
 
-    unsigned getWidth() const noexcept {
+public:
+    friend class TypeMapInternal;
+
+    /// @brief Returns the bitwidth of this integer.
+    unsigned getWidth() const {
         return width_;
     }
+};
 
-    constexpr static Alignment getAlignment(unsigned width) noexcept {
-        return Alignment::fromBits(width);
+class BlockType final : public Type {
+    constexpr BlockType() : Type(Block) {}
+
+public:
+    friend class TypeMapInternal;
+};
+
+class FPType final : public Type {
+    FPFormat format_;
+
+    constexpr FPType(FPFormat fmt) : Type(Float), format_(fmt) {}
+
+public:
+    friend class TypeMapInternal;
+
+    /// @brief Returns the floating point format.
+    FPFormat getFormat() const {
+        return format_;
     }
 
-    static Alignment getAlignment(const IntegerType* intType) noexcept {
-        return getAlignment(intType->width_);
-    }
-
-    constexpr static unsigned getSize(unsigned width) noexcept {
-        return (width + 7) >> 3;
-    }
-
-    static unsigned getSize(const IntegerType* intType) noexcept {
-        return getSize(intType->width_);
+    unsigned getWidth() const {
+        switch(format_) {
+            case FPFormat::Binary16:
+                return 16;
+            case FPFormat::Binary32:
+                return 32;
+            case FPFormat::Binary64:
+                return 64;
+            case FPFormat::x87_80:
+                return 80;
+        }
     }
 };
 
-class FunctionType : public Type {
-    /// @brief Return type of the function.
-    const Type* return_;
-    /// @brief Types of the args of the function.
+class FuncType final : public Type {
+    const Type* ret_;
     std::vector<const Type*> args_;
+    bool vararg_;
+
+    FuncType(const Type* ret, arrview<const Type*> args, bool vararg) :
+        Type(Function),
+        ret_(ret),
+        args_(args.begin(), args.end()),
+        vararg_(vararg) {}
 
 public:
-    FunctionType(const Type* retType,
-                 std::initializer_list<const Type*> argTypes) :
-        Type(TypeID::Function), return_(retType), args_(argTypes) {}
-
-    const Type* getReturn() const noexcept {
-        return return_;
+    const Type* getReturn() const {
+        return ret_;
     }
 
-    const std::vector<const Type*>& getArgs() const noexcept {
-        return args_;
+    unsigned getNumArgs() const {
+        return args_.size();
     }
 
-    constexpr static Alignment getAlignment() noexcept {
-        return Alignment(16);
+    const Type* getArg(unsigned i) const {
+        return args_[i];
     }
+
+    bool isVararg() const {
+        return vararg_;
+    }
+
+    friend class TypeMapInternal;
 };
-
-class PointerType : public Type {
-public:
-    PointerType() noexcept : Type(TypeID::Pointer) {}
-
-    static Alignment getAlignment(Triple triple) noexcept {
-        return Alignment::fromBits(triple.getPointerWidth());
-    }
-
-    static unsigned getSize(Triple triple) noexcept {
-        return triple.getPointerWidth() >> 3;
-    }
-};
-
-const Type* strToType(const class InrContext& ctx, class sview str);
-std::string typeToStr(const Type* t);
-
-static inline Alignment getTypeAlignment(const Type* t, Triple triple) {
-    switch(t->getTypeID()) {
-        case Type::TypeID::Integer:
-            return IntegerType::getAlignment((const IntegerType*)t);
-        case Type::TypeID::Pointer:
-            return PointerType::getAlignment(triple);
-        default:
-            return {};
-    }
-}
-
-static inline unsigned getTypeSizeInBytes(const Type* t, Triple triple) {
-    switch(t->getTypeID()) {
-        case Type::TypeID::Integer:
-            return IntegerType::getSize((const IntegerType*)t);
-        case Type::TypeID::Pointer:
-            return PointerType::getSize(triple);
-        default:
-            return {};
-    }
-}
-
-/// @brief Be able to print out the type to a stream.
-class raw_stream& operator<<(raw_stream&, const Type&);
 
 } // namespace inr
 
