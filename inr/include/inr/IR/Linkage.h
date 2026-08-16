@@ -21,8 +21,7 @@ enum class Linkage : uint8_t {
     Global,
     /// @brief Internal linkage.
     ///
-    /// Symbols that are visible only to this `TUnit`, there may be more than
-    /// one symbols with the same name defined with this linkage type.
+    /// Symbols that are visible only to this `TUnit`.
     Local,
     /// @brief Weak linkage.
     ///

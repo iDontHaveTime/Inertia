@@ -6,7 +6,7 @@
 #define INERTIA_ADT_ILIST_H
 
 /// @file ADT/IList.h
-/// @brief Contains an intrusive linked list.
+/// @brief Provides an intrusive linked list.
 
 #include <inr/Support/Assert.h>
 
@@ -87,7 +87,7 @@ public:
     }
 
     ilist_iterator& operator++() {
-        inr_assert(node_, "ilist_iterator operator++: past the end");
+        inr_assert(node_, "ilist_iterator operator++(): past the end");
         node_ = node_->getNext();
         return *this;
     }
@@ -99,7 +99,7 @@ public:
     }
 
     ilist_iterator& operator--() {
-        inr_assert(node_, "ilist_iterator operator--: past the begin");
+        inr_assert(node_, "ilist_iterator operator--(): past the begin");
         node_ = node_->getPrev();
         return *this;
     }

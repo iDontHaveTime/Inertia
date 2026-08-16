@@ -7,6 +7,9 @@
 
 /// @file Support/Assert.h
 /// @brief Provides an assert function.
+///
+/// Assertions should probably follow some format, instead of doing "class
+/// foo(): message" but just use message, and maybe add class.
 
 #ifndef NDEBUG
 namespace inr::internal {

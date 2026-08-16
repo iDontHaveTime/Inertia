@@ -1,4 +1,4 @@
-# Contains the version for the backend.
+# Contains the version of the backend.
 
 # Major
 if(NOT DEFINED INERTIA_VERSION_MAJOR)

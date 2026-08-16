@@ -2,6 +2,7 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 #include <inr/IR/ArgDef.h>
+#include <inr/IR/FuncDef.h>
 #include <inr/IR/InstDef.h>
 #include <inr/IR/Linkage.h>
 #include <inr/IR/Printer.h>

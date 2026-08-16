@@ -22,7 +22,7 @@ namespace inr {
 ///
 /// The `Def` class represents a definition, and something that can be on the
 /// rhs. For example an instruction, function, basic block, etc.. Those are all
-/// definition, as all of the above can appear on the right hand side, have
+/// definitions, as all of the above can appear on the right hand side, have
 /// users, and are declared.
 class Def {
 public:

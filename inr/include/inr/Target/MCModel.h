@@ -6,7 +6,7 @@
 #define INERTIA_TARGET_MCMODEL
 
 /// @file Target/MCModel.h
-/// @brief Used for the `-mcmodel` flag.s
+/// @brief Used for the `-mcmodel` flag.
 
 namespace inr {
 

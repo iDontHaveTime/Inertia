@@ -19,6 +19,8 @@ namespace inr::x86 {
 /// @brief SystemV ABI for x86_64.
 class x86_64_SysV_CC_Lowering : public TIRCCLowering {
     /// @brief 3.2.3 Parameter passing.
+    ///
+    /// TODO: Actually use this enum in the cc implementation.
     enum ParameterPassing {
         INTEGER,
     };

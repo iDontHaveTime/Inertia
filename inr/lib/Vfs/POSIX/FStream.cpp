@@ -13,24 +13,24 @@ namespace inr {
 struct CheckFDColor {
     bool res;
     CheckFDColor(int fd) : res(false) {
-        char* force_color = getenv("FORCE_COLOR");
-        char* no_color = getenv("NO_COLOR");
-        char* term = getenv("TERM");
+        char* force_color = std::getenv("FORCE_COLOR");
+        char* no_color = std::getenv("NO_COLOR");
+        char* term = std::getenv("TERM");
 
-        if(force_color != NULL && strcmp(force_color, "0") != 0) {
+        if(force_color != nullptr && std::strcmp(force_color, "0") != 0) {
             res = true;
             return;
         }
 
-        if(no_color != NULL) {
+        if(no_color != nullptr) {
             return;
         }
 
-        if(!isatty(fd)) {
+        if(!::isatty(fd)) {
             return;
         }
 
-        if(term != NULL && strcmp(term, "dumb") == 0) {
+        if(term != nullptr && std::strcmp(term, "dumb") == 0) {
             return;
         }
 
@@ -51,7 +51,7 @@ public:
     }
 
     bool isDisplayed() const override {
-        static bool disp = isatty(STDOUT_FILENO);
+        static bool disp = ::isatty(STDOUT_FILENO);
         return disp;
     }
 };
@@ -69,7 +69,7 @@ public:
     }
 
     bool isDisplayed() const override {
-        static bool disp = isatty(STDERR_FILENO);
+        static bool disp = ::isatty(STDERR_FILENO);
         return disp;
     }
 };

@@ -45,7 +45,7 @@ public:
     ~arrview() = default;
 
     /// @brief Constructs a view from an inline vector.
-    /// @note Modifying the vector will invalidate this.
+    /// @note Modifying (size-wise) the vector will invalidate this.
     template<size_type N>
     arrview(const ivec<value_type, N>& vec) :
         data_(vec.data()), size_(vec.size()) {}

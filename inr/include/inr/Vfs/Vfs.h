@@ -31,8 +31,8 @@ enum OpenMode : unsigned char {
 /// @brief Aliases for SEEK_* macros.
 enum SeekType : unsigned char {
     SSET = SEEK_SET, ///< Alias for SEEK_SET.
-    SCUR = SEEK_CUR, ///< Alias for SEEK_CUR
-    SEND = SEEK_END, ///< Alias for SEEK_END
+    SCUR = SEEK_CUR, ///< Alias for SEEK_CUR.
+    SEND = SEEK_END, ///< Alias for SEEK_END.
 };
 
 /// @brief Type of the underlying file.

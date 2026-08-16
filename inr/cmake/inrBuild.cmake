@@ -1,3 +1,7 @@
+# Build type.
+
+# For now only 3 options should be available.
+# Maybe TODO MultiStatic?
 
 set(INERTIA_BUILD "MultiShared" CACHE STRING "How should Inertia be built")
 

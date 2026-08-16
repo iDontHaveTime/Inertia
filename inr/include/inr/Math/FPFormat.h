@@ -20,14 +20,8 @@ enum class FPFormat : unsigned char {
     /// @brief IEEE-754 Half precision floating point.
     Binary16,
     /// @brief IEEE-754 Single precision floating point.
-    ///
-    /// This is usually what the `float` type is in C, although not always, and
-    /// can be checked via `__STDC_IEC_559__`.
     Binary32,
     /// @brief IEEE-754 Double precision floating point.
-    ///
-    /// Explanation is the same as for `Binary32` although this time `double`
-    /// and not `float`.
     Binary64,
 
     // ISA-specific
@@ -35,7 +29,8 @@ enum class FPFormat : unsigned char {
     /// @brief x86's 80-bit binary format.
     x87_80,
 
-    // More would be added when they are supported.
+    // More would be added when they are supported (not implying that the ones
+    // above are).
 };
 
 } // namespace inr

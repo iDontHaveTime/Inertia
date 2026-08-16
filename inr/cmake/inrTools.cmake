@@ -1,4 +1,4 @@
-# Provides a selection of which tools to include.
+# Which tools should be included in the build.
 
 # Random IR generator tool.
 # This tool generates a random IR sample, mainly used for testing.

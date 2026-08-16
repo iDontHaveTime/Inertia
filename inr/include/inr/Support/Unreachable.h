@@ -19,7 +19,9 @@ void inr_unreachable_impl(const char* file, long line, const char* func,
 }
 
 #if defined(__GNUC__) || defined(__clang__)
-#define INR_UNREACHABLE_FUNC __PRETTY_FUNCTION__
+#define INR_UNREACHABLE_FUNC                                              \
+    __PRETTY_FUNCTION__ /* Should assert and unreachable share this under \
+                           Support/Shared/Macros.h */
 #else
 #define INR_UNREACHABLE_FUNC __func__
 #endif

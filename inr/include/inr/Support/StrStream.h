@@ -32,7 +32,7 @@ public:
         return str_;
     }
 
-    /// @brief If buffering is present, this can be unreliable.
+    /// @brief If buffering is present this can be unreliable.
     std::string& access() {
         return str_;
     }
