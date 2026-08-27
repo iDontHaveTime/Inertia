@@ -59,7 +59,7 @@ stream& IRPrinter::printDef(stream& os, const Def* def, bool prefix) {
 static inline void printType(stream& os, const Type* type) {
     switch(type->getID()) {
         case Type::Integer:
-            os << 'i' << ((const IntType*)type)->getWidth();
+            os << 'i' << type->as<IntType>()->getWidth();
             break;
         case Type::Pointer:
             os << "ptr";
@@ -71,7 +71,7 @@ static inline void printType(stream& os, const Type* type) {
             os << "block";
             break;
         case Type::Function: {
-            const FuncType* ft = (const FuncType*)type;
+            const FuncType* ft = type->as<FuncType>();
             printType(os, ft->getReturn());
             os << '(';
             for(unsigned i = 0; i < ft->getNumArgs(); i++) {
@@ -81,7 +81,7 @@ static inline void printType(stream& os, const Type* type) {
             os << ')';
         } break;
         case Type::Float:
-            switch(((const FPType*)type)->getFormat()) {
+            switch(type->as<FPType>()->getFormat()) {
                 case FPFormat::Binary16:
                     os << "binary16";
                     break;
@@ -96,6 +96,12 @@ static inline void printType(stream& os, const Type* type) {
                     break;
             }
             break;
+        case Type::Array: {
+            const ArrayType* at = type->as<ArrayType>();
+            os << '[';
+            printType(os, at->getElement());
+            os << " x " << at->getSize() << ']';
+        }
     }
 }
 
@@ -337,7 +343,7 @@ void IRPrinter::printFunction(stream& os, const FuncDef& fd) {
 void IRPrinter::printSignature(stream& os, const FuncDef& fd) {
     os << "def fn ";
 
-    const FuncType* ft = (const FuncType*)fd.getType();
+    const FuncType* ft = fd.getType()->as<FuncType>();
 
     if(fd.getRetExt() != TypeExt::NoExt && ft->getReturn()->isInteger()) {
         printTypeExt(os, fd.getRetExt());

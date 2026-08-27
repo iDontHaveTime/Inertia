@@ -1,12 +1,8 @@
 # Contributing to Inertia
 
-Thank you for being interested in contributing to Inertia.
-
-To start contributing to Inertia you follow the usual procedures being fork, new branch, commit then PR.
+Thank you for being interested in contributing to Inertia, this means a lot.
 
 ## Steps to PR
-
-This section describes what you should be aware of when working on your contribution.
 
 ### After you fork
 Make sure you have created a new branch, preferrably that describes the feature or fix you are making.
@@ -15,9 +11,9 @@ Make sure you have created a new branch, preferrably that describes the feature 
 Before you commit make sure your commit message matches the commit message style which is shown below.
 
 **Commit Message Style:**
-`[Project][Component] Title describing the commit.`
+`[Project][Component] Title describing the commit`
  - Projects: `inr` (Inertia), `inrcc`.
- - Example commit: `[inrcc][driver] Added new args to be more compatible with gcc.`
+ - Example commit: `[inrcc][driver] The sun of California is hot`
 
 ### Before you PR
 After you've done the commits you wanted you should format your code if your editor doesn't already do it.
@@ -26,8 +22,6 @@ The root folder contains a `.clang-format` that you should use to format your co
 ---
 
 ## Making changes
-
-In this section you'll read about some rules in actually making code for Inertia.
 
 ### Creating new files
 If you create a new C++ source file you should make sure it is added to the sources in `CMakeLists.txt` files.
@@ -87,8 +81,6 @@ Really make sure your new feature is tested and is ready to be merged, do not su
 ---
 
 ## Notes
-
-This section contains some useful info you should probably know.
 
 ### Standard
 Currently Inertia (both `inr` and `inrcc`) use the C++20 standard, and there is no reason to change it.

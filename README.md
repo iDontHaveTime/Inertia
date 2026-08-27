@@ -2,8 +2,6 @@
 
 ## What is Inertia?
 
-In this section you'll read about Inertia and what it is.
-
 ### Compiler or Compiler backend?
 Inertia can refer to two things, one being the infrastructure/backend which is in the `inr` folder.
 The other one can refer to this project as a whole.
@@ -31,14 +29,9 @@ All Inertia components are modular and are made with libraries, so you can fork 
 ### Contributing
 If you are willing to spend your time helping Inertia to go forward, you can read this [CONTRIBUTING](CONTRIBUTING.md) file.
 
-### First time using it?
-There is a file meant specifically explaning how to use Inertia almost step by step in [TRY_IT](TRY_IT.md).
-
 ---
 
 ## Extra
-
-Some extra info for you to know.
 
 ### License
 Inertia uses the Boost Software License 1.0.

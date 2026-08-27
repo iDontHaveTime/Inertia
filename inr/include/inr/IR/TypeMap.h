@@ -62,6 +62,9 @@ public:
 
     /// @brief Returns the floating point type with the provided format.
     const FPType* getFloat(FPFormat fmt);
+
+    /// @brief Returns an array type with the specified element type and size.
+    const ArrayType* getArray(const Type* element, uint64_t size);
 };
 
 } // namespace inr

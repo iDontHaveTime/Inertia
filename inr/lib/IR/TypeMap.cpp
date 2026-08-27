@@ -3,12 +3,15 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 #include <inr/ADT/ArrView.h>
 #include <inr/ADT/HMap.h>
+#include <inr/ADT/HMapInfo.h>
 #include <inr/ADT/HSet.h>
 #include <inr/IR/Type.h>
 #include <inr/IR/TypeMap.h>
 #include <inr/Math/FPFormat.h>
 #include <inr/Support/Assert.h>
+#include <inr/Support/Unreachable.h>
 
+#include <cstdint>
 #include <memory>
 #include <new>
 
@@ -23,14 +26,8 @@ struct FuncLookup {
 template<>
 struct HMapInfo<std::unique_ptr<FuncType>> {
     static std::size_t hash(const std::unique_ptr<FuncType>& ft) {
-        std::size_t seed = HMapInfo<const Type*>::hash(ft->getReturn());
-        seed ^= std::size_t(ft->isVararg()) + 0x9e3779b9 + (seed << 6) +
-                (seed >> 2);
-        for(unsigned i = 0; i < ft->getNumArgs(); i++) {
-            seed ^= HMapInfo<const Type*>::hash(ft->getArg(i)) + 0x9e3779b9 +
-                    (seed << 6) + (seed >> 2);
-        }
-        return seed;
+        FuncLookup fl(ft->getReturn(), ft->getArgs(), ft->isVararg());
+        return hash(fl);
     }
 
     static std::size_t hash(const FuncLookup& ft) {
@@ -57,19 +54,30 @@ struct HMapInfo<std::unique_ptr<FuncType>> {
 
     static bool equal(const std::unique_ptr<FuncType>& lhs,
                       const std::unique_ptr<FuncType>& rhs) {
-        if(lhs->getNumArgs() != rhs->getNumArgs()) return false;
-        if(lhs->isVararg() != rhs->isVararg()) return false;
+        // If a bug happens on function comparison this should be checked first
+        // as I'm not really sure if pointer comparison is correct here.
+        return lhs == rhs;
+    }
+};
 
-        for(unsigned i = 0; i < lhs->getNumArgs(); i++) {
-            if(lhs->getArg(i) != rhs->getArg(i)) return false;
-        }
+template<>
+struct HMapInfo<ArrayType> {
+    static std::size_t hash(const ArrayType& at) {
+        std::size_t seed = HMapInfo<const Type*>::hash(at.getElement());
+        seed ^=
+            std::size_t(at.getSize()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+        return seed;
+    }
 
-        return true;
+    static bool equal(const ArrayType& lhs, const ArrayType& rhs) {
+        return lhs.getElement() == rhs.getElement() &&
+               lhs.getSize() == rhs.getSize();
     }
 };
 
 class TypeMapInternal {
     HMap<unsigned, std::unique_ptr<IntType>> integerMap_;
+    HSet<ArrayType> arraySet_;
     HSet<std::unique_ptr<FuncType>> funcsSet_;
 
 public:
@@ -101,6 +109,8 @@ public:
                 return &b64_;
             case FPFormat::x87_80:
                 return &b80_;
+            default:
+                inr_unreachable("Unknown FP format was passed");
         }
     }
 
@@ -142,6 +152,11 @@ public:
         inr_assert(e,
                    "TypeMapInternal getFuncType(): the type must be emplaced");
         return v->get();
+    }
+
+    const ArrayType* getArray(const Type* elem, uint64_t size) {
+        auto [v, _] = arraySet_.try_emplace(ArrayType(elem, size));
+        return v;
     }
 };
 
@@ -208,6 +223,10 @@ const FuncType* TypeMap::getFunc(const Type* ret, arrview<const Type*> args,
 
 const FPType* TypeMap::getFloat(FPFormat fmt) {
     return internal_->getFPType(fmt);
+}
+
+const ArrayType* TypeMap::getArray(const Type* element, uint64_t size) {
+    return internal_->getArray(element, size);
 }
 
 } // namespace inr

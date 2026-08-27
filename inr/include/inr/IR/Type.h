@@ -2,29 +2,40 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
-#ifndef INERTIA_IR_TYPE_H
-#define INERTIA_IR_TYPE_H
+#ifndef IR_TYPE_H
+#define IR_TYPE_H
 
 /// @file IR/Type.h
 /// @brief Represents a Def type.
 
 #include <inr/ADT/ArrView.h>
 #include <inr/Math/FPFormat.h>
+#include <inr/Support/Assert.h>
 
+#include <cstdint>
 #include <vector>
 
 namespace inr {
+
+class IntType;
+class PtrType;
+class VoidType;
+class BlockType;
+class FPType;
+class ArrayType;
+class FuncType;
 
 /// @brief Base class for all IR types.
 class Type {
 public:
     enum TypeID : unsigned {
-        Integer, // Integer MUST be first.
+        Integer,
         Pointer,
         Void,
         Block,
         Float,
-        Function, // Make sure function is last.
+        Array,
+        Function,
     };
 
 private:
@@ -62,16 +73,69 @@ public:
         return id_ == Void;
     }
 
+    /// @brief Returns true if this type is float.
     bool isFloat() const {
         return id_ == Float;
     }
 
+    /// @brief Returns true if this type is a function.
     bool isFunction() const {
         return id_ == Function;
     }
 
+    /// @brief Returns true if this type is a block.
     bool isBlock() const {
         return id_ == Block;
+    }
+
+    /// @brief Returns true if this type is an array.
+    bool isArray() const {
+        return id_ == Array;
+    }
+
+    template<typename T>
+    const T* as() const = delete;
+
+    template<>
+    const IntType* as<IntType>() const {
+        inr_assert(isInteger(), "Type casted to integer but wasn't one");
+        return (const IntType*)this;
+    }
+
+    template<>
+    const PtrType* as<PtrType>() const {
+        inr_assert(isPointer(), "Type casted to pointer but wasn't one");
+        return (const PtrType*)this;
+    }
+
+    template<>
+    const VoidType* as<VoidType>() const {
+        inr_assert(isVoid(), "Type casted to void but wasn't one");
+        return (const VoidType*)this;
+    }
+
+    template<>
+    const BlockType* as<BlockType>() const {
+        inr_assert(isBlock(), "Type casted to block but wasn't one");
+        return (const BlockType*)this;
+    }
+
+    template<>
+    const FPType* as<FPType>() const {
+        inr_assert(isFloat(), "Type casted to float but wasn't one");
+        return (const FPType*)this;
+    }
+
+    template<>
+    const FuncType* as<FuncType>() const {
+        inr_assert(isFunction(), "Type casted to function but wasn't one");
+        return (const FuncType*)this;
+    }
+
+    template<>
+    const ArrayType* as<ArrayType>() const {
+        inr_assert(isArray(), "Type casted to array but wasn't one");
+        return (const ArrayType*)this;
     }
 };
 
@@ -168,9 +232,32 @@ public:
         return vararg_;
     }
 
+    arrview<const Type*> getArgs() const {
+        return args_;
+    }
+
+    friend class TypeMapInternal;
+};
+
+class ArrayType final : public Type {
+    const Type* element_;
+    uint64_t size_;
+
+    ArrayType(const Type* element, uint64_t size) :
+        Type(Array), element_(element), size_(size) {}
+
+public:
+    const Type* getElement() const {
+        return element_;
+    }
+
+    uint64_t getSize() const {
+        return size_;
+    }
+
     friend class TypeMapInternal;
 };
 
 } // namespace inr
 
-#endif // INERTIA_IR_TYPE_H
+#endif // IR_TYPE_H

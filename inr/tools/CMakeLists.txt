@@ -18,12 +18,3 @@ function(inr_add_tool TOOL_NAME)
 
 endfunction()
 
-# Random IR generation tool.
-if(INERTIA_TOOL_RANDIR)
-    add_subdirectory(inr-randir)
-endif()
-
-# ISA lang.
-if(INERTIA_TOOL_ISA)
-    add_subdirectory(inr-isa)
-endif()

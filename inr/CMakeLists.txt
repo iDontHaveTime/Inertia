@@ -10,8 +10,6 @@ set(INERTIA_CMAKE_UTILS "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include("${INERTIA_CMAKE_UTILS}/inrVersion.cmake")
 # Include the build mode.
 include("${INERTIA_CMAKE_UTILS}/inrBuild.cmake")
-# Include target entries.
-include("${INERTIA_CMAKE_UTILS}/inrTarget.cmake")
 
 # Set the variables so that its easier to check the build mode.
 if(INERTIA_BUILD STREQUAL "Shared")
@@ -41,21 +39,21 @@ project(Inertia
     VERSION ${INERTIA_VERSION_MAJOR}.${INERTIA_VERSION_MINOR}.${INERTIA_VERSION_PATCH}
     LANGUAGES CXX)
 
-option(INERTIA_ENABLE_TESTING "Should testing be enabled?" ON)
-
 # Source of the libraries
 add_subdirectory(lib)
-
-# == Testing ==
-
-if(INERTIA_ENABLE_TESTING)
-    enable_testing()
-    # Test executables
-    add_subdirectory(tests)
-endif()
 
 # == Tooling ==
 
 include("${INERTIA_CMAKE_UTILS}/inrTools.cmake")
 
 add_subdirectory(tools)
+
+# == Testing ==
+
+option(INERTIA_ENABLE_TESTING "Should testing be enabled?" ON)
+
+if(INERTIA_ENABLE_TESTING)
+    enable_testing()
+    # Test executables
+    add_subdirectory(tests)
+endif()

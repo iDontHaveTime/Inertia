@@ -55,6 +55,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                     break;
                 case Type::Function:
                 case Type::Block:
+                case Type::Array:
                     printError(os,
                                "return tries to return a non returnable type");
                     err = true;
@@ -78,7 +79,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                     err = true;
                 }
                 else {
-                    if(((const IntType*)jinst.getCondition()->getType())
+                    if((jinst.getCondition()->getType()->as<IntType>())
                            ->getWidth() != 1) {
                         printError(os,
                                    "jmp (conditional) condition must be i1");
@@ -122,6 +123,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                         case Type::Void:
                         case Type::Block:
                         case Type::Function:
+                        case Type::Array:
                             printError(os, "phi can only accept value types");
                             err = true;
                             break;
@@ -170,7 +172,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
             switch(binst.getType()->getID()) {
                 case Type::Integer:
                     if(binst.getInstType() == InstDef::Cmp &&
-                       ((const IntType*)binst.getType())->getWidth() != 1) {
+                       (binst.getType()->as<IntType>()->getWidth() != 1)) {
                         printError(os,
                                    "comparison instruction's width is not i1");
                         err = true;
@@ -181,6 +183,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                 case Type::Float:
                 case Type::Function:
                 case Type::Block:
+                case Type::Array:
                     printError(os, "binary instruction has an invalid type");
                     err = true;
                     break;
@@ -207,6 +210,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                 case Type::Void:
                 case Type::Block:
                 case Type::Function:
+                case Type::Array:
                     printError(os, "load instruction can only load values");
                     err = true;
                     break;
@@ -231,6 +235,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                     case Type::Void:
                     case Type::Block:
                     case Type::Function:
+                    case Type::Array:
                         printError(os, "store can only store values");
                         err = true;
                         break;
@@ -253,6 +258,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
                     case Type::Integer:
                     case Type::Pointer:
                     case Type::Float:
+                    case Type::Array:
                         break;
                     case Type::Void:
                     case Type::Block:
@@ -314,7 +320,7 @@ static inline bool verifyFunction(const FuncDef& fn, inr::stream* os) {
         err = true;
     }
     else {
-        const FuncType* ft = (const FuncType*)t;
+        const FuncType* ft = t->as<FuncType>();
         switch(ft->getReturn()->getID()) {
             case Type::Integer:
             case Type::Pointer:
@@ -329,6 +335,11 @@ static inline bool verifyFunction(const FuncDef& fn, inr::stream* os) {
             case Type::Block:
                 printError(os, "function ", fName,
                            "'s return type is a block type");
+                err = true;
+                break;
+            case Type::Array:
+                printError(os, "function ", fName,
+                           "'s return type is an array type");
                 err = true;
                 break;
         }
@@ -355,6 +366,11 @@ static inline bool verifyFunction(const FuncDef& fn, inr::stream* os) {
                     case Type::Block:
                         printError(os, "function ", fName, "'s arg ", i,
                                    " is a block type");
+                        err = true;
+                        break;
+                    case Type::Array:
+                        printError(os, "function ", fName, "'s arg ", i,
+                                   " is an array type");
                         err = true;
                         break;
                 }
