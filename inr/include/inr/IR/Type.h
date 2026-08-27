@@ -2,8 +2,8 @@
 // Distributed under the Boost Software License, Version 1.0.
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 
-#ifndef IR_TYPE_H
-#define IR_TYPE_H
+#ifndef INERTIA_IR_TYPE_H
+#define INERTIA_IR_TYPE_H
 
 /// @file IR/Type.h
 /// @brief Represents a Def type.
@@ -260,4 +260,4 @@ public:
 
 } // namespace inr
 
-#endif // IR_TYPE_H
+#endif // INERTIA_IR_TYPE_H
