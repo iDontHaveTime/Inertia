@@ -29,16 +29,16 @@ class FuncDef : public GlobalDef, public ilist_node<FuncDef> {
     TypeExt ext_;
 
     void initArgs() {
-        const FuncType* type = (const FuncType*)getType();
+        const FuncType* type = getElemType()->as<FuncType>();
         for(unsigned i = 0; i < type->getNumArgs(); i++) {
             args_.emplace_back(type->getArg(i), std::string_view{}, i,
                                TypeExt::NoExt);
         }
     }
 
-    FuncDef(const FuncType* type, std::string_view name, Linkage linkage,
-            TypeExt retExt) :
-        GlobalDef(linkage, type, FuncDefType, name), ext_(retExt) {
+    FuncDef(const PtrType* ptr, const FuncType* type, std::string_view name,
+            Linkage linkage, TypeExt retExt) :
+        GlobalDef(type, linkage, ptr, FuncDefType, name), ext_(retExt) {
         initArgs();
     }
 

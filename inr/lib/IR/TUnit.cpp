@@ -10,9 +10,11 @@
 
 namespace inr {
 
-FuncDef* TUnit::createFunction(const FuncType* type, std::string_view name,
-                               Linkage linkage, TypeExt retExt) {
-    return funcs_.push_back(new FuncDef(type, name, linkage, retExt));
+FuncDef* TUnit::createFunction(TypeMap& tm, const FuncType* type,
+                               std::string_view name, Linkage linkage,
+                               TypeExt retExt) {
+    return funcs_.push_back(
+        new FuncDef(tm.getPtr(), type, name, linkage, retExt));
 }
 
 BlockDef* TUnit::createBlock(TypeMap& tm, FuncDef* to, std::string_view name) {

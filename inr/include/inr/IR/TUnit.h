@@ -68,8 +68,9 @@ public:
         return funcs_;
     }
 
-    FuncDef* createFunction(const FuncType* type, std::string_view name,
-                            Linkage linkage, TypeExt retExt);
+    FuncDef* createFunction(TypeMap& tm, const FuncType* type,
+                            std::string_view name, Linkage linkage,
+                            TypeExt retExt);
     BlockDef* createBlock(TypeMap& tm, FuncDef* to, std::string_view name);
 
     ConstDef* createConst(const IntType* type, const bigint& val);

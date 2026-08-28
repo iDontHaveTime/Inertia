@@ -14,8 +14,8 @@ int main() {
     inr::TypeMap map;
 
     auto mainFunction = unit.createFunction(
-        map.getFunc(map.getI32(), {map.getI32(), map.getPtr()}, false), "main",
-        inr::Linkage::Global, inr::TypeExt::SignExt);
+        map, map.getFunc(map.getI32(), {map.getI32(), map.getPtr()}, false),
+        "main", inr::Linkage::Global, inr::TypeExt::SignExt);
 
     mainFunction->getArg(0)->setName("argc");
     mainFunction->getArg(1)->setName("argv");

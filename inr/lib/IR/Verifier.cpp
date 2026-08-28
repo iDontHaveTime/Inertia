@@ -3,10 +3,12 @@
 // See LICENSE file or https://www.boost.org/LICENSE_1_0.txt
 #include <inr/IR/ArgDef.h>
 #include <inr/IR/BlockDef.h>
+#include <inr/IR/Def.h>
 #include <inr/IR/FuncDef.h>
 #include <inr/IR/InstDef.h>
 #include <inr/IR/Type.h>
 #include <inr/IR/Verifier.h>
+#include <inr/Support/Assert.h>
 #include <inr/Support/Stream.h>
 
 namespace inr {
@@ -305,6 +307,8 @@ static inline bool verifyBlock(const FuncDef& fn, const BlockDef& blk,
 }
 
 static inline bool verifyFunction(const FuncDef& fn, inr::stream* os) {
+    inr_assert(fn.getDefType() == Def::FuncDefType,
+               "FuncDef isn't actually a function def type");
     bool err = false;
     std::string_view fName = fn.getName();
 
@@ -314,7 +318,7 @@ static inline bool verifyFunction(const FuncDef& fn, inr::stream* os) {
         fName = "unnamed";
     }
 
-    const Type* t = fn.getType();
+    const Type* t = fn.getElemType();
     if(!t->isFunction()) {
         printError(os, "function ", fName, "'s type is not a function type");
         err = true;
