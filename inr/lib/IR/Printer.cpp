@@ -13,6 +13,8 @@
 #include <inr/Support/Stream.h>
 #include <inr/Support/Unreachable.h>
 
+#include <string_view>
+
 namespace inr {
 
 static inline void printTypeExt(stream& os, TypeExt ext) {
@@ -343,7 +345,7 @@ void IRPrinter::printFunction(stream& os, const FuncDef& fd) {
 void IRPrinter::printSignature(stream& os, const FuncDef& fd) {
     os << "def fn ";
 
-    const FuncType* ft = fd.getType()->as<FuncType>();
+    const FuncType* ft = fd.getFuncType();
 
     if(fd.getRetExt() != TypeExt::NoExt && ft->getReturn()->isInteger()) {
         printTypeExt(os, fd.getRetExt());
@@ -384,11 +386,30 @@ void IRPrinter::printSignature(stream& os, const FuncDef& fd) {
     os << ')';
 }
 
+static inline void printStringWithEscapes(stream& os, std::string_view sv) {
+    for(char c : sv) {
+        if(std::isprint(c)) {
+            if(c == '\\') {
+                os << "\\\\";
+            }
+            else if(c == '"') {
+                os << "\\\"";
+            }
+            else os << c;
+        }
+        else {
+            (os << "\\x").printBase16((unsigned)c);
+        }
+    }
+}
+
 void IRPrinter::print(stream& os) {
     counter_ = 0;
     defNames_.clear();
     if(!unit_.getName().empty()) {
-        os << "module.name = " << unit_.getName() << "\n\n";
+        os << "module.name = \"";
+        printStringWithEscapes(os, unit_.getName());
+        os << "\"\n\n";
     }
 
     for(const FuncDef& fd : unit_.getFuncs()) {

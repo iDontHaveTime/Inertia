@@ -97,6 +97,11 @@ public:
     const T* as() const = delete;
 
     template<>
+    const Type* as<Type>() const {
+        return (const Type*)this;
+    }
+
+    template<>
     const IntType* as<IntType>() const {
         inr_assert(isInteger(), "Type casted to integer but wasn't one");
         return (const IntType*)this;

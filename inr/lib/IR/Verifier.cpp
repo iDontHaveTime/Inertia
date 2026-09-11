@@ -31,7 +31,7 @@ static inline bool verifyInstruction(const FuncDef& fn, const InstDef& inst,
         case InstDef::Ret: {
             const RetInst& ret = (const RetInst&)inst;
             if(fn.getType()->isFunction() &&
-               ((const FuncType*)fn.getType())->getReturn() != ret.getType()) {
+               fn.getType()->as<FuncType>()->getReturn() != ret.getType()) {
                 printError(os, "return type mismatch");
                 err = true;
             }
@@ -286,9 +286,18 @@ static inline bool verifyBlock(const FuncDef& fn, const BlockDef& blk,
     }
 
     bool terminated = false;
+    bool phi = true;
 
     for(const InstDef& inst : blk.getInstructions()) {
         if(!verifyInstruction(fn, inst, os)) err = true;
+        if(inst.isPhi()) {
+            if(!phi) {
+                printError(os, "phi instructions must be first in a block");
+                err = true;
+            }
+        }
+        else phi = false;
+
         if(inst.isTerminator()) {
             terminated = true;
             if(&inst != blk.getInstructions().listTail()) {

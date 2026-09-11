@@ -20,7 +20,7 @@ int main() {
     mainFunction->getArg(0)->setName("argc");
     mainFunction->getArg(1)->setName("argv");
 
-    auto entryBlock = unit.createBlock(map, mainFunction, "entry");
+    auto entryBlock = mainFunction->createBlock(map, "entry");
 
     inr::RetInst::createRet(map, entryBlock,
                             unit.createConst(map.getI32(), inr::bigint(32, 0)));

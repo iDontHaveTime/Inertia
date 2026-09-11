@@ -16,7 +16,7 @@ namespace inr {
 class stream;
 
 /// @brief Stores an integer number with any number of bits.
-/// @note All operation must be done on same bit sized bigints.
+/// @note All operations must be done on same bit sized bigints.
 class bigint {
 public:
     using Limb = uint64_t;

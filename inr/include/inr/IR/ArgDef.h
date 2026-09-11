@@ -20,7 +20,7 @@ enum class TypeExt : unsigned char {
 };
 
 /// @brief Represents a function argument.
-class ArgDef : public Def {
+class ArgDef final : public Def {
     unsigned num_;
     TypeExt ext_;
 

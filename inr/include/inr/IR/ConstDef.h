@@ -16,7 +16,7 @@
 namespace inr {
 
 /// @brief Represents an integer constant.
-class ConstDef : public Def {
+class ConstDef final : public Def {
     bigint int_;
 
     ConstDef(const IntType* type, const bigint& bi) :

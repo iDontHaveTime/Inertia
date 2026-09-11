@@ -6,24 +6,32 @@
 
 namespace inr::host {
 
-Target getTarget() {
-    Arch arch = Arch::Error;
-    OS os = OS::Unknown;
-    ABI abi = ABI::None;
-
+Arch getArch() {
 #if defined(__x86_64__)
-    arch = Arch::x86_64;
+    return Arch::x86_64;
+#else
+    return Arch::Error;
 #endif
+}
 
+OS getOS() {
 #if defined(__linux__)
-    os = OS::Linux;
+    return OS::Linux;
+#else
+    return OS::Unknown;
 #endif
+}
 
+ABI getABI() {
 #if defined(__gnu_linux__)
-    abi = ABI::GNU;
+    return ABI::GNU;
+#else
+    return ABI::None;
 #endif
+}
 
-    return Target(arch, os, abi);
+Target getTarget() {
+    return Target(getArch(), getOS(), getABI());
 }
 
 } // namespace inr::host

@@ -13,12 +13,11 @@
 
 namespace inr {
 
-class Verifier {
-public:
-    /// @brief Verifies the correctness of the IR.
-    /// @return False if malformed.
-    static bool verify(const TUnit& unit, inr::stream* os = nullptr);
-};
+namespace Verifier {
+/// @brief Verifies the correctness of the IR.
+/// @return False if malformed.
+bool verify(const TUnit& unit, inr::stream* os = nullptr);
+} // namespace Verifier
 
 } // namespace inr
 

@@ -60,24 +60,39 @@ struct HMapInfo<std::unique_ptr<FuncType>> {
     }
 };
 
+struct ArrayLookup {
+    const Type* elem;
+    uint64_t size;
+};
+
 template<>
-struct HMapInfo<ArrayType> {
-    static std::size_t hash(const ArrayType& at) {
-        std::size_t seed = HMapInfo<const Type*>::hash(at.getElement());
-        seed ^=
-            std::size_t(at.getSize()) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+struct HMapInfo<std::unique_ptr<ArrayType>> {
+    static std::size_t hash(const std::unique_ptr<ArrayType>& at) {
+        ArrayLookup al(at->getElement(), at->getSize());
+        return hash(al);
+    }
+
+    static std::size_t hash(const ArrayLookup& at) {
+        std::size_t seed = HMapInfo<const Type*>::hash(at.elem);
+        seed ^= std::size_t(at.size) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
         return seed;
     }
 
-    static bool equal(const ArrayType& lhs, const ArrayType& rhs) {
-        return lhs.getElement() == rhs.getElement() &&
-               lhs.getSize() == rhs.getSize();
+    static bool equal(const ArrayLookup& al,
+                      const std::unique_ptr<ArrayType>& at) {
+        return al.elem == at->getElement() && al.size == at->getSize();
+    }
+
+    static bool equal(const std::unique_ptr<ArrayType>& lhs,
+                      const std::unique_ptr<ArrayType>& rhs) {
+        // Same comment as in function type goes here.
+        return lhs == rhs;
     }
 };
 
 class TypeMapInternal {
     HMap<unsigned, std::unique_ptr<IntType>> integerMap_;
-    HSet<ArrayType> arraySet_;
+    HSet<std::unique_ptr<ArrayType>> arraySet_;
     HSet<std::unique_ptr<FuncType>> funcsSet_;
 
 public:
@@ -155,8 +170,16 @@ public:
     }
 
     const ArrayType* getArray(const Type* elem, uint64_t size) {
-        auto [v, _] = arraySet_.try_emplace(ArrayType(elem, size));
-        return v;
+        ArrayLookup lookup(elem, size);
+        if(auto v = arraySet_.find(lookup)) {
+            return v->get();
+        }
+
+        auto [v, e] = arraySet_.try_emplace(
+            std::unique_ptr<ArrayType>(new ArrayType(elem, size)));
+
+        inr_assert(e, "TypeMapInternal getArray(): the type must be emplaced");
+        return v->get();
     }
 };
 

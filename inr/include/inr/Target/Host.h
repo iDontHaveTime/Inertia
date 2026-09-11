@@ -12,6 +12,10 @@
 
 namespace inr::host {
 
+Arch getArch();
+OS getOS();
+ABI getABI();
+
 /// @brief Returns the target triple of this host.
 Target getTarget();
 

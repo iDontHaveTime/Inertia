@@ -17,7 +17,7 @@ namespace inr {
 
 class FuncDef;
 
-class BlockDef : public Def, public ilist_node<BlockDef> {
+class BlockDef final : public Def, public ilist_node<BlockDef> {
     ilist<InstDef> instructions_;
 
     BlockDef(const BlockType* bt, std::string_view name) :

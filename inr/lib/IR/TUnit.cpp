@@ -17,28 +17,21 @@ FuncDef* TUnit::createFunction(TypeMap& tm, const FuncType* type,
         new FuncDef(tm.getPtr(), type, name, linkage, retExt));
 }
 
-BlockDef* TUnit::createBlock(TypeMap& tm, FuncDef* to, std::string_view name) {
-    inr_assert(to != nullptr, "TUnit createBlock(): FuncDef is nullptr");
-    return to->createBlock(tm.getBlock(), name);
-}
-
 ConstDef* TUnit::createConst(const IntType* type, const bigint& val) {
     inr_assert(type->getWidth() == val.getBits(),
                "TUnit createConst(): bit width does not match");
-    return (ConstDef*)defStorage_.emplace_back(new ConstDef(type, val)).get();
+    return (ConstDef*)defStorage_.own(new ConstDef(type, val));
 }
 
 ConstDef* TUnit::createConst(const IntType* type, bigint&& val) {
     inr_assert(type->getWidth() == val.getBits(),
                "TUnit createConst(): bit width does not match");
-    return (ConstDef*)defStorage_
-        .emplace_back(new ConstDef(type, std::move(val)))
-        .get();
+    return (ConstDef*)defStorage_.own(new ConstDef(type, std::move(val)));
 }
 
 UnDef* TUnit::createUndef(const Type* t) {
     inr_assert(t != nullptr, "TUnit createUndef(): Type is nullptr");
-    return (UnDef*)defStorage_.emplace_back(new UnDef(t)).get();
+    return (UnDef*)defStorage_.own(new UnDef(t));
 }
 
 } // namespace inr

@@ -16,13 +16,15 @@
 #include <inr/IR/GlobalDef.h>
 #include <inr/IR/Linkage.h>
 #include <inr/IR/Type.h>
+#include <inr/IR/TypeMap.h>
+#include <inr/Support/Assert.h>
 
 namespace inr {
 
 class TUnit;
 
 /// @brief Function definition.
-class FuncDef : public GlobalDef, public ilist_node<FuncDef> {
+class FuncDef final : public GlobalDef, public ilist_node<FuncDef> {
     std::vector<ArgDef> args_;
     ilist<BlockDef> blocks_;
     CallingConv cc_ = CallingConv::Default;
@@ -41,8 +43,6 @@ class FuncDef : public GlobalDef, public ilist_node<FuncDef> {
         GlobalDef(type, linkage, ptr, FuncDefType, name), ext_(retExt) {
         initArgs();
     }
-
-    BlockDef* createBlock(const BlockType* bt, std::string_view name);
 
     friend class TUnit;
 
@@ -64,6 +64,7 @@ public:
     }
 
     ArgDef* getArg(unsigned i) {
+        inr_assert(i < args_.size(), "Index out of bounds");
         return &args_[i];
     }
 
@@ -82,6 +83,16 @@ public:
     void setCC(CallingConv cc) {
         cc_ = cc;
     }
+
+    const FuncType* getFuncType() const {
+        return getElemType()->as<FuncType>();
+    }
+
+    bool isVararg() const {
+        return getFuncType()->isVararg();
+    }
+
+    BlockDef* createBlock(TypeMap& tm, std::string_view name);
 };
 
 } // namespace inr

@@ -30,8 +30,7 @@ public:
     /// @note This is GlobalDef's getType() which returns a pointer type, NOT
     /// the actual type of the def.
     const PtrType* getType() const {
-        inr_assert(UseDef::getType()->isPointer(),
-                   "GlobalDef's type is not a pointer");
+        // `as<...>(...)` has an assert for type already.
         return UseDef::getType()->as<PtrType>();
     }
 

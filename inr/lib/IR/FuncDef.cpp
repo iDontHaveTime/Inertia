@@ -6,8 +6,8 @@
 
 namespace inr {
 
-BlockDef* FuncDef::createBlock(const BlockType* bt, std::string_view name) {
-    return blocks_.push_back(new BlockDef(bt, name));
+BlockDef* FuncDef::createBlock(TypeMap& tm, std::string_view name) {
+    return blocks_.push_back(new BlockDef(tm.getBlock(), name));
 }
 
 } // namespace inr

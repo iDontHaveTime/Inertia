@@ -179,11 +179,9 @@ public:
         return *this;
     }
 
-    /// @brief Writes either an integral or a floating point value to the
-    /// stream.
     template<typename T>
     requires std::integral<T> || std::floating_point<T>
-    stream& operator<<(T n) {
+    stream& printBase10(T n) {
         buffchar_t buff[(std::is_floating_point_v<T>
                              ? std::numeric_limits<T>::max_digits10
                              : std::numeric_limits<T>::digits10) +
@@ -195,6 +193,26 @@ public:
         }
 
         return *this;
+    }
+
+    template<typename T>
+    requires std::integral<T>
+    stream& printBase16(T n) {
+        buffchar_t buff[sizeof(n) * 2 + 1];
+        auto result = std::to_chars(buff, buff + sizeof(buff), n, 16);
+        if(result.ec == std::errc()) {
+            write(buff, result.ptr - buff);
+        }
+
+        return *this;
+    }
+
+    /// @brief Writes either an integral or a floating point value to the
+    /// stream.
+    template<typename T>
+    requires std::integral<T> || std::floating_point<T>
+    stream& operator<<(T n) {
+        return printBase10<T>(n);
     }
 
     /// @brief Writes a null terminated string to the stream.

@@ -18,9 +18,10 @@ namespace inr {
 /// ```llvm
 /// %x = phi i32 [undef, %block1], [%y, %block2]
 /// ```
-class UnDef : public Def {
-public:
+class UnDef final : public Def {
     UnDef(const Type* type) : Def(type, UnDefDefType, {}) {}
+
+    friend class TUnit;
 };
 
 } // namespace inr

@@ -220,10 +220,14 @@ public:
                 return false;
         }
     }
+
+    bool isPhi() const {
+        return instType_ == Phi;
+    }
 };
 
 /// @brief Represents the `ret` instruction.
-class RetInst : public InstDef {
+class RetInst final : public InstDef {
     RetInst(const Type* type, Def* retVal) : InstDef(type, {}, Ret) {
         addUse(retVal);
     }
@@ -258,7 +262,7 @@ public:
 };
 
 /// @brief Represents the `jmp` instruction.
-class JmpInst : public InstDef {
+class JmpInst final : public InstDef {
     JmpInst(const VoidType* type, Def* lbl) : InstDef(type, {}, Jmp) {
         addUse(lbl);
     }
@@ -381,7 +385,7 @@ public:
 
 /// @brief Represents the `cmp` instruction.
 /// @note This is an integer comparison instruction.
-class CmpInst : public BinaryInst {
+class CmpInst final : public BinaryInst {
 public:
     /// @brief Explained under the `InstDef::Cmp` enum.
     enum CmpCond : unsigned {
@@ -421,7 +425,7 @@ public:
 };
 
 /// @brief Represents the `mul` instruction.
-class MulInst : public BinaryInst {
+class MulInst final : public BinaryInst {
     MulInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, Mul, lhs, rhs) {}
 
@@ -436,7 +440,7 @@ public:
 };
 
 /// @brief Represents the `udiv` instruction.
-class UDivInst : public BinaryInst {
+class UDivInst final : public BinaryInst {
     UDivInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, UDiv, lhs, rhs) {}
 
@@ -451,7 +455,7 @@ public:
 };
 
 /// @brief Represents the `sdiv` instruction.
-class SDivInst : public BinaryInst {
+class SDivInst final : public BinaryInst {
     SDivInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, SDiv, lhs, rhs) {}
 
@@ -466,7 +470,7 @@ public:
 };
 
 /// @brief Represents the `urem` instruction.
-class URemInst : public BinaryInst {
+class URemInst final : public BinaryInst {
     URemInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, URem, lhs, rhs) {}
 
@@ -481,7 +485,7 @@ public:
 };
 
 /// @brief Represents the `srem` instruction.
-class SRemInst : public BinaryInst {
+class SRemInst final : public BinaryInst {
     SRemInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, SRem, lhs, rhs) {}
 
@@ -496,7 +500,7 @@ public:
 };
 
 /// @brief Represents the `add` instruction.
-class AddInst : public BinaryInst {
+class AddInst final : public BinaryInst {
     AddInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, Add, lhs, rhs) {}
 
@@ -511,7 +515,7 @@ public:
 };
 
 /// @brief Represents the `sub` instruction.
-class SubInst : public BinaryInst {
+class SubInst final : public BinaryInst {
     SubInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, Sub, lhs, rhs) {}
 
@@ -526,7 +530,7 @@ public:
 };
 
 /// @brief Represents the `shl` instruction.
-class ShlInst : public BinaryInst {
+class ShlInst final : public BinaryInst {
     ShlInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, Shl, lhs, rhs) {}
 
@@ -541,7 +545,7 @@ public:
 };
 
 /// @brief Represents the `lshr` instruction.
-class LShrInst : public BinaryInst {
+class LShrInst final : public BinaryInst {
     LShrInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, LShr, lhs, rhs) {}
 
@@ -556,7 +560,7 @@ public:
 };
 
 /// @brief Represents the `ashr` instruction.
-class AShrInst : public BinaryInst {
+class AShrInst final : public BinaryInst {
     AShrInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, AShr, lhs, rhs) {}
 
@@ -571,7 +575,7 @@ public:
 };
 
 /// @brief Represents the `and` instruction.
-class AndInst : public BinaryInst {
+class AndInst final : public BinaryInst {
     AndInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, And, lhs, rhs) {}
 
@@ -601,7 +605,7 @@ public:
 };
 
 /// @brief Represents the `xor` instruction.
-class XorInst : public BinaryInst {
+class XorInst final : public BinaryInst {
     XorInst(const Type* type, std::string_view name, Def* lhs, Def* rhs) :
         BinaryInst(type, name, Xor, lhs, rhs) {}
 
@@ -616,7 +620,7 @@ public:
 };
 
 /// @brief Represents the `phi` instruction.
-class PhiInst : public InstDef {
+class PhiInst final : public InstDef {
     ivec<BlockDef*, 4> block_;
 
     PhiInst(const Type* type, std::string_view name) :
@@ -663,7 +667,7 @@ public:
 };
 
 /// @brief Represents the `unreachable` instruction.
-class UnreachableInst : public InstDef {
+class UnreachableInst final : public InstDef {
     UnreachableInst(const VoidType* vt) : InstDef(vt, {}, Unreachable) {}
 
 public:
@@ -673,7 +677,7 @@ public:
 };
 
 /// @brief Represents the `load` instruction.
-class LoadInst : public InstDef {
+class LoadInst final : public InstDef {
     LoadInst(const Type* type, std::string_view name, Def* from) :
         InstDef(type, name, Load) {
         addUse(from);
@@ -700,7 +704,7 @@ public:
 };
 
 /// @brief Represents the `store` instruction.
-class StoreInst : public InstDef {
+class StoreInst final : public InstDef {
     StoreInst(const VoidType* vt, Def* to, Def* from) : InstDef(vt, {}, Store) {
         addUse(to);
         addUse(from);
@@ -736,7 +740,7 @@ public:
 };
 
 /// @brief Represents the `alloca` instruction.
-class AllocaInst : public InstDef {
+class AllocaInst final : public InstDef {
     const Type* allocates_;
     AllocaInst(const PtrType* ptr, std::string_view name, const Type* t,
                Def* count) :
