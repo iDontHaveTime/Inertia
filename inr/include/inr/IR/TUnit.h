@@ -48,12 +48,17 @@ class TUnit {
     std::string_view name_;
     ilist<FuncDef> funcs_;
     storage<Def> defStorage_;
+    TypeMap& tmap_;
 
 public:
-    TUnit(std::string_view name) : name_(name) {}
+    TUnit(std::string_view name, TypeMap& map) : name_(name), tmap_(map) {}
 
     ~TUnit() {
         funcs_.deleteNodes();
+    }
+
+    TypeMap& getTypeMap() {
+        return tmap_;
     }
 
     std::string_view getName() const {
@@ -68,12 +73,13 @@ public:
         return funcs_;
     }
 
-    FuncDef* createFunction(TypeMap& tm, const FuncType* type,
-                            std::string_view name, Linkage linkage,
-                            TypeExt retExt);
+    FuncDef* createFunction(const FuncType* type, std::string_view name,
+                            Linkage linkage, TypeExt retExt);
 
-    ConstDef* createConst(const IntType* type, const bigint& val);
-    ConstDef* createConst(const IntType* type, bigint&& val);
+    /// @brief Creates a new constant integer.
+    /// @note Creates an integer type matching the bigint's width.
+    ConstDef* createConst(bigint val);
+
     UnDef* createUndef(const Type* t);
 };
 

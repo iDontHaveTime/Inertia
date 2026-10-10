@@ -58,7 +58,7 @@ public:
     static Target fromString(std::string_view str);
 
     /// @brief Returns this triple as a string.
-    std::string str();
+    std::string str() const;
 
     Arch getArch() const {
         return arch_;

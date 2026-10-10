@@ -13,7 +13,7 @@ Before you commit make sure your commit message matches the commit message style
 **Commit Message Style:**
 `[Project][Component] Title describing the commit`
  - Projects: `inr` (Inertia), `inrcc`.
- - Example commit: `[inrcc][driver] The sun of California is hot`
+ - Example commit: `[inrcc][driver] Added XYZ`
 
 ### Before you PR
 After you've done the commits you wanted you should format your code if your editor doesn't already do it.

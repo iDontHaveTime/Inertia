@@ -19,13 +19,13 @@ RetInst* RetInst::createRetVoid(TypeMap& tm, BlockDef* blk) {
     return createRet(tm, blk, nullptr);
 }
 
-JmpInst* JmpInst::createJmp(TypeMap& tm, BlockDef* blk, Def* lbl) {
+JmpInst* JmpInst::createJmp(TypeMap& tm, BlockDef* blk, BlockDef* lbl) {
     return (JmpInst*)blk->getInstructions().push_back(
         new JmpInst(tm.getVoid(), lbl));
 }
 
 JmpInst* JmpInst::createJmpCond(TypeMap& tm, BlockDef* blk, Def* cond,
-                                Def* iftrue, Def* iffalse) {
+                                BlockDef* iftrue, BlockDef* iffalse) {
     return (JmpInst*)blk->getInstructions().push_back(
         new JmpInst(tm.getVoid(), cond, iftrue, iffalse));
 }

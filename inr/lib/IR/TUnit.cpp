@@ -10,23 +10,16 @@
 
 namespace inr {
 
-FuncDef* TUnit::createFunction(TypeMap& tm, const FuncType* type,
-                               std::string_view name, Linkage linkage,
-                               TypeExt retExt) {
+FuncDef* TUnit::createFunction(const FuncType* type, std::string_view name,
+                               Linkage linkage, TypeExt retExt) {
     return funcs_.push_back(
-        new FuncDef(tm.getPtr(), type, name, linkage, retExt));
+        new FuncDef(this, getTypeMap().getPtr(), type, name, linkage, retExt));
 }
 
-ConstDef* TUnit::createConst(const IntType* type, const bigint& val) {
-    inr_assert(type->getWidth() == val.getBits(),
-               "TUnit createConst(): bit width does not match");
-    return (ConstDef*)defStorage_.own(new ConstDef(type, val));
-}
-
-ConstDef* TUnit::createConst(const IntType* type, bigint&& val) {
-    inr_assert(type->getWidth() == val.getBits(),
-               "TUnit createConst(): bit width does not match");
-    return (ConstDef*)defStorage_.own(new ConstDef(type, std::move(val)));
+ConstDef* TUnit::createConst(bigint val) {
+    unsigned bitCount = val.getBits();
+    return (ConstDef*)defStorage_.own(
+        new ConstDef(tmap_.getInt(bitCount), std::move(val)));
 }
 
 UnDef* TUnit::createUndef(const Type* t) {

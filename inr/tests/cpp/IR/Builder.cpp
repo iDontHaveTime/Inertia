@@ -8,9 +8,9 @@
 #include <inr/IR/Verifier.h>
 
 int main() {
-    inr::TUnit unit(__FILE__);
     inr::TypeMap map;
-    inr::IRBuilder builder(unit, map);
+    inr::TUnit unit(__FILE__, map);
+    inr::IRBuilder builder(unit);
 
     inr::FuncBuilder mainBuilder = builder.createFunction(
         map.getFunc(map.getI32(), {map.getI32(), map.getPtr()}, false), "main",

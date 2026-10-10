@@ -18,10 +18,11 @@ namespace inr {
 class FuncDef;
 
 class BlockDef final : public Def, public ilist_node<BlockDef> {
+    FuncDef* parent_;
     ilist<InstDef> instructions_;
 
-    BlockDef(const BlockType* bt, std::string_view name) :
-        Def(bt, BlockDefType, name) {}
+    BlockDef(FuncDef* parent, const BlockType* bt, std::string_view name) :
+        Def(bt, BlockDefType, name), parent_(parent) {}
 
     friend class FuncDef;
 
@@ -36,6 +37,14 @@ public:
 
     const ilist<InstDef>& getInstructions() const {
         return instructions_;
+    }
+
+    FuncDef* getParent() {
+        return parent_;
+    }
+
+    const FuncDef* getParent() const {
+        return parent_;
     }
 };
 

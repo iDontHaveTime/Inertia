@@ -10,20 +10,20 @@
 #include <inr/Math/BigInt.h>
 
 int main() {
-    inr::TUnit unit(__FILE__);
     inr::TypeMap map;
+    inr::TUnit unit(__FILE__, map);
 
     auto mainFunction = unit.createFunction(
-        map, map.getFunc(map.getI32(), {map.getI32(), map.getPtr()}, false),
-        "main", inr::Linkage::Global, inr::TypeExt::SignExt);
+        map.getFunc(map.getI32(), {map.getI32(), map.getPtr()}, false), "main",
+        inr::Linkage::Global, inr::TypeExt::SignExt);
 
     mainFunction->getArg(0)->setName("argc");
     mainFunction->getArg(1)->setName("argv");
 
-    auto entryBlock = mainFunction->createBlock(map, "entry");
+    auto entryBlock = mainFunction->createBlock("entry");
 
     inr::RetInst::createRet(map, entryBlock,
-                            unit.createConst(map.getI32(), inr::bigint(32, 0)));
+                            unit.createConst(inr::bigint(32, 0)));
 
     if(!inr::Verifier::verify(unit, &inr::log())) {
         return 1;

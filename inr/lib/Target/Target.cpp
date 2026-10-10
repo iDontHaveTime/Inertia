@@ -75,7 +75,7 @@ Target::Target(std::string_view str) {
     abi_ = getStrABI(abi);
 }
 
-std::string Target::str() {
+std::string Target::str() const {
     std::string s(getArchStr(arch_));
     s += '-';
     s += getOSStr(os_);

@@ -8,9 +8,23 @@
 /// @file TIR/TargetMap.h
 /// @brief Provides a target map class for a lowered IR unit.
 
+#include <inr/ADT/HMap.h>
+#include <inr/IR/FuncDef.h>
+#include <inr/TIR/TargetSymbol.h>
+
 namespace inr {
 
-class TargetMap {};
+/// @brief Map of lowered functions.
+class TargetMap {
+    HMap<const FuncDef*, std::unique_ptr<TargetSymbol>> funcMap_;
+
+public:
+    TargetSymbol* getSymbol(const FuncDef* func) {
+        if(auto v = funcMap_.find(func)) return v->get();
+        auto [v, _] = funcMap_.try_emplace(func, new TargetSymbol(*func));
+        return v->get();
+    }
+};
 
 } // namespace inr
 

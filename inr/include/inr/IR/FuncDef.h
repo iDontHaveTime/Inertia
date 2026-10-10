@@ -25,6 +25,7 @@ class TUnit;
 
 /// @brief Function definition.
 class FuncDef final : public GlobalDef, public ilist_node<FuncDef> {
+    TUnit* parent_;
     std::vector<ArgDef> args_;
     ilist<BlockDef> blocks_;
     CallingConv cc_ = CallingConv::Default;
@@ -38,9 +39,11 @@ class FuncDef final : public GlobalDef, public ilist_node<FuncDef> {
         }
     }
 
-    FuncDef(const PtrType* ptr, const FuncType* type, std::string_view name,
-            Linkage linkage, TypeExt retExt) :
-        GlobalDef(type, linkage, ptr, FuncDefType, name), ext_(retExt) {
+    FuncDef(TUnit* parent, const PtrType* ptr, const FuncType* type,
+            std::string_view name, Linkage linkage, TypeExt retExt) :
+        GlobalDef(type, linkage, ptr, FuncDefType, name),
+        parent_(parent),
+        ext_(retExt) {
         initArgs();
     }
 
@@ -92,7 +95,15 @@ public:
         return getFuncType()->isVararg();
     }
 
-    BlockDef* createBlock(TypeMap& tm, std::string_view name);
+    TUnit* getParent() {
+        return parent_;
+    }
+
+    const TUnit* getParent() const {
+        return parent_;
+    }
+
+    BlockDef* createBlock(std::string_view name);
 };
 
 } // namespace inr

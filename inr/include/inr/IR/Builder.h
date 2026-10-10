@@ -26,9 +26,8 @@ namespace inr {
 
 class BlockBuilder {
     BlockDef* block_;
-    TypeMap& map_;
 
-    BlockBuilder(BlockDef* block, TypeMap& map) : block_(block), map_(map) {}
+    BlockBuilder(BlockDef* block) : block_(block) {}
 
     friend class FuncBuilder;
     friend class IRBuilder;
@@ -48,28 +47,98 @@ public:
     }
 
     TypeMap& getMap() {
-        return map_;
+        return getBlock()->getParent()->getParent()->getTypeMap();
     }
 
     /// @brief Creates a return void instruction.
+    /// @return *this
     BlockBuilder& createRetVoid() {
-        RetInst::createRetVoid(map_, block_);
+        RetInst::createRetVoid(getMap(), getBlock());
         return *this;
     }
 
     /// @brief Creates a return instruction.
     /// @param retVal Return value, if nullptr then it's a ret void.
+    /// @return *this
     BlockBuilder& createRet(Def* retVal) {
-        RetInst::createRet(map_, block_, retVal);
+        RetInst::createRet(getMap(), getBlock(), retVal);
         return *this;
+    }
+
+    /// @brief Creates a jump instruction.
+    /// @param dest The block to jump to.
+    /// @return Pointer to the instruction.
+    JmpInst* createJmp(BlockDef* dest) {
+        return JmpInst::createJmp(getMap(), getBlock(), dest);
+    }
+
+    /// @brief Creates a conditional jump instruction.
+    /// @param condition An i1 (boolean) condition.
+    /// @param iftrue The block to jump to if the condition is true.
+    /// @param iffalse The block to jump to if the condition is false.
+    /// @return Pointer to the instruction.
+    JmpInst* createJmpCond(Def* condition, BlockDef* iftrue,
+                           BlockDef* iffalse) {
+        return JmpInst::createJmpCond(getMap(), getBlock(), condition, iftrue,
+                                      iffalse);
+    }
+
+    /// @brief Creates a new comparison instruction.
+    /// @param condition The condition for the comparison to output 1 (true).
+    /// @param lhs Left hand side of the comparison.
+    /// @param rhs Right hand side of the comparison.
+    /// @param name The name for the result, can be {}.
+    /// @return Pointer to the instruction.
+    CmpInst* createCmp(CmpInst::CmpCond condition, Def* lhs, Def* rhs,
+                       std::string_view name) {
+        return CmpInst::createCmp(getMap(), getBlock(), condition, lhs, rhs,
+                                  name);
+    }
+
+    /// @brief Creates a new multiplication instruction.
+    /// @param lhs Left hand side.
+    /// @param rhs Right hand side.
+    /// @param name The name for the result, can be {}.
+    /// @return Pointer to the instruction.
+    MulInst* createMul(Def* lhs, Def* rhs, std::string_view name) {
+        return MulInst::createMul(getBlock(), lhs, rhs, name);
+    }
+
+    /// @brief Creates a new unsigned division instruction.
+    /// @param lhs Left hand side.
+    /// @param rhs Right hand side.
+    /// @param name The name for the result, can be {}.
+    /// @return Pointer to the instruction.
+    UDivInst* createUDiv(Def* lhs, Def* rhs, std::string_view name) {
+        return UDivInst::createUDiv(getBlock(), lhs, rhs, name);
+    }
+
+    /// @brief Creates a new signed division instruction.
+    /// @param lhs Left hand side.
+    /// @param rhs Right hand side.
+    /// @param name The name for the result, can be {}.
+    /// @return Pointer to the instruction.
+    SDivInst* createSDiv(Def* lhs, Def* rhs, std::string_view name) {
+        return SDivInst::createSDiv(getBlock(), lhs, rhs, name);
+    }
+
+    /// @brief Creates a new stack slot.
+    /// @param type The type to allocate.
+    /// @param count The number of elements to allocate (so the size would be
+    /// sizeof(type) * count).
+    /// @param name The name for the result, can be {}.
+    /// @return Pointer to the instruction.
+    AllocaInst* createAlloca(const Type* type, Def* count,
+                             std::string_view name) {
+        return AllocaInst::createAlloca(getMap(), getBlock(), type, count,
+                                        name);
     }
 };
 
 class FuncBuilder {
     FuncDef* func_;
-    TypeMap& map_;
 
-    FuncBuilder(FuncDef* func, TypeMap& map) : func_(func), map_(map) {}
+    FuncBuilder(FuncDef* func) : func_(func) {}
 
     friend class IRBuilder;
 
@@ -95,7 +164,7 @@ public:
     }
 
     BlockBuilder createBlock(std::string_view name) {
-        return {func_->createBlock(map_, name), map_};
+        return {func_->createBlock(name)};
     }
 
     FuncDef* getFunc() {
@@ -107,16 +176,15 @@ public:
     }
 
     TypeMap& getMap() {
-        return map_;
+        return func_->getParent()->getTypeMap();
     }
 };
 
 class IRBuilder {
     TUnit& unit_;
-    TypeMap& map_;
 
 public:
-    IRBuilder(TUnit& unit, TypeMap& map) : unit_(unit), map_(map) {}
+    IRBuilder(TUnit& unit) : unit_(unit) {}
 
     IRBuilder(const IRBuilder&) = delete;
     IRBuilder& operator=(const IRBuilder&) = delete;
@@ -132,30 +200,25 @@ public:
     }
 
     TypeMap& getMap() {
-        return map_;
+        return unit_.getTypeMap();
     }
 
-    ConstDef* getConst(const IntType* type, inr::bigint val) {
-        return unit_.createConst(type, std::move(val));
-    }
-
-    ConstDef* getConst(unsigned width, inr::bigint val) {
-        return getConst(map_.getInt(width), std::move(val));
+    ConstDef* getConst(inr::bigint val) {
+        return unit_.createConst(std::move(val));
     }
 
     ConstDef* getZeroConst(const IntType* type) {
-        return getConst(type, inr::bigint(type->getWidth()));
+        return getConst(inr::bigint(type->getWidth()));
     }
 
     ConstDef* getZeroConst(unsigned width) {
-        return getConst(width, inr::bigint(width));
+        return getConst(inr::bigint(width));
     }
 
     FuncBuilder createFunction(const FuncType* type, std::string_view name,
                                TypeExt retExt,
                                Linkage linkage = Linkage::Global) {
-        FuncDef* func = unit_.createFunction(map_, type, name, linkage, retExt);
-        return {func, map_};
+        return {unit_.createFunction(type, name, linkage, retExt)};
     }
 };
 

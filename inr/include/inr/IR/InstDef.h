@@ -278,14 +278,14 @@ public:
     /// @brief Creates a new non conditional jump.
     /// @param blk Block to append it to.
     /// @param lbl Block it should jump to.
-    static JmpInst* createJmp(TypeMap& tm, BlockDef* blk, Def* lbl);
+    static JmpInst* createJmp(TypeMap& tm, BlockDef* blk, BlockDef* lbl);
     /// @brief Creates a new conditional jump.
     /// @param blk Block to append it to.
     /// @param cond An i1 condition def.
     /// @param iftrue Block to jump to if the condition is 1.
     /// @param iffalse Block to jump to if the condition is 0.
     static JmpInst* createJmpCond(TypeMap& tm, BlockDef* blk, Def* cond,
-                                  Def* iftrue, Def* iffalse);
+                                  BlockDef* iftrue, BlockDef* iffalse);
 
     /// @brief Returns true if this jump is conditional.
     bool isConditional() const {
